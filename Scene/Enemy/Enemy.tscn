@@ -1,0 +1,10 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://Scripts/Enemy/Enemy.gd" id="1_enemy"]
+
+[node name="Enemy" type="Node3D"]
+script = ExtResource("1_enemy")
+
+[node name="Body" type="Node3D" parent="."]
+
+[node name="ModelSlot" type="Node3D" parent="Body"]
