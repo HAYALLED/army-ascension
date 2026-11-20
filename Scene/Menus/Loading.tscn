@@ -1,0 +1,71 @@
+[gd_scene format=3]
+
+[ext_resource type="Theme" path="res://Resources/UI/ui_theme.tres" id="1_exlbs"]
+[ext_resource type="Script" path="res://Scripts/UI/Loading.gd" id="2_ywqe1"]
+[ext_resource type="Texture2D" path="res://Assets/UI/bg_loading.png" id="3_4hmuf"]
+[ext_resource type="Texture2D" path="res://Assets/UI/logo.png" id="4_p70cf"]
+[ext_resource type="Texture2D" path="res://Assets/UI/bar_frame.png" id="5_0ys7i"]
+[ext_resource type="Texture2D" path="res://Assets/UI/bar_fill_yellow.png" id="6_1f1r6"]
+
+[node name="Loading" type="Control" unique_id=1698323505]
+layout_mode = 3
+anchors_preset = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme = ExtResource("1_exlbs")
+script = ExtResource("2_ywqe1")
+
+[node name="Background" type="TextureRect" parent="." unique_id=877770458]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+texture = ExtResource("3_4hmuf")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="Logo" type="TextureRect" parent="." unique_id=1048607197]
+custom_minimum_size = Vector2(560, 280)
+layout_mode = 0
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -280.0
+offset_top = 80.0
+offset_right = 280.0
+offset_bottom = 360.0
+mouse_filter = 2
+texture = ExtResource("4_p70cf")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Bottom" type="VBoxContainer" parent="." unique_id=1549970176]
+layout_mode = 0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 60.0
+offset_top = -190.0
+offset_right = -60.0
+offset_bottom = -90.0
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="Bottom" unique_id=1091260654]
+layout_mode = 2
+theme_type_variation = &"LabelBig"
+text = "LOADING..."
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Bar" type="TextureProgressBar" parent="Bottom" unique_id=535576835]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+nine_patch_stretch = true
+stretch_margin_left = 22
+stretch_margin_top = 10
+stretch_margin_right = 22
+stretch_margin_bottom = 10
+texture_under = ExtResource("5_0ys7i")
+texture_progress = ExtResource("6_1f1r6")

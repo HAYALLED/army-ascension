@@ -1,20 +1,15 @@
 class_name Models
 extends RefCounted
-## Loads real 3D assets (glb / gltf / tscn) and falls back to the primitive
-## placeholders when a file is missing, so the game always runs.
+## Helpers for imported 3D assets (glb) and their optional animations.
 ##
-## Asset paths are given WITHOUT extension, e.g. "res://Assets/Units/rifleman".
-## Every extension in EXTS is tried in order.
-##
-## Conventions for assets (see Docs/ASSET_PROMPTS.md):
-##   * origin at the feet, 1 unit = 1 meter
-##   * glb / gltf: the model FRONT faces +Z (glTF standard). It is rotated
-##     180 deg on load so it faces -Z, the direction the army advances.
-##   * optional node named "Muzzle" = bullet spawn point
+## Asset conventions (see Docs/ASSET_PROMPTS.md):
+##   * origin at the feet, 1 unit = 1 meter, glb front faces +Z
+##     (unit scenes rotate the glb 180 deg so it faces -Z, the advance direction)
+##   * optional node "Muzzle" = bullet spawn point
 ##   * optional AnimationPlayer with clips: idle, run / walk, attack, shoot, die
 
+## Extensions tried by `find` (path given without extension).
 const EXTS := [".glb", ".gltf", ".tscn"]
-const IMPORT_YAW_DEG := 180.0
 
 static var _scenes: Dictionary = {}
 
@@ -32,41 +27,9 @@ static func find(base: String) -> PackedScene:
 	return found
 
 
-## Instance a unit model. Returns
-## { root, meshes: Array, muzzle: Node3D|null, anim: AnimationPlayer|null, external: bool }
-## `fallback` is called when no asset file exists and must return { root, meshes }.
-static func unit(base: String, fallback: Callable) -> Dictionary:
-	var scene := find(base)
-	if scene == null:
-		var d: Dictionary = fallback.call()
-		d["muzzle"] = null
-		d["anim"] = null
-		d["external"] = false
-		return d
-	var inst := scene.instantiate() as Node3D
-	var holder := Node3D.new()
-	holder.add_child(inst)
-	var path := ""
-	for ext in EXTS:
-		if ResourceLoader.exists(base + ext):
-			path = base + ext
-			break
-	if path.ends_with(".glb") or path.ends_with(".gltf"):
-		inst.rotation_degrees.y += IMPORT_YAW_DEG
-	var meshes: Array = []
-	_collect_meshes(inst, meshes)
-	return {
-		"root": holder,
-		"meshes": meshes,
-		"muzzle": inst.find_child("Muzzle", true, false),
-		"anim": _find_anim_player(inst),
-		"external": true,
-	}
-
-
-## First MeshInstance3D of a prop scene with its transform relative to the
-## scene root: { "mesh": Mesh, "xform": Transform3D } or {} when missing.
-## Used to feed MultiMesh scatter (trees, rocks, buildings, barriers).
+## First MeshInstance3D of a scene with its transform relative to the scene
+## root: { "mesh": Mesh, "xform": Transform3D } or {} when missing.
+## Used for MultiMesh scatter (see BarrierLine.gd).
 static func prop(base: String) -> Dictionary:
 	var scene := find(base)
 	if scene == null:
@@ -87,14 +50,20 @@ static func prop(base: String) -> Dictionary:
 	return result
 
 
-## All existing variants out of a list of base paths.
-static func prop_variants(bases: Array) -> Array:
+static func collect_meshes(root: Node) -> Array:
 	var out: Array = []
-	for b in bases:
-		var p := prop(b)
-		if not p.is_empty():
-			out.append(p)
+	_collect(root, out)
 	return out
+
+
+static func find_anim_player(root: Node) -> AnimationPlayer:
+	if root is AnimationPlayer:
+		return root
+	for c in root.get_children():
+		var r := find_anim_player(c)
+		if r != null:
+			return r
+	return null
 
 
 ## Case-insensitive animation lookup: "run" matches "Run", "Armature|Run_loop".
@@ -121,11 +90,11 @@ static func play(ap: AnimationPlayer, anim_name: String, speed: float = 1.0) -> 
 	return true
 
 
-static func _collect_meshes(n: Node, out: Array) -> void:
+static func _collect(n: Node, out: Array) -> void:
 	if n is MeshInstance3D:
 		out.append(n)
 	for c in n.get_children():
-		_collect_meshes(c, out)
+		_collect(c, out)
 
 
 static func _first_mesh(n: Node) -> MeshInstance3D:
@@ -133,16 +102,6 @@ static func _first_mesh(n: Node) -> MeshInstance3D:
 		return n
 	for c in n.get_children():
 		var r := _first_mesh(c)
-		if r != null:
-			return r
-	return null
-
-
-static func _find_anim_player(n: Node) -> AnimationPlayer:
-	if n is AnimationPlayer:
-		return n
-	for c in n.get_children():
-		var r := _find_anim_player(c)
 		if r != null:
 			return r
 	return null

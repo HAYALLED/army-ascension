@@ -1,0 +1,115 @@
+[gd_scene format=3]
+
+[ext_resource type="Theme" path="res://Resources/UI/ui_theme.tres" id="1_48gpg"]
+[ext_resource type="Script" path="res://Scripts/UI/Pages/HomePage.gd" id="2_ltlfu"]
+[ext_resource type="Texture2D" path="res://Assets/UI/logo.png" id="3_c315i"]
+[ext_resource type="Texture2D" path="res://Assets/UI/panel_header.png" id="4_831b7"]
+[ext_resource type="Texture2D" path="res://Assets/UI/icon_play.png" id="5_4bq80"]
+[ext_resource type="Texture2D" path="res://Assets/UI/icon_calendar_gift.png" id="6_5w6pw"]
+[ext_resource type="Texture2D" path="res://Assets/UI/icon_ad_video.png" id="7_m3vpb"]
+
+[node name="HomePage" type="Control" unique_id=806928833]
+layout_mode = 3
+anchors_preset = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme = ExtResource("1_48gpg")
+script = ExtResource("2_ltlfu")
+
+[node name="Margin" type="MarginContainer" parent="." unique_id=77499722]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+size_flags_horizontal = 3
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 24
+
+[node name="Content" type="VBoxContainer" parent="Margin" unique_id=643759058]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="Logo" type="TextureRect" parent="Margin/Content" unique_id=1241077317]
+custom_minimum_size = Vector2(0, 340)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("3_c315i")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="LevelBanner" type="Control" parent="Margin/Content" unique_id=1619142688]
+custom_minimum_size = Vector2(0, 110)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Ribbon" type="TextureRect" parent="Margin/Content/LevelBanner" unique_id=1008955499]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+texture = ExtResource("4_831b7")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="LevelLabel" type="Label" parent="Margin/Content/LevelBanner" unique_id=163640113]
+unique_name_in_owner = true
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_bottom = -12.0
+theme_type_variation = &"LabelBig"
+text = "LEVEL 1"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Spacer" type="Control" parent="Margin/Content" unique_id=1684696508]
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2
+
+[node name="PlayButton" type="Button" parent="Margin/Content" unique_id=1329669413]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(520, 150)
+layout_mode = 2
+size_flags_horizontal = 4
+focus_mode = 0
+theme_type_variation = &"ButtonPrimary"
+theme_override_font_sizes/font_size = 72
+theme_override_constants/icon_max_width = 96
+text = "PLAY"
+icon = ExtResource("5_4bq80")
+expand_icon = true
+
+[node name="Extras" type="HBoxContainer" parent="Margin/Content" unique_id=1217703348]
+layout_mode = 2
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="DailyButton" type="Button" parent="Margin/Content/Extras" unique_id=845028185]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(250, 90)
+layout_mode = 2
+focus_mode = 0
+theme_type_variation = &"ButtonGold"
+theme_override_font_sizes/font_size = 32
+text = "DAILY"
+icon = ExtResource("6_5w6pw")
+expand_icon = true
+
+[node name="ChestButton" type="Button" parent="Margin/Content/Extras" unique_id=329399138]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(290, 90)
+layout_mode = 2
+focus_mode = 0
+theme_type_variation = &"ButtonSecondary"
+theme_override_font_sizes/font_size = 30
+text = "FREE CHEST"
+icon = ExtResource("7_m3vpb")
+expand_icon = true
+
+[node name="@Control@19" type="Control" parent="Margin/Content" unique_id=1550702672]
+custom_minimum_size = Vector2(0, 8)
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2

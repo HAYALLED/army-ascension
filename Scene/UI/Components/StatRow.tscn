@@ -1,0 +1,43 @@
+[gd_scene format=3]
+
+[ext_resource type="Theme" path="res://Resources/UI/ui_theme.tres" id="1_7wi0w"]
+[ext_resource type="Script" path="res://Scripts/UI/Components/StatRow.gd" id="2_jd86t"]
+[ext_resource type="Texture2D" path="res://Assets/UI/icon_damage.png" id="3_nqu48"]
+
+[node name="StatRow" type="HBoxContainer" unique_id=63913751]
+theme = ExtResource("1_7wi0w")
+theme_override_constants/separation = 12
+script = ExtResource("2_jd86t")
+
+[node name="Icon" type="TextureRect" parent="." unique_id=124909812]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("3_nqu48")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="NameLabel" type="Label" parent="." unique_id=799682360]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Damage"
+vertical_alignment = 1
+
+[node name="ValueLabel" type="Label" parent="." unique_id=1864906019]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"LabelBig"
+text = "10"
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="NextLabel" type="Label" parent="." unique_id=873548146]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(80, 0)
+layout_mode = 2
+theme_type_variation = &"LabelBig"
+theme_override_colors/font_color = Color(0.45, 1, 0.55, 1)
+text = "+5"
+vertical_alignment = 1

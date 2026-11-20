@@ -3,9 +3,11 @@ extends Node3D
 ## Regular enemy (grunt, scout, brute, gunner, warlord). Boss.gd extends this.
 ## Scene: Scene/Enemy/Enemy.tscn.  Plain Node3D, no physics: chases the
 ## nearest soldier and attacks.
-## Node layout:  Enemy -> Body (yaw / bob / lunge) -> ModelSlot (scale) -> [3D model]
+## Node layout:  Enemy -> Body (yaw / bob / lunge) -> ModelSlot (scale) -> Model (.glb)
+## Each kind is an inherited scene in Scene/Enemy/Types/ that instances its .glb
+## under ModelSlot and sets `kind`.
 
-var kind: int = EnemyDB.Kind.BASIC
+@export var kind: EnemyDB.Kind = EnemyDB.Kind.BASIC
 var enemy_name: String = ""
 var dead: bool = false
 var hp: float = 1.0
@@ -34,8 +36,6 @@ var _phase: float = 0.0
 @onready var _body: Node3D = $Body
 @onready var _model: Node3D = $Body/ModelSlot   # scale target (model_scale, death squash)
 
-static var _scene: PackedScene = null
-
 var _meshes: Array = []
 var _anim: AnimationPlayer = null
 var _flash_t: float = 0.0
@@ -49,10 +49,8 @@ var _lunge: float = 0.0
 
 
 static func spawn(parent: Node3D, p_kind: int, pos: Vector3) -> Enemy:
-	if _scene == null:
-		_scene = load("res://Scene/Enemy/Enemy.tscn")
-	var e := _scene.instantiate() as Enemy
-	e.kind = p_kind
+	var e := EnemyDB.scene(p_kind).instantiate() as Enemy
+	e.kind = p_kind as EnemyDB.Kind
 	e.position = pos
 	parent.add_child(e)
 	return e
@@ -76,21 +74,12 @@ func _ready() -> void:
 	shard_chance = d["shard_chance"]
 	proj_speed = d["proj_speed"]
 	hit_color = d["color"]
-	model_scale = d["scale"]
-	_phase = randf() * TAU
-	var built := Models.unit(d["model"], func() -> Dictionary: return PlaceholderModels.enemy(kind))
-	var model: Node3D = built["root"]
-	_model.add_child(model)
-	_meshes = built["meshes"]
-	_anim = built["anim"]
 	_bar_h = d["height"]
+	model_scale = _bar_h / 1.5
+	_phase = randf() * TAU
+	_meshes = Models.collect_meshes(_model)
+	_anim = Models.find_anim_player(_model)
 	_bar_w = clampf(0.4 * _bar_h, 0.7, 1.8)
-	if built["external"]:
-		model.scale = Vector3.ONE * float(d["model_scale"])
-	else:
-		# Placeholders are built at unit size and scaled here; real assets
-		# are authored at final size (DB "height").
-		_model.scale = Vector3.ONE * model_scale
 	Game.enemies.append(self)
 	_post_ready()
 
@@ -250,8 +239,9 @@ func _grant_rewards() -> void:
 	Game.add_gold(gold)
 	Game.add_kill()
 	if shard_amount > 0 and randf() < shard_chance:
-		Game.add_shards(shard_amount)
-		Game.fx.popup(position + Vector3(0, _bar_h + 0.9, 0), "+%d SHARD" % shard_amount, Color(0.5, 0.9, 1.0), 0.9)
+		var type := Game.add_shards(shard_amount)
+		var who: String = SoldierDB.DATA[type]["name"]
+		Game.fx.popup(position + Vector3(0, _bar_h + 0.9, 0), "+%d %s SHARD" % [shard_amount, who.to_upper()], Color(0.5, 0.9, 1.0), 0.9)
 	Game.fx.popup(position + Vector3(0, _bar_h * 0.6, 0), "+%d" % gold, Color(1.0, 0.82, 0.2), 0.8)
 
 

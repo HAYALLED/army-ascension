@@ -1,0 +1,109 @@
+[gd_scene format=3]
+
+[ext_resource type="Theme" path="res://Resources/UI/ui_theme.tres" id="1_1hds0"]
+[ext_resource type="Script" path="res://Scripts/UI/Components/SoldierCard.gd" id="2_2sayk"]
+[ext_resource type="Texture2D" path="res://Assets/UI/class_rifleman.png" id="3_38qpl"]
+[ext_resource type="Texture2D" path="res://Assets/UI/icon_shard.png" id="4_nuk37"]
+[ext_resource type="Texture2D" path="res://Assets/UI/bar_frame.png" id="5_wc767"]
+[ext_resource type="Texture2D" path="res://Assets/UI/bar_fill_cyan.png" id="6_qkg1v"]
+[ext_resource type="Texture2D" path="res://Assets/UI/frame_common.png" id="7_fls74"]
+
+[node name="SoldierCard" type="PanelContainer" unique_id=143685479]
+custom_minimum_size = Vector2(300, 400)
+size_flags_horizontal = 3
+mouse_filter = 1
+theme = ExtResource("1_1hds0")
+theme_type_variation = &"PanelCard"
+script = ExtResource("2_2sayk")
+
+[node name="Content" type="VBoxContainer" parent="." unique_id=1526520649]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 4
+
+[node name="ClassIcon" type="TextureRect" parent="Content" unique_id=1582334164]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(120, 120)
+layout_mode = 2
+size_flags_horizontal = 4
+mouse_filter = 2
+texture = ExtResource("3_38qpl")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="NameLabel" type="Label" parent="Content" unique_id=2083685464]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"LabelDark"
+text = "RIFLEMAN"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="RarityLabel" type="Label" parent="Content" unique_id=1904198686]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"LabelDark"
+theme_override_font_sizes/font_size = 22
+text = "Common"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="LevelLabel" type="Label" parent="Content" unique_id=2018751135]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"LabelDark"
+text = "Lv 1"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ShardRow" type="HBoxContainer" parent="Content" unique_id=1050730292]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="ShardIcon" type="TextureRect" parent="Content/ShardRow" unique_id=1094599169]
+custom_minimum_size = Vector2(34, 34)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("4_nuk37")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ShardBar" type="TextureProgressBar" parent="Content/ShardRow" unique_id=1732382769]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(120, 34)
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+value = 40.0
+nine_patch_stretch = true
+stretch_margin_left = 22
+stretch_margin_top = 10
+stretch_margin_right = 22
+stretch_margin_bottom = 10
+texture_under = ExtResource("5_wc767")
+texture_progress = ExtResource("6_qkg1v")
+
+[node name="ShardLabel" type="Label" parent="Content/ShardRow" unique_id=225970767]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"LabelDark"
+theme_override_font_sizes/font_size = 22
+text = "4/10"
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="UpgradeButton" type="Button" parent="Content" unique_id=689372907]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
+focus_mode = 0
+theme_type_variation = &"ButtonPrimary"
+theme_override_font_sizes/font_size = 30
+text = "UPGRADE"
+
+[node name="Frame" type="TextureRect" parent="." unique_id=113898503]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("7_fls74")
+expand_mode = 1

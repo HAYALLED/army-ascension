@@ -73,7 +73,10 @@ func fire(origin: Vector3, dir: Vector3, speed: float, damage: float, travel: fl
 	_aoe[i] = aoe
 	_rad[i] = radius
 	_kind[i] = kind
-	_ids[i] = [] if pierce > 0 else null
+	if pierce > 0:
+		_ids[i] = []
+	else:
+		_ids[i] = null
 
 
 func _process(delta: float) -> void:
@@ -106,8 +109,8 @@ func _draw() -> void:
 	for i in _count:
 		var v := _vel[i]
 		var k := _kind[i]
-		var basis := Basis.looking_at(v, Vector3.UP) * Basis.from_scale(KIND_SIZE[k])
-		_mm.set_instance_transform(i, Transform3D(basis, _pos[i]))
+		var bs := Basis.looking_at(v, Vector3.UP) * Basis.from_scale(KIND_SIZE[k])
+		_mm.set_instance_transform(i, Transform3D(bs, _pos[i]))
 		_mm.set_instance_color(i, KIND_COLOR[k])
 	_mm.visible_instance_count = _count
 

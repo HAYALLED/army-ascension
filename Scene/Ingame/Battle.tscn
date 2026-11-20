@@ -1,6 +1,75 @@
 [gd_scene format=3 uid="uid://bl8vkvdbirup"]
 
-[ext_resource type="Script" uid="uid://b2je5m34sym5d" path="res://Scripts/Ingame/Battle.gd" id="1_battle"]
+[ext_resource type="Script" uid="uid://b2je5m34sym5d" path="res://Scripts/Ingame/Battle.gd" id="1_ovvgt"]
+[ext_resource type="PackedScene" path="res://Scene/Ingame/Levels/Level01.tscn" id="2_ki3f3"]
+[ext_resource type="Script" uid="uid://cpqolwbxr02vf" path="res://Scripts/Effects/Fx.gd" id="4_ctu2c"]
+[ext_resource type="Script" uid="uid://bn3n43k2obb7c" path="res://Scripts/Effects/ProjectilePool.gd" id="5_6sgbr"]
+[ext_resource type="Script" uid="uid://4fkk5eaw7h5" path="res://Scripts/Ingame/Army.gd" id="6_1p41u"]
+[ext_resource type="Script" uid="uid://biv5pmd8undgu" path="res://Scripts/Ingame/CameraRig.gd" id="7_jxs8h"]
+[ext_resource type="PackedScene" path="res://Scene/UI/HUD.tscn" id="8_owfft"]
 
-[node name="Battle" type="Node3D" unique_id=892004500]
-script = ExtResource("1_battle")
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_yuq7d"]
+sky_top_color = Color(0.3, 0.52, 0.85, 1)
+sky_horizon_color = Color(0.72, 0.82, 0.92, 1)
+ground_bottom_color = Color(0.35, 0.42, 0.35, 1)
+ground_horizon_color = Color(0.72, 0.82, 0.92, 1)
+
+[sub_resource type="Sky" id="Sky_k8q1o"]
+sky_material = SubResource("ProceduralSkyMaterial_yuq7d")
+
+[sub_resource type="Environment" id="Environment_plxa0"]
+background_mode = 2
+sky = SubResource("Sky_k8q1o")
+ambient_light_source = 3
+ambient_light_energy = 0.8
+tonemap_mode = 2
+fog_enabled = true
+fog_mode = 1
+fog_light_color = Color(0.72, 0.82, 0.92, 1)
+fog_density = 1.0
+fog_depth_begin = 60.0
+fog_depth_end = 125.0
+
+[node name="Battle" type="Node3D" unique_id=63752784]
+script = ExtResource("1_ovvgt")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=292395512]
+environment = SubResource("Environment_plxa0")
+
+[node name="Sun" type="DirectionalLight3D" parent="." unique_id=1507910950]
+transform = Transform3D(0.8660254, 0.39400536, -0.30783075, 0, 0.6156615, 0.7880107, 0.5, -0.6824373, 0.5331785, 0, 0, 0)
+light_color = Color(1, 0.96, 0.88, 1)
+light_energy = 1.1
+shadow_enabled = true
+directional_shadow_mode = 0
+directional_shadow_max_distance = 45.0
+
+[node name="Level" parent="." unique_id=223986348 instance=ExtResource("2_ki3f3")]
+
+[node name="Units" type="Node3D" parent="." unique_id=2115093543]
+
+[node name="Fx" type="Node3D" parent="." unique_id=1067853885]
+script = ExtResource("4_ctu2c")
+
+[node name="PlayerBullets" type="Node3D" parent="." unique_id=2005601879]
+script = ExtResource("5_6sgbr")
+
+[node name="EnemyBullets" type="Node3D" parent="." unique_id=1595058338]
+script = ExtResource("5_6sgbr")
+capacity = 200
+hits_enemies = false
+
+[node name="Army" type="Node3D" parent="." unique_id=1526442350 node_paths=PackedStringArray("units")]
+script = ExtResource("6_1p41u")
+units = NodePath("../Units")
+
+[node name="Camera" type="Camera3D" parent="." unique_id=523349156 node_paths=PackedStringArray("target")]
+keep_aspect = 0
+current = true
+fov = 52.0
+near = 0.3
+far = 160.0
+script = ExtResource("7_jxs8h")
+target = NodePath("../Army")
+
+[node name="HUD" parent="." unique_id=2143382632 instance=ExtResource("8_owfft")]

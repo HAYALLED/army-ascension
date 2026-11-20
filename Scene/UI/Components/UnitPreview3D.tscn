@@ -1,0 +1,35 @@
+[gd_scene format=3]
+
+[ext_resource type="Theme" path="res://Resources/UI/ui_theme.tres" id="1_00coo"]
+[ext_resource type="Script" path="res://Scripts/UI/Components/UnitPreview3D.gd" id="2_rg0nw"]
+
+[sub_resource type="Environment" id="Environment_teq4b"]
+ambient_light_source = 2
+ambient_light_color = Color(0.85, 0.88, 1, 1)
+ambient_light_energy = 0.8
+
+[node name="UnitPreview3D" type="SubViewportContainer" unique_id=512657983]
+custom_minimum_size = Vector2(360, 340)
+size_flags_horizontal = 4
+theme = ExtResource("1_00coo")
+stretch = true
+script = ExtResource("2_rg0nw")
+
+[node name="Viewport" type="SubViewport" parent="." unique_id=1801831121]
+own_world_3d = true
+transparent_bg = true
+size = Vector2i(360, 340)
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="Viewport" unique_id=1711112238]
+environment = SubResource("Environment_teq4b")
+
+[node name="Camera3D" type="Camera3D" parent="Viewport" unique_id=937676789]
+transform = Transform3D(1, 0, 0, 0, 0.9961947, 0.08715574, 0, -0.08715574, 0.9961947, 0, 0.78, 3.1)
+fov = 32.0
+
+[node name="Sun" type="DirectionalLight3D" parent="Viewport" unique_id=662179974]
+transform = Transform3D(0.90630776, -0.24240388, 0.34618863, 0, 0.81915206, 0.57357645, -0.42261827, -0.5198368, 0.74240386, 0, 0, 0)
+light_energy = 1.1
+
+[node name="Pivot" type="Node3D" parent="Viewport" unique_id=623528343]
+unique_name_in_owner = true

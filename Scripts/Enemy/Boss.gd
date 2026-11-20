@@ -12,7 +12,7 @@ const SEQUENCE := [Pattern.FAN, Pattern.SLAM, Pattern.SUMMON, Pattern.SLAM, Patt
 const WAKE_DISTANCE := 55.0
 const HOLD_DISTANCE := 13.0
 const SLAM_RADIUS := 3.3
-const SLAM_DAMAGE := 45.0
+const SLAM_DAMAGE := 40.0
 const SLAM_TIME := 1.4
 
 var _state: int = Phase.SLEEP

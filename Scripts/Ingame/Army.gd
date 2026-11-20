@@ -10,11 +10,10 @@ const SPACING_Z := 0.85
 const SLOW_FAR := 22.0
 const SLOW_NEAR := 8.0
 const MIN_SPEED := 0.25
-const SOLDIER_SCENE := preload("res://Scene/Units/Soldier.tscn")
 ## Strafe "crowd" effect: sideways speed (units/s) that gives the full squeeze.
 const SQUEEZE_SPEED := 6.0
 
-var units: Node3D = null
+@export var units: Node3D = null
 var forward_speed: float = 6.0
 var drag_sensitivity: float = 0.026
 var keyboard_speed: float = 10.0
@@ -111,8 +110,8 @@ func emit_status() -> void:
 func add_soldier(type: int, level: int = 1, pop: bool = false) -> Soldier:
 	if Game.soldiers.size() >= Game.MAX_SOLDIERS:
 		return null
-	var s := SOLDIER_SCENE.instantiate() as Soldier
-	s.setup(type, level)
+	var s := SoldierDB.scene(type).instantiate() as Soldier
+	s.setup(level)
 	s.position = position + Vector3(randf_range(-1.0, 1.0), 0.0, randf_range(0.0, 2.0))
 	units.add_child(s)
 	Game.soldiers.append(s)
@@ -123,7 +122,8 @@ func add_soldier(type: int, level: int = 1, pop: bool = false) -> Soldier:
 
 func add_random_soldiers(count: int) -> void:
 	for i in count:
-		add_soldier(SoldierDB.random_type(), 1, i == 0)
+		var t := SoldierDB.random_type()
+		add_soldier(t, PlayerData.level_of(t), i == 0)
 	rebuild_formation()
 	emit_status()
 
@@ -170,7 +170,7 @@ func rebuild_formation() -> void:
 	var rows := int(ceil(float(n) / cols))
 	for i in n:
 		var s: Soldier = list[i]
-		var row := i / cols
+		var row := floori(float(i) / float(cols))
 		var col := i % cols
 		var in_row := mini(cols, n - row * cols)
 		s.slot = Vector3(

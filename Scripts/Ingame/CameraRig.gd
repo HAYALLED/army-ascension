@@ -7,18 +7,10 @@ extends Camera3D
 @export var follow_x: float = 0.5
 @export var smoothing: float = 7.0
 
-var target: Node3D = null
+@export var target: Node3D = null
 var _shake: float = 0.0
 var _pos: Vector3 = Vector3.ZERO
 var _focus: Vector3 = Vector3.ZERO
-
-
-func _ready() -> void:
-	fov = 52.0
-	keep_aspect = Camera3D.KEEP_WIDTH
-	near = 0.3
-	far = 160.0
-	current = true
 
 
 func snap() -> void:

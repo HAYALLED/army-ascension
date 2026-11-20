@@ -3,13 +3,15 @@ extends Node3D
 ## One soldier (scene: Scene/Units/Soldier.tscn). A plain Node3D, no physics:
 ## targeting and bullets use cheap distance checks so big armies stay light.
 ##
-## Node layout:  Soldier -> Body (yaw / bob / recoil) -> ModelSlot (scale) -> [3D model]
-## The model comes from Models.unit(); see Docs/ASSET_PROMPTS.md.
+## Node layout:  Soldier -> Body (yaw / bob / recoil) -> ModelSlot (scale) -> Model (.glb)
+## Each class is an inherited scene in Scene/Units/Soldiers/ that instances its
+## .glb under ModelSlot. The glb's "Muzzle" node is the bullet spawn point.
 
 static var _next_uid: int = 1
 
 var uid: int = 0
-var type: int = SoldierDB.Type.RIFLEMAN
+## Set per class in the inherited scene (Scene/Units/Soldiers/*.tscn).
+@export var type: SoldierDB.Type = SoldierDB.Type.RIFLEMAN
 var display_name: String = ""
 var rarity: int = SoldierDB.Rarity.COMMON
 var level: int = 1
@@ -51,13 +53,11 @@ var _recoil: float = 0.0
 var _age: float = 0.0
 var _phase: float = 0.0
 var _scale_mul: Vector3 = Vector3.ONE
-var _model_scale: float = 1.0
 var _jitter: Vector2 = Vector2.ZERO
 var _squeeze_var: float = 1.0
 
 
-func setup(p_type: int, p_level: int = 1) -> void:
-	type = p_type
+func setup(p_level: int = 1) -> void:
 	level = p_level
 	uid = _next_uid
 	_next_uid += 1
@@ -80,22 +80,16 @@ func setup(p_type: int, p_level: int = 1) -> void:
 	heal_range = d["heal_range"]
 	sfx = d["sfx"]
 	row_priority = d["row"]
-	_model_scale = d["model_scale"]
 
 
 func _ready() -> void:
-	var built := Models.unit(_data["model"], func() -> Dictionary: return PlaceholderModels.soldier(type))
-	var model: Node3D = built["root"]
-	_slot.add_child(model)
-	_meshes = built["meshes"]
-	_anim = built["anim"]
+	_meshes = Models.collect_meshes(_slot)
+	_anim = Models.find_anim_player(_slot)
 	_has_run_anim = _anim != null and Models.find_anim(_anim, "run") != &""
-	if built["external"]:
-		model.scale = Vector3.ONE * _model_scale
-	_muzzle = built["muzzle"]
+	_muzzle = _slot.find_child("Muzzle", true, false) as Node3D
 	if _muzzle == null:
 		_muzzle = Node3D.new()
-		_muzzle.position = _data["muzzle"]
+		_muzzle.position = Vector3(0.2, 0.7, -0.7)
 		_body.add_child(_muzzle)
 	_muzzle_flash = Mats.part(_muzzle, Mats.sphere(0.12, 8), Mats.unshaded(Color(1.0, 0.9, 0.5)))
 	_muzzle_flash.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF

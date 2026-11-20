@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://Scripts/Ingame/WaveTrigger.gd" id="1_tuh2v"]
+
+[node name="WaveTrigger" type="Node3D" unique_id=280318471]
+script = ExtResource("1_tuh2v")

@@ -1,0 +1,279 @@
+[gd_scene format=3]
+
+[ext_resource type="Theme" path="res://Resources/UI/ui_theme.tres" id="1_tk18p"]
+[ext_resource type="Script" path="res://Scripts/UI/MainMenu.gd" id="2_cufvu"]
+[ext_resource type="Texture2D" path="res://Assets/UI/bg_main_menu.png" id="3_ng2ks"]
+[ext_resource type="PackedScene" path="res://Scene/Menus/Pages/HomePage.tscn" id="4_0xx3b"]
+[ext_resource type="Script" path="res://Scripts/UI/Pages/HomePage.gd" id="5_0tr4r"]
+[ext_resource type="PackedScene" path="res://Scene/Menus/Pages/SoldiersPage.tscn" id="6_kjuu2"]
+[ext_resource type="Script" path="res://Scripts/UI/Pages/SoldiersPage.gd" id="7_e66wk"]
+[ext_resource type="PackedScene" path="res://Scene/Menus/Pages/UpgradePage.tscn" id="8_kncek"]
+[ext_resource type="Script" path="res://Scripts/UI/Pages/UpgradePage.gd" id="9_aal47"]
+[ext_resource type="PackedScene" path="res://Scene/Menus/Pages/MissionsPage.tscn" id="10_afflk"]
+[ext_resource type="Script" path="res://Scripts/UI/Pages/MissionsPage.gd" id="11_mijn3"]
+[ext_resource type="PackedScene" path="res://Scene/Menus/Pages/ShopPage.tscn" id="12_qnyxv"]
+[ext_resource type="Script" path="res://Scripts/UI/Pages/ShopPage.gd" id="13_wmwt0"]
+[ext_resource type="PackedScene" path="res://Scene/UI/Components/CurrencyPill.tscn" id="14_12u6t"]
+[ext_resource type="Script" path="res://Scripts/UI/Components/CurrencyPill.gd" id="15_5ufcj"]
+[ext_resource type="Texture2D" path="res://Assets/UI/icon_settings.png" id="16_7tewt"]
+[ext_resource type="Texture2D" path="res://Assets/UI/tabbar.png" id="17_l8hla"]
+[ext_resource type="Texture2D" path="res://Assets/UI/icon_soldiers.png" id="18_ohx0t"]
+[ext_resource type="Texture2D" path="res://Assets/UI/icon_upgrade.png" id="19_5i77f"]
+[ext_resource type="Texture2D" path="res://Assets/UI/icon_play.png" id="20_5m028"]
+[ext_resource type="Texture2D" path="res://Assets/UI/icon_missions.png" id="21_0nrfl"]
+[ext_resource type="Texture2D" path="res://Assets/UI/icon_shop.png" id="22_lmg5l"]
+
+[sub_resource type="ButtonGroup" id="ButtonGroup_3mxh6"]
+
+[node name="MainMenu" type="Control" unique_id=901816523]
+layout_mode = 3
+anchors_preset = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme = ExtResource("1_tk18p")
+script = ExtResource("2_cufvu")
+
+[node name="Background" type="TextureRect" parent="." unique_id=1180708290]
+unique_name_in_owner = true
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+texture = ExtResource("3_ng2ks")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="Pages" type="Control" parent="." unique_id=645936663]
+anchors_preset = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 130.0
+offset_bottom = -180.0
+mouse_filter = 2
+
+[node name="HomePage" type="Control" parent="Pages" unique_id=806928833 instance=ExtResource("4_0xx3b")]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme = ExtResource("1_tk18p")
+script = ExtResource("5_0tr4r")
+
+[node name="SoldiersPage" type="Control" parent="Pages" unique_id=1221677895 instance=ExtResource("6_kjuu2")]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme = ExtResource("1_tk18p")
+script = ExtResource("7_e66wk")
+
+[node name="UpgradePage" type="Control" parent="Pages" unique_id=2087154241 instance=ExtResource("8_kncek")]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme = ExtResource("1_tk18p")
+script = ExtResource("9_aal47")
+
+[node name="MissionsPage" type="Control" parent="Pages" unique_id=38541904 instance=ExtResource("10_afflk")]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme = ExtResource("1_tk18p")
+script = ExtResource("11_mijn3")
+
+[node name="ShopPage" type="Control" parent="Pages" unique_id=765228179 instance=ExtResource("12_qnyxv")]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme = ExtResource("1_tk18p")
+script = ExtResource("13_wmwt0")
+
+[node name="TopBar" type="MarginContainer" parent="." unique_id=1423369357]
+unique_name_in_owner = true
+layout_mode = 0
+anchor_right = 1.0
+mouse_filter = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="Row" type="HBoxContainer" parent="TopBar" unique_id=73290909]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 10
+
+[node name="GoldPill" type="PanelContainer" parent="TopBar/Row" unique_id=36560541 instance=ExtResource("14_12u6t")]
+custom_minimum_size = Vector2(160, 64)
+layout_mode = 2
+theme = ExtResource("1_tk18p")
+theme_type_variation = &"PanelCurrency"
+script = ExtResource("15_5ufcj")
+
+[node name="ShardsPill" type="PanelContainer" parent="TopBar/Row" unique_id=1831388495 instance=ExtResource("14_12u6t")]
+custom_minimum_size = Vector2(160, 64)
+layout_mode = 2
+theme = ExtResource("1_tk18p")
+theme_type_variation = &"PanelCurrency"
+script = ExtResource("15_5ufcj")
+kind = "shards"
+
+[node name="GemsPill" type="PanelContainer" parent="TopBar/Row" unique_id=990961191 instance=ExtResource("14_12u6t")]
+custom_minimum_size = Vector2(160, 64)
+layout_mode = 2
+theme = ExtResource("1_tk18p")
+theme_type_variation = &"PanelCurrency"
+script = ExtResource("15_5ufcj")
+kind = "gems"
+
+[node name="Spacer" type="Control" parent="TopBar/Row" unique_id=1691412777]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+
+[node name="SettingsButton" type="Button" parent="TopBar/Row" unique_id=1904731174]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(84, 84)
+layout_mode = 2
+size_flags_vertical = 4
+focus_mode = 0
+theme_type_variation = &"ButtonRound"
+icon = ExtResource("16_7tewt")
+expand_icon = true
+
+[node name="TabBar" type="Control" parent="." unique_id=1162865596]
+anchors_preset = 0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -180.0
+mouse_filter = 2
+
+[node name="Background" type="TextureRect" parent="TabBar" unique_id=254161869]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+texture = ExtResource("17_l8hla")
+expand_mode = 1
+
+[node name="Margin" type="MarginContainer" parent="TabBar" unique_id=1505331329]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 22
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 10
+
+[node name="Tabs" type="HBoxContainer" parent="TabBar/Margin" unique_id=591245426]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 6
+
+[node name="TabSoldiers" type="Button" parent="TabBar/Margin/Tabs" unique_id=1415941347]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 140)
+layout_mode = 2
+size_flags_horizontal = 3
+focus_mode = 0
+theme_type_variation = &"TabButton"
+toggle_mode = true
+button_group = SubResource("ButtonGroup_3mxh6")
+text = "SOLDIERS"
+icon = ExtResource("18_ohx0t")
+icon_alignment = 1
+vertical_icon_alignment = 0
+expand_icon = true
+
+[node name="TabUpgrades" type="Button" parent="TabBar/Margin/Tabs" unique_id=1565540763]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 140)
+layout_mode = 2
+size_flags_horizontal = 3
+focus_mode = 0
+theme_type_variation = &"TabButton"
+toggle_mode = true
+button_group = SubResource("ButtonGroup_3mxh6")
+text = "UPGRADES"
+icon = ExtResource("19_5i77f")
+icon_alignment = 1
+vertical_icon_alignment = 0
+expand_icon = true
+
+[node name="TabHome" type="Button" parent="TabBar/Margin/Tabs" unique_id=1175644112]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 140)
+layout_mode = 2
+size_flags_horizontal = 3
+focus_mode = 0
+theme_type_variation = &"TabButton"
+toggle_mode = true
+button_pressed = true
+button_group = SubResource("ButtonGroup_3mxh6")
+text = "PLAY"
+icon = ExtResource("20_5m028")
+icon_alignment = 1
+vertical_icon_alignment = 0
+expand_icon = true
+
+[node name="TabMissions" type="Button" parent="TabBar/Margin/Tabs" unique_id=869856609]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 140)
+layout_mode = 2
+size_flags_horizontal = 3
+focus_mode = 0
+theme_type_variation = &"TabButton"
+toggle_mode = true
+button_group = SubResource("ButtonGroup_3mxh6")
+text = "MISSIONS"
+icon = ExtResource("21_0nrfl")
+icon_alignment = 1
+vertical_icon_alignment = 0
+expand_icon = true
+
+[node name="TabShop" type="Button" parent="TabBar/Margin/Tabs" unique_id=2117811132]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 140)
+layout_mode = 2
+size_flags_horizontal = 3
+focus_mode = 0
+theme_type_variation = &"TabButton"
+toggle_mode = true
+button_group = SubResource("ButtonGroup_3mxh6")
+text = "SHOP"
+icon = ExtResource("22_lmg5l")
+icon_alignment = 1
+vertical_icon_alignment = 0
+expand_icon = true
+
+[node name="Toast" type="Label" parent="." unique_id=2078757802]
+unique_name_in_owner = true
+layout_mode = 0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 30.0
+offset_top = -280.0
+offset_right = -30.0
+offset_bottom = -190.0
+theme_type_variation = &"LabelSmall"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="Popups" type="Control" parent="." unique_id=1890108566]
+unique_name_in_owner = true
+anchors_preset = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2

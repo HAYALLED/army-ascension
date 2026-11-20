@@ -1,0 +1,63 @@
+[gd_scene format=3]
+
+[ext_resource type="Theme" path="res://Resources/UI/ui_theme.tres" id="1_ybb3b"]
+[ext_resource type="Script" path="res://Scripts/UI/Pages/UpgradePage.gd" id="2_qhm32"]
+[ext_resource type="Texture2D" path="res://Assets/UI/panel_header.png" id="3_dpqo6"]
+
+[node name="UpgradePage" type="Control" unique_id=2087154241]
+layout_mode = 3
+anchors_preset = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme = ExtResource("1_ybb3b")
+script = ExtResource("2_qhm32")
+
+[node name="Content" type="VBoxContainer" parent="." unique_id=701377828]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_constants/separation = 10
+
+[node name="Header" type="Control" parent="Content" unique_id=1064189140]
+custom_minimum_size = Vector2(0, 110)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Ribbon" type="TextureRect" parent="Content/Header" unique_id=776236869]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+texture = ExtResource("3_dpqo6")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Title" type="Label" parent="Content/Header" unique_id=547699683]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_bottom = -12.0
+theme_type_variation = &"LabelBig"
+text = "UPGRADES"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Scroll" type="ScrollContainer" parent="Content" unique_id=1662606501]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+vertical_scroll_mode = 3
+
+[node name="Margin" type="MarginContainer" parent="Content/Scroll" unique_id=276466377]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="List" type="VBoxContainer" parent="Content/Scroll/Margin" unique_id=2027865807]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 16

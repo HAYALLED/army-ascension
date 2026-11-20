@@ -3,16 +3,23 @@ extends Node
 ## Soldiers and enemies live directly under Battle/Units at identity
 ## transform, so `position` == world position everywhere.
 
+@warning_ignore("unused_signal")
 signal army_changed(count: int, hp: float, max_hp: float)
 signal gold_changed(total: int)
 signal shards_changed(total: int)
 signal kills_changed(total: int)
 signal buffs_changed(damage_mult: float, rate_mult: float)
+@warning_ignore("unused_signal")
 signal wave_started(index: int, total: int)
+@warning_ignore("unused_signal")
 signal boss_spawned(boss_name: String, max_hp: float)
+@warning_ignore("unused_signal")
 signal boss_hp_changed(hp: float, max_hp: float)
+@warning_ignore("unused_signal")
 signal boss_defeated()
+@warning_ignore("unused_signal")
 signal progress_changed(ratio: float)
+@warning_ignore("unused_signal")
 signal banner_requested(text: String, color: Color)
 signal state_changed(new_state: int)
 signal battle_won()
@@ -26,6 +33,7 @@ var state: int = State.LOADING
 var level_index: int = 1
 var gold: int = 0
 var shards: int = 0
+var run_shards: Dictionary = {}   # SoldierDB.Type -> shards earned this battle
 var kills: int = 0
 var elapsed: float = 0.0
 var damage_buff: float = 1.0
@@ -47,6 +55,7 @@ var camera_rig: CameraRig = null
 func reset_run() -> void:
 	gold = 0
 	shards = 0
+	run_shards.clear()
 	kills = 0
 	elapsed = 0.0
 	damage_buff = 1.0
@@ -87,11 +96,29 @@ func end_battle(won: bool) -> void:
 		return
 	get_tree().paused = false
 	Engine.time_scale = 1.0
+	_credit_rewards(won)
 	_set_state(State.WON if won else State.LOST)
 	if won:
 		battle_won.emit()
 	else:
 		battle_lost.emit()
+
+
+## Battle rewards go to the player's profile: all of them on victory, half the gold on defeat.
+func _credit_rewards(won: bool) -> void:
+	PlayerData.add_gold(gold if won else int(gold * 0.5))
+	for t in run_shards:
+		PlayerData.add_shards(t, int(run_shards[t]))
+
+
+func goto_menu() -> void:
+	reset_run()
+	get_tree().change_scene_to_file("res://Scene/Menus/MainMenu.tscn")
+
+
+func goto_battle() -> void:
+	reset_run()
+	get_tree().change_scene_to_file("res://Scene/Menus/Loading.tscn")
 
 
 func restart() -> void:
@@ -106,11 +133,15 @@ func add_gold(amount: int) -> void:
 	gold_changed.emit(gold)
 
 
-func add_shards(amount: int) -> void:
+## Shards drop for a random soldier class. Returns the class that got them.
+func add_shards(amount: int) -> int:
 	if amount <= 0:
-		return
+		return -1
+	var type := SoldierDB.random_type()
+	run_shards[type] = int(run_shards.get(type, 0)) + amount
 	shards += amount
 	shards_changed.emit(shards)
+	return type
 
 
 func add_kill() -> void:

@@ -1,0 +1,65 @@
+[gd_scene format=3]
+
+[ext_resource type="Theme" path="res://Resources/UI/ui_theme.tres" id="1_jwsjv"]
+[ext_resource type="Script" path="res://Scripts/UI/Pages/SoldiersPage.gd" id="2_rbvbh"]
+[ext_resource type="Texture2D" path="res://Assets/UI/panel_header.png" id="3_fvadw"]
+
+[node name="SoldiersPage" type="Control" unique_id=1221677895]
+layout_mode = 3
+anchors_preset = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme = ExtResource("1_jwsjv")
+script = ExtResource("2_rbvbh")
+
+[node name="Content" type="VBoxContainer" parent="." unique_id=1764950208]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_constants/separation = 10
+
+[node name="Header" type="Control" parent="Content" unique_id=1283082096]
+custom_minimum_size = Vector2(0, 110)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Ribbon" type="TextureRect" parent="Content/Header" unique_id=2130454582]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+texture = ExtResource("3_fvadw")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Title" type="Label" parent="Content/Header" unique_id=1822733903]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_bottom = -12.0
+theme_type_variation = &"LabelBig"
+text = "SOLDIERS"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Scroll" type="ScrollContainer" parent="Content" unique_id=1411467065]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+vertical_scroll_mode = 3
+
+[node name="Margin" type="MarginContainer" parent="Content/Scroll" unique_id=1502688657]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="Grid" type="GridContainer" parent="Content/Scroll/Margin" unique_id=1989791284]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/h_separation = 20
+theme_override_constants/v_separation = 20
+columns = 2

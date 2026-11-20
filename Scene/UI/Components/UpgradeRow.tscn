@@ -1,0 +1,100 @@
+[gd_scene format=3]
+
+[ext_resource type="Theme" path="res://Resources/UI/ui_theme.tres" id="1_cgo5d"]
+[ext_resource type="Script" path="res://Scripts/UI/Components/UpgradeRow.gd" id="2_fpygc"]
+[ext_resource type="Texture2D" path="res://Assets/UI/class_rifleman.png" id="3_6es4h"]
+[ext_resource type="Texture2D" path="res://Assets/UI/icon_gold.png" id="4_mcjm5"]
+[ext_resource type="Texture2D" path="res://Assets/UI/icon_shard.png" id="5_ngtax"]
+
+[node name="UpgradeRow" type="PanelContainer" unique_id=1025439048]
+custom_minimum_size = Vector2(0, 150)
+theme = ExtResource("1_cgo5d")
+theme_type_variation = &"PanelDark"
+script = ExtResource("2_fpygc")
+
+[node name="Row" type="HBoxContainer" parent="." unique_id=689445904]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="ClassIcon" type="TextureRect" parent="Row" unique_id=1133721532]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(96, 96)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("3_6es4h")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Info" type="VBoxContainer" parent="Row" unique_id=48811551]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 2
+
+[node name="NameLabel" type="Label" parent="Row/Info" unique_id=1526268293]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"LabelBig"
+theme_override_font_sizes/font_size = 30
+text = "RIFLEMAN  Lv 1"
+vertical_alignment = 1
+clip_text = true
+
+[node name="StatLabel" type="Label" parent="Row/Info" unique_id=1620366344]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(120, 0)
+layout_mode = 2
+theme_type_variation = &"LabelSmall"
+text = "DMG 10>15  HP 100>120"
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="Cost" type="VBoxContainer" parent="Row" unique_id=467008528]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="GoldRow" type="HBoxContainer" parent="Row/Cost" unique_id=1116275154]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="GoldIcon" type="TextureRect" parent="Row/Cost/GoldRow" unique_id=1265040359]
+custom_minimum_size = Vector2(36, 36)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("4_mcjm5")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="GoldCost" type="Label" parent="Row/Cost/GoldRow" unique_id=1130860579]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"LabelSmall"
+text = "500"
+vertical_alignment = 1
+
+[node name="ShardRow" type="HBoxContainer" parent="Row/Cost" unique_id=1887525210]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="ShardIcon" type="TextureRect" parent="Row/Cost/ShardRow" unique_id=862230401]
+custom_minimum_size = Vector2(36, 36)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("5_ngtax")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ShardCost" type="Label" parent="Row/Cost/ShardRow" unique_id=218163415]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"LabelSmall"
+text = "10"
+vertical_alignment = 1
+
+[node name="UpgradeButton" type="Button" parent="Row" unique_id=1168257927]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(150, 84)
+layout_mode = 2
+focus_mode = 0
+theme_type_variation = &"ButtonPrimary"
+theme_override_font_sizes/font_size = 24
+text = "UPGRADE"

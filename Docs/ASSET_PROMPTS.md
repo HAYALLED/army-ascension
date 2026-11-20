@@ -144,31 +144,103 @@ Height 6.8 m. Facing forward.
 Optional boss clips: `Idle_loop`, `Walk_loop`, `Shoot` (fan attack), `Slam`, `Roar`, `Death`.
 
 ---------------------------------------------------------------------
-## 6. ENVIRONMENT PROPS  →  `Assets/Ingame/`
+## 6. ROAD, BOSS ARENA, BUFF GATES, TRAPS  →  `Assets/Ingame/`
 
-**Each prop = ONE single mesh object** (the game scatters them hundreds of times). Same style: blocky, flat colors, cute. Origin at the bottom center.
+Current focus: units, traps, road, walls. Environment dressing (trees, rocks, buildings) is **deferred** – not needed yet.
+All pieces below are **tileable or symmetric**, one mesh object each, origin at the **bottom center**, front faces **+Z** (the side the player sees first), final size in meters.
 
-| File | What | Size (W×H×D m) |
+| File | What | Size (W × H × D m) |
 |---|---|---|
-| `tree_a.glb` | Round blocky tree: brown box trunk + big green cube-ish canopy | 2.5 × 3.5 × 2.5 |
-| `tree_b.glb` | Blocky pine: 3 stacked shrinking green cubes on a brown trunk | 2.2 × 4.5 × 2.2 |
-| `rock_a.glb` | Gray angular rock cluster (3 chunky boxes), light gray tops | 1.4 × 1.0 × 1.2 |
-| `rock_b.glb` | Single gray boulder, chunky and faceted | 0.9 × 0.7 × 0.9 |
-| `building_a.glb` | Ruined blocky house: beige walls, broken roof corner, dark window squares | 6 × 7 × 6 |
-| `building_b.glb` | Tall broken tower block, gray-brown, missing top corner | 5 × 11 × 5 |
-| `building_c.glb` | Low wide warehouse, rusty orange-brown roof | 9 × 5 × 6 |
-| `barrier_a.glb` | Concrete jersey barrier block, white with a red stripe, cute rounded edges. Long side along **Z** | 0.7 × 0.85 × 2.0 |
-| `barrier_b.glb` | *(optional)* stack of sandbags, tan, long side along **Z** | 0.8 × 0.8 × 2.0 |
-| `spike_wall.glb` | **One 3.5 m segment** of a spike trap wall: red-black base with yellow warning stripe, 6 chunky steel spikes pointing up. Tiles side by side, must be exactly 3.5 m wide, front faces +Z | 3.5 × 1.3 × 0.9 |
-| `gate_pillar.glb` | Chunky dark-blue metal pillar with a yellow band at top and bottom, symmetric | 0.5 × 3.4 × 0.5 |
+| `road_tile.glb` | One road segment, **tiles seamlessly along Z** (front and back edges identical) | 14.4 × 0.12 × 10 |
+| `arena_floor_tile.glb` | Boss arena floor segment, seamless along Z | 14.4 × 0.16 × 10 |
+| `arena_wall_side.glb` | Boss arena side wall segment, seamless along Z. **Inner face (toward the road) is the +X side** (the game mirrors it for the other side) | 1.4 × 5 × 10 |
+| `arena_wall_back.glb` | Boss arena back wall with the boss door. Front face +Z | 24 × 10 × 2 |
+| `arena_entrance.glb` | Archway the army walks through to enter the boss zone. **Open underneath**: clear opening 14.4 wide × 5 high. Front face +Z | 17 × 7.5 × 1.5 |
+| `gate_pillar.glb` | Buff gate pillar (3 per gate) | 0.5 × 3.6 × 0.5 |
+| `gate_beam.glb` | Top beam that holds the buff signs | 14.4 × 0.4 × 0.5 |
+| `gate_panel.glb` | Hanging buff sign (the game writes "+6", "x2", "+25% DAMAGE" on it). Soldiers walk UNDER it: model bottom edge = 0, the game hangs it at 1.6 m | 6.2 × 1.7 × 0.25 |
+| `spike_wall.glb` | Trap, one 3.5 m segment (already requested earlier) | 3.5 × 1.3 × 0.9 |
 
-Prompt pattern for props:
+**Special rule for `gate_panel.glb` (2 materials):**
+- material `Frame` – dark navy metal frame with yellow corner bolts (fixed colors)
+- material **`Tint`** – the big flat screen area in the middle, **plain white, no texture, no emissive**. The game recolors it per buff (blue = soldiers, orange = damage, yellow = fire rate, red = penalty). Keep it a flat rectangle with nothing drawn on it.
+
+### 6.1 `road_tile.glb`
 ```
-[STYLE BLOCK] A cute blocky low-poly <PROP DESCRIPTION>, single mesh, flat
-colors, size <W x H x D> meters, origin at bottom center.
+[STYLE BLOCK] A cute blocky low-poly road segment for a mobile army shooter,
+seamlessly tileable along its length. Flat sandy-tan paving made of large
+chunky square stone blocks in two slightly different warm tan shades (#C7B58F
+and #B9A67E), very low contrast, thin darker grooves between blocks, two
+dashed white lane lines near the left and right edges, slightly darker worn
+strip in the middle, rounded bevel on the side edges. Plain and calm so
+colorful soldiers stand out. Size 14.4 m wide, 10 m long, 0.12 m thick. Top
+view readable. Front and back edges must match perfectly for tiling.
+```
+
+### 6.2 `arena_floor_tile.glb`
+```
+[STYLE BLOCK] A cute blocky metal arena floor segment, seamlessly tileable
+along its length. Dark steel plates (#3D4050) with chunky bevels and square
+rivets, a yellow-and-black hazard stripe band across the front and back edge
+(#F2BF1A and #1A1A1F), subtle red glow lines between plates (flat color, not
+emissive). Size 14.4 m wide, 10 m long, 0.16 m thick.
+```
+
+### 6.3 `arena_wall_side.glb`
+```
+[STYLE BLOCK] A cute blocky fortress wall segment for a boss arena, seamlessly
+tileable along its length. Dark steel and concrete blocks (#262830 and #3B3E4A),
+chunky battlements on top, vertical glowing red slit windows (flat red
+#FF3A2A) every 2.5 m, yellow-black hazard stripe near the bottom. The inner
+face (+X side) carries the details, the outer face is plain. Size 1.4 m thick,
+5 m high, 10 m long.
+```
+
+### 6.4 `arena_wall_back.glb`
+```
+[STYLE BLOCK] A cute blocky giant boss gate wall, symmetric. Dark steel wall
+(#262830) with a huge double door in the center, the door has a big angry
+robot face emblem with two red slit eyes and two horns (#FF3A2A, #454857),
+thick rivets, red warning stripes along the top, chunky towers on both ends.
+Front face +Z. Size 24 m wide, 10 m high, 2 m thick.
+```
+
+### 6.5 `arena_entrance.glb`
+```
+[STYLE BLOCK] A cute blocky boss-zone entrance archway, symmetric. Two chunky
+dark steel towers (#262830) on the sides joined by a thick beam on top with a
+big angry robot-skull emblem in the center (#454857 with red eyes #FF3A2A),
+red-and-yellow warning light blocks on the corners, hazard stripes on the
+towers. The opening underneath is completely EMPTY: 14.4 m wide and 5 m high.
+Front face +Z. Size 17 m wide, 7.5 m high, 1.5 m deep.
+```
+
+### 6.6 `gate_pillar.glb`
+```
+[STYLE BLOCK] A cute blocky metal gate pillar, symmetric, dark navy (#1F2A47)
+with a yellow band at the top and at the bottom (#F2BF1A), small square bolts,
+slightly wider base. Size 0.5 x 3.6 x 0.5 m.
+```
+
+### 6.7 `gate_beam.glb`
+```
+[STYLE BLOCK] A cute blocky horizontal gate beam, dark navy (#1F2A47) with
+yellow-black hazard stripes at both ends and small square mounting hooks
+underneath every 3 m. Symmetric. Size 14.4 x 0.4 x 0.5 m.
+```
+
+### 6.8 `gate_panel.glb`
+```
+[STYLE BLOCK] A cute blocky hanging sign panel for a buff gate, symmetric. A
+thick dark navy metal frame (#1F2A47) with yellow square corner bolts
+(#F2BF1A) and two short chain links on top. The large center area is a
+perfectly FLAT plain WHITE rectangle (separate material named "Tint", no
+text, no pattern, no glow). Both sides identical. Bottom edge at height 0.
+Size 6.2 m wide, 1.7 m high, 0.25 m thick.
 ```
 
 ---------------------------------------------------------------------
+
 ## 7. NEGATIVE PROMPT (if the tool supports it)
 
 ```

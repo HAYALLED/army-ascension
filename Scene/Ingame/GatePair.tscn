@@ -1,6 +1,92 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://Scripts/Ingame/GatePair.gd" id="1_gate"]
+[ext_resource type="Script" path="res://Scripts/Ingame/GatePair.gd" id="1_nf3c0"]
+[ext_resource type="PackedScene" path="res://Assets/Ingame/gate_pillar.glb" id="2_nj4oo"]
+[ext_resource type="PackedScene" path="res://Assets/Ingame/gate_beam.glb" id="3_ndvya"]
+[ext_resource type="PackedScene" path="res://Assets/Ingame/gate_panel.glb" id="4_b70yp"]
 
-[node name="GatePair" type="Node3D"]
-script = ExtResource("1_gate")
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_dofip"]
+transparency = 1
+shading_mode = 0
+albedo_color = Color(0.2, 0.55, 1, 0.35)
+
+[sub_resource type="BoxMesh" id="BoxMesh_wpwdo"]
+size = Vector3(6.2, 0.03, 3)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_tvhcu"]
+transparency = 1
+shading_mode = 0
+albedo_color = Color(0.2, 0.55, 1, 0.35)
+
+[sub_resource type="BoxMesh" id="BoxMesh_a5oed"]
+size = Vector3(6.2, 0.03, 3)
+
+[node name="GatePair" type="Node3D" unique_id=1904896826]
+script = ExtResource("1_nf3c0")
+
+[node name="Pillars" type="Node3D" parent="." unique_id=1712891455]
+
+[node name="Pillar1" type="Node3D" parent="Pillars" unique_id=908704601 instance=ExtResource("2_nj4oo")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.95, 0, 0)
+
+[node name="Pillar2" type="Node3D" parent="Pillars" unique_id=1828724981 instance=ExtResource("2_nj4oo")]
+
+[node name="Pillar3" type="Node3D" parent="Pillars" unique_id=867152997 instance=ExtResource("2_nj4oo")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.95, 0, 0)
+
+[node name="Beam" type="Node3D" parent="." unique_id=1164171605 instance=ExtResource("3_ndvya")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.6, 0)
+
+[node name="PanelLeft" type="Node3D" parent="." unique_id=1360835331]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.5, 1.6, 0)
+
+[node name="Model" type="Node3D" parent="PanelLeft" unique_id=63800557 instance=ExtResource("4_b70yp")]
+
+[node name="Value" type="Label3D" parent="PanelLeft" unique_id=2099401028]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0.16)
+pixel_size = 0.011
+outline_modulate = Color(0, 0, 0, 0.85)
+text = "+0"
+font_size = 150
+outline_size = 22
+
+[node name="Sub" type="Label3D" parent="PanelLeft" unique_id=1114839268]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.42, 0.16)
+pixel_size = 0.011
+outline_modulate = Color(0, 0, 0, 0.85)
+text = "SOLDIERS"
+font_size = 60
+outline_size = 22
+
+[node name="Pad" type="MeshInstance3D" parent="PanelLeft" unique_id=269723518]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.51, 0)
+material_override = SubResource("StandardMaterial3D_dofip")
+cast_shadow = 0
+mesh = SubResource("BoxMesh_wpwdo")
+
+[node name="PanelRight" type="Node3D" parent="." unique_id=1851206487]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.5, 1.6, 0)
+
+[node name="Model" type="Node3D" parent="PanelRight" unique_id=2040775349 instance=ExtResource("4_b70yp")]
+
+[node name="Value" type="Label3D" parent="PanelRight" unique_id=192367434]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0.16)
+pixel_size = 0.011
+outline_modulate = Color(0, 0, 0, 0.85)
+text = "+0"
+font_size = 150
+outline_size = 22
+
+[node name="Sub" type="Label3D" parent="PanelRight" unique_id=1608442137]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.42, 0.16)
+pixel_size = 0.011
+outline_modulate = Color(0, 0, 0, 0.85)
+text = "SOLDIERS"
+font_size = 60
+outline_size = 22
+
+[node name="Pad" type="MeshInstance3D" parent="PanelRight" unique_id=833426369]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.51, 0)
+material_override = SubResource("StandardMaterial3D_tvhcu")
+cast_shadow = 0
+mesh = SubResource("BoxMesh_a5oed")

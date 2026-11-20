@@ -1,0 +1,235 @@
+[gd_scene format=3]
+
+[ext_resource type="Theme" path="res://Resources/UI/ui_theme.tres" id="1_cdcyf"]
+[ext_resource type="Script" path="res://Scripts/UI/Pages/ShopPage.gd" id="2_b8fhx"]
+[ext_resource type="Texture2D" path="res://Assets/UI/panel_header.png" id="3_y04pw"]
+[ext_resource type="PackedScene" path="res://Scene/UI/Components/ShopOffer.tscn" id="4_kfarw"]
+[ext_resource type="Script" path="res://Scripts/UI/Components/ShopOffer.gd" id="5_qprct"]
+[ext_resource type="Texture2D" path="res://Assets/UI/icon_ad_video.png" id="6_dwmjk"]
+[ext_resource type="Texture2D" path="res://Assets/UI/shop_bundle_starter.png" id="7_54yms"]
+[ext_resource type="PackedScene" path="res://Scene/UI/Components/ShopItem.tscn" id="8_qbnpw"]
+[ext_resource type="Script" path="res://Scripts/UI/Components/ShopItem.gd" id="9_o5m7a"]
+[ext_resource type="Texture2D" path="res://Assets/UI/shop_gold_s.png" id="10_5wvh3"]
+[ext_resource type="Texture2D" path="res://Assets/UI/shop_gold_m.png" id="11_0fpay"]
+[ext_resource type="Texture2D" path="res://Assets/UI/shop_gold_l.png" id="12_k66qb"]
+[ext_resource type="Texture2D" path="res://Assets/UI/shop_shards_s.png" id="13_f0a3w"]
+[ext_resource type="Texture2D" path="res://Assets/UI/shop_shards_m.png" id="14_rssmh"]
+[ext_resource type="Texture2D" path="res://Assets/UI/shop_shards_l.png" id="15_k530d"]
+[ext_resource type="Texture2D" path="res://Assets/UI/shop_no_ads.png" id="16_kehqu"]
+[ext_resource type="Texture2D" path="res://Assets/UI/shop_season_pass.png" id="17_njana"]
+
+[node name="ShopPage" type="Control" unique_id=765228179]
+layout_mode = 3
+anchors_preset = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme = ExtResource("1_cdcyf")
+script = ExtResource("2_b8fhx")
+
+[node name="Content" type="VBoxContainer" parent="." unique_id=558095586]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_constants/separation = 10
+
+[node name="Header" type="Control" parent="Content" unique_id=896355903]
+custom_minimum_size = Vector2(0, 110)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Ribbon" type="TextureRect" parent="Content/Header" unique_id=1381691760]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+texture = ExtResource("3_y04pw")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Title" type="Label" parent="Content/Header" unique_id=1111417900]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_bottom = -12.0
+theme_type_variation = &"LabelBig"
+text = "SHOP"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Scroll" type="ScrollContainer" parent="Content" unique_id=1375410388]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+vertical_scroll_mode = 3
+
+[node name="Margin" type="MarginContainer" parent="Content/Scroll" unique_id=1868626759]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="List" type="VBoxContainer" parent="Content/Scroll/Margin" unique_id=548597226]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 16
+
+[node name="AdShards" type="PanelContainer" parent="Content/Scroll/Margin/List" unique_id=1992032565 instance=ExtResource("4_kfarw")]
+custom_minimum_size = Vector2(0, 170)
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("1_cdcyf")
+theme_type_variation = &"PanelDark"
+script = ExtResource("5_qprct")
+item_id = "ad_shards"
+title = "FREE SHARDS"
+description = "Watch a short video: +5 shards"
+price_text = "WATCH"
+icon = ExtResource("6_dwmjk")
+button_style = "ButtonPrimary"
+
+[node name="Starter" type="PanelContainer" parent="Content/Scroll/Margin/List" unique_id=1853384764 instance=ExtResource("4_kfarw")]
+custom_minimum_size = Vector2(0, 170)
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("1_cdcyf")
+theme_type_variation = &"PanelDark"
+script = ExtResource("5_qprct")
+item_id = "starter_bundle"
+title = "STARTER BUNDLE"
+description = "Gold, shards and a chest"
+icon = ExtResource("7_54yms")
+
+[node name="GoldTitle" type="Label" parent="Content/Scroll/Margin/List" unique_id=833212303]
+layout_mode = 2
+theme_type_variation = &"LabelBig"
+text = "GOLD"
+vertical_alignment = 1
+
+[node name="GoldRow" type="HBoxContainer" parent="Content/Scroll/Margin/List" unique_id=836985983]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Gold1" type="PanelContainer" parent="Content/Scroll/Margin/List/GoldRow" unique_id=436909523 instance=ExtResource("8_qbnpw")]
+custom_minimum_size = Vector2(200, 330)
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("1_cdcyf")
+theme_type_variation = &"PanelCard"
+script = ExtResource("9_o5m7a")
+item_id = "gold_s"
+title = "SMALL"
+icon = ExtResource("10_5wvh3")
+
+[node name="Gold2" type="PanelContainer" parent="Content/Scroll/Margin/List/GoldRow" unique_id=1229720192 instance=ExtResource("8_qbnpw")]
+custom_minimum_size = Vector2(200, 330)
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("1_cdcyf")
+theme_type_variation = &"PanelCard"
+script = ExtResource("9_o5m7a")
+item_id = "gold_m"
+title = "MEDIUM"
+amount_text = "x1,500"
+price_text = "$2.99"
+icon = ExtResource("11_0fpay")
+
+[node name="Gold3" type="PanelContainer" parent="Content/Scroll/Margin/List/GoldRow" unique_id=935816849 instance=ExtResource("8_qbnpw")]
+custom_minimum_size = Vector2(200, 330)
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("1_cdcyf")
+theme_type_variation = &"PanelCard"
+script = ExtResource("9_o5m7a")
+item_id = "gold_l"
+title = "LARGE"
+amount_text = "x5,000"
+price_text = "$7.99"
+icon = ExtResource("12_k66qb")
+
+[node name="ShardTitle" type="Label" parent="Content/Scroll/Margin/List" unique_id=376881839]
+layout_mode = 2
+theme_type_variation = &"LabelBig"
+text = "SHARDS"
+vertical_alignment = 1
+
+[node name="ShardRow" type="HBoxContainer" parent="Content/Scroll/Margin/List" unique_id=1626248772]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Shard1" type="PanelContainer" parent="Content/Scroll/Margin/List/ShardRow" unique_id=1123069992 instance=ExtResource("8_qbnpw")]
+custom_minimum_size = Vector2(200, 330)
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("1_cdcyf")
+theme_type_variation = &"PanelCard"
+script = ExtResource("9_o5m7a")
+item_id = "shards_s"
+title = "SMALL"
+amount_text = "x20"
+icon = ExtResource("13_f0a3w")
+
+[node name="Shard2" type="PanelContainer" parent="Content/Scroll/Margin/List/ShardRow" unique_id=2007121208 instance=ExtResource("8_qbnpw")]
+custom_minimum_size = Vector2(200, 330)
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("1_cdcyf")
+theme_type_variation = &"PanelCard"
+script = ExtResource("9_o5m7a")
+item_id = "shards_m"
+title = "MEDIUM"
+amount_text = "x60"
+price_text = "$2.99"
+icon = ExtResource("14_rssmh")
+
+[node name="Shard3" type="PanelContainer" parent="Content/Scroll/Margin/List/ShardRow" unique_id=671515436 instance=ExtResource("8_qbnpw")]
+custom_minimum_size = Vector2(200, 330)
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("1_cdcyf")
+theme_type_variation = &"PanelCard"
+script = ExtResource("9_o5m7a")
+item_id = "shards_l"
+title = "LARGE"
+amount_text = "x200"
+price_text = "$7.99"
+icon = ExtResource("15_k530d")
+
+[node name="MoreTitle" type="Label" parent="Content/Scroll/Margin/List" unique_id=1990903851]
+layout_mode = 2
+theme_type_variation = &"LabelBig"
+text = "MORE"
+vertical_alignment = 1
+
+[node name="MoreRow" type="HBoxContainer" parent="Content/Scroll/Margin/List" unique_id=611768512]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="NoAds" type="PanelContainer" parent="Content/Scroll/Margin/List/MoreRow" unique_id=2145211453 instance=ExtResource("8_qbnpw")]
+custom_minimum_size = Vector2(200, 330)
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("1_cdcyf")
+theme_type_variation = &"PanelCard"
+script = ExtResource("9_o5m7a")
+item_id = "remove_ads"
+title = "NO ADS"
+amount_text = ""
+price_text = "$4.99"
+icon = ExtResource("16_kehqu")
+button_style = "ButtonSecondary"
+
+[node name="Pass" type="PanelContainer" parent="Content/Scroll/Margin/List/MoreRow" unique_id=1107933129 instance=ExtResource("8_qbnpw")]
+custom_minimum_size = Vector2(200, 330)
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("1_cdcyf")
+theme_type_variation = &"PanelCard"
+script = ExtResource("9_o5m7a")
+item_id = "season_pass"
+title = "SEASON PASS"
+amount_text = ""
+price_text = "$4.99"
+icon = ExtResource("17_njana")
+button_style = "ButtonSecondary"

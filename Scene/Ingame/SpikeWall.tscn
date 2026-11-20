@@ -1,6 +1,33 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://Scripts/Ingame/SpikeWall.gd" id="1_wall"]
+[ext_resource type="Script" path="res://Scripts/Ingame/SpikeWall.gd" id="1_v1ty0"]
+[ext_resource type="PackedScene" path="res://Assets/Ingame/spike_wall.glb" id="2_10q8p"]
 
-[node name="SpikeWall" type="Node3D"]
-script = ExtResource("1_wall")
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_a7pff"]
+transparency = 1
+shading_mode = 0
+albedo_color = Color(1, 0.2, 0.15, 0.7)
+
+[sub_resource type="BoxMesh" id="BoxMesh_wi081"]
+size = Vector3(1, 0.02, 0.4)
+
+[node name="SpikeWall" type="Node3D" unique_id=1823818234]
+script = ExtResource("1_v1ty0")
+
+[node name="Seg1" type="Node3D" parent="." unique_id=1084228958 instance=ExtResource("2_10q8p")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.25, 0, 0)
+
+[node name="Seg2" type="Node3D" parent="." unique_id=1374141140 instance=ExtResource("2_10q8p")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.75, 0, 0)
+
+[node name="Seg3" type="Node3D" parent="." unique_id=906720287 instance=ExtResource("2_10q8p")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.75, 0, 0)
+
+[node name="Seg4" type="Node3D" parent="." unique_id=512651452 instance=ExtResource("2_10q8p")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.25, 0, 0)
+
+[node name="ApproachStrip" type="MeshInstance3D" parent="." unique_id=1584265787]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.09, 1.4)
+material_override = SubResource("StandardMaterial3D_a7pff")
+cast_shadow = 0
+mesh = SubResource("BoxMesh_wi081")

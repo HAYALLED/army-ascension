@@ -1,0 +1,96 @@
+[gd_scene format=3]
+
+[ext_resource type="Theme" path="res://Resources/UI/ui_theme.tres" id="1_ak8c6"]
+[ext_resource type="Script" path="res://Scripts/UI/Components/MissionRow.gd" id="2_32uv2"]
+[ext_resource type="Texture2D" path="res://Assets/UI/icon_trophy.png" id="3_gqkhp"]
+[ext_resource type="Texture2D" path="res://Assets/UI/bar_frame.png" id="4_fbawi"]
+[ext_resource type="Texture2D" path="res://Assets/UI/bar_fill_yellow.png" id="5_1h50n"]
+[ext_resource type="Texture2D" path="res://Assets/UI/icon_gold.png" id="6_wa0bp"]
+
+[node name="MissionRow" type="PanelContainer" unique_id=561528057]
+custom_minimum_size = Vector2(0, 130)
+theme = ExtResource("1_ak8c6")
+theme_type_variation = &"PanelDark"
+script = ExtResource("2_32uv2")
+
+[node name="Row" type="HBoxContainer" parent="." unique_id=2060329067]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="Icon" type="TextureRect" parent="Row" unique_id=1486304347]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(80, 80)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("3_gqkhp")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Info" type="VBoxContainer" parent="Row" unique_id=571624891]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 4
+
+[node name="TitleLabel" type="Label" parent="Row/Info" unique_id=370870093]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"LabelSmall"
+text = "Defeat 100 enemies"
+vertical_alignment = 1
+
+[node name="ProgressRow" type="HBoxContainer" parent="Row/Info" unique_id=1670678931]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Bar" type="TextureProgressBar" parent="Row/Info/ProgressRow" unique_id=2046056803]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(150, 30)
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+value = 100.0
+nine_patch_stretch = true
+stretch_margin_left = 22
+stretch_margin_top = 10
+stretch_margin_right = 22
+stretch_margin_bottom = 10
+texture_under = ExtResource("4_fbawi")
+texture_progress = ExtResource("5_1h50n")
+
+[node name="ProgressLabel" type="Label" parent="Row/Info/ProgressRow" unique_id=1838522630]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"LabelSmall"
+text = "0/100"
+vertical_alignment = 1
+
+[node name="Reward" type="VBoxContainer" parent="Row" unique_id=1838642357]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="RewardIcon" type="TextureRect" parent="Row/Reward" unique_id=1266006704]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+size_flags_horizontal = 4
+mouse_filter = 2
+texture = ExtResource("6_wa0bp")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="RewardLabel" type="Label" parent="Row/Reward" unique_id=522758530]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"LabelSmall"
+text = "300"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ClaimButton" type="Button" parent="Row" unique_id=196791433]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(150, 72)
+layout_mode = 2
+focus_mode = 0
+theme_type_variation = &"ButtonGold"
+theme_override_font_sizes/font_size = 28
+text = "CLAIM"

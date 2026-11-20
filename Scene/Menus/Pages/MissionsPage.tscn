@@ -1,0 +1,333 @@
+[gd_scene format=3]
+
+[ext_resource type="Theme" path="res://Resources/UI/ui_theme.tres" id="1_c6kc6"]
+[ext_resource type="Script" path="res://Scripts/UI/Pages/MissionsPage.gd" id="2_t4ho1"]
+[ext_resource type="Texture2D" path="res://Assets/UI/panel_header.png" id="3_gejgr"]
+[ext_resource type="Texture2D" path="res://Assets/UI/icon_gold.png" id="4_1e4ew"]
+[ext_resource type="Texture2D" path="res://Assets/UI/icon_shard.png" id="5_n1a1m"]
+[ext_resource type="Texture2D" path="res://Assets/UI/chest_gold.png" id="6_4gnxl"]
+
+[sub_resource type="ButtonGroup" id="ButtonGroup_f1nxi"]
+
+[node name="MissionsPage" type="Control" unique_id=38541904]
+layout_mode = 3
+anchors_preset = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme = ExtResource("1_c6kc6")
+script = ExtResource("2_t4ho1")
+
+[node name="Content" type="VBoxContainer" parent="." unique_id=955275942]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_constants/separation = 10
+
+[node name="Header" type="Control" parent="Content" unique_id=160225673]
+custom_minimum_size = Vector2(0, 110)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Ribbon" type="TextureRect" parent="Content/Header" unique_id=160680128]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+texture = ExtResource("3_gejgr")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Title" type="Label" parent="Content/Header" unique_id=749113275]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_bottom = -12.0
+theme_type_variation = &"LabelBig"
+text = "MISSIONS"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="StripMargin" type="MarginContainer" parent="Content" unique_id=1873562424]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="DailyLogin" type="PanelContainer" parent="Content/StripMargin" unique_id=1450840348]
+layout_mode = 2
+theme_type_variation = &"PanelDark"
+
+[node name="Box" type="VBoxContainer" parent="Content/StripMargin/DailyLogin" unique_id=2078532668]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Title" type="Label" parent="Content/StripMargin/DailyLogin/Box" unique_id=36840487]
+layout_mode = 2
+theme_type_variation = &"LabelSmall"
+text = "DAILY LOGIN"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Days" type="HBoxContainer" parent="Content/StripMargin/DailyLogin/Box" unique_id=957083632]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Day1" type="VBoxContainer" parent="Content/StripMargin/DailyLogin/Box/Days" unique_id=695894340]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 2
+
+[node name="Name" type="Label" parent="Content/StripMargin/DailyLogin/Box/Days/Day1" unique_id=1794487534]
+layout_mode = 2
+theme_type_variation = &"LabelSmall"
+text = "D1"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Icon" type="TextureRect" parent="Content/StripMargin/DailyLogin/Box/Days/Day1" unique_id=1041762741]
+custom_minimum_size = Vector2(56, 56)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("4_1e4ew")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Amount" type="Label" parent="Content/StripMargin/DailyLogin/Box/Days/Day1" unique_id=1383912331]
+layout_mode = 2
+theme_type_variation = &"LabelSmall"
+text = "100"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Day2" type="VBoxContainer" parent="Content/StripMargin/DailyLogin/Box/Days" unique_id=334139255]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 2
+
+[node name="Name" type="Label" parent="Content/StripMargin/DailyLogin/Box/Days/Day2" unique_id=962891850]
+layout_mode = 2
+theme_type_variation = &"LabelSmall"
+text = "D2"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Icon" type="TextureRect" parent="Content/StripMargin/DailyLogin/Box/Days/Day2" unique_id=105994525]
+custom_minimum_size = Vector2(56, 56)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("4_1e4ew")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Amount" type="Label" parent="Content/StripMargin/DailyLogin/Box/Days/Day2" unique_id=1654197400]
+layout_mode = 2
+theme_type_variation = &"LabelSmall"
+text = "200"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Day3" type="VBoxContainer" parent="Content/StripMargin/DailyLogin/Box/Days" unique_id=1757018333]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 2
+
+[node name="Name" type="Label" parent="Content/StripMargin/DailyLogin/Box/Days/Day3" unique_id=1110172133]
+layout_mode = 2
+theme_type_variation = &"LabelSmall"
+text = "D3"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Icon" type="TextureRect" parent="Content/StripMargin/DailyLogin/Box/Days/Day3" unique_id=525017733]
+custom_minimum_size = Vector2(56, 56)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("5_n1a1m")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Amount" type="Label" parent="Content/StripMargin/DailyLogin/Box/Days/Day3" unique_id=1297504572]
+layout_mode = 2
+theme_type_variation = &"LabelSmall"
+text = "5"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Day4" type="VBoxContainer" parent="Content/StripMargin/DailyLogin/Box/Days" unique_id=1860868133]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 2
+
+[node name="Name" type="Label" parent="Content/StripMargin/DailyLogin/Box/Days/Day4" unique_id=1995098035]
+layout_mode = 2
+theme_type_variation = &"LabelSmall"
+text = "D4"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Icon" type="TextureRect" parent="Content/StripMargin/DailyLogin/Box/Days/Day4" unique_id=737584894]
+custom_minimum_size = Vector2(56, 56)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("4_1e4ew")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Amount" type="Label" parent="Content/StripMargin/DailyLogin/Box/Days/Day4" unique_id=913720426]
+layout_mode = 2
+theme_type_variation = &"LabelSmall"
+text = "300"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Day5" type="VBoxContainer" parent="Content/StripMargin/DailyLogin/Box/Days" unique_id=1844177665]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 2
+
+[node name="Name" type="Label" parent="Content/StripMargin/DailyLogin/Box/Days/Day5" unique_id=743553916]
+layout_mode = 2
+theme_type_variation = &"LabelSmall"
+text = "D5"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Icon" type="TextureRect" parent="Content/StripMargin/DailyLogin/Box/Days/Day5" unique_id=673166947]
+custom_minimum_size = Vector2(56, 56)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("5_n1a1m")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Amount" type="Label" parent="Content/StripMargin/DailyLogin/Box/Days/Day5" unique_id=430434553]
+layout_mode = 2
+theme_type_variation = &"LabelSmall"
+text = "10"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Day6" type="VBoxContainer" parent="Content/StripMargin/DailyLogin/Box/Days" unique_id=1083797587]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 2
+
+[node name="Name" type="Label" parent="Content/StripMargin/DailyLogin/Box/Days/Day6" unique_id=975117430]
+layout_mode = 2
+theme_type_variation = &"LabelSmall"
+text = "D6"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Icon" type="TextureRect" parent="Content/StripMargin/DailyLogin/Box/Days/Day6" unique_id=1467726472]
+custom_minimum_size = Vector2(56, 56)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("4_1e4ew")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Amount" type="Label" parent="Content/StripMargin/DailyLogin/Box/Days/Day6" unique_id=588496800]
+layout_mode = 2
+theme_type_variation = &"LabelSmall"
+text = "500"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Day7" type="VBoxContainer" parent="Content/StripMargin/DailyLogin/Box/Days" unique_id=1989379457]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 2
+
+[node name="Name" type="Label" parent="Content/StripMargin/DailyLogin/Box/Days/Day7" unique_id=815252388]
+layout_mode = 2
+theme_type_variation = &"LabelSmall"
+text = "D7"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Icon" type="TextureRect" parent="Content/StripMargin/DailyLogin/Box/Days/Day7" unique_id=709485919]
+custom_minimum_size = Vector2(56, 56)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("6_4gnxl")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Amount" type="Label" parent="Content/StripMargin/DailyLogin/Box/Days/Day7" unique_id=767516925]
+layout_mode = 2
+theme_type_variation = &"LabelSmall"
+text = "BOX"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="TabsMargin" type="MarginContainer" parent="Content" unique_id=1188373172]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="Tabs" type="HBoxContainer" parent="Content/TabsMargin" unique_id=590463437]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="TabDaily" type="Button" parent="Content/TabsMargin/Tabs" unique_id=263556736]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
+size_flags_horizontal = 3
+focus_mode = 0
+theme_type_variation = &"TabButton"
+theme_override_font_sizes/font_size = 26
+toggle_mode = true
+button_pressed = true
+button_group = SubResource("ButtonGroup_f1nxi")
+text = "DAILY"
+
+[node name="TabWeekly" type="Button" parent="Content/TabsMargin/Tabs" unique_id=410195141]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
+size_flags_horizontal = 3
+focus_mode = 0
+theme_type_variation = &"TabButton"
+theme_override_font_sizes/font_size = 26
+toggle_mode = true
+button_group = SubResource("ButtonGroup_f1nxi")
+text = "WEEKLY"
+
+[node name="TabAchievements" type="Button" parent="Content/TabsMargin/Tabs" unique_id=247802130]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
+size_flags_horizontal = 3
+focus_mode = 0
+theme_type_variation = &"TabButton"
+theme_override_font_sizes/font_size = 26
+toggle_mode = true
+button_group = SubResource("ButtonGroup_f1nxi")
+text = "ACHIEVEMENTS"
+
+[node name="Scroll" type="ScrollContainer" parent="Content" unique_id=1866731619]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+vertical_scroll_mode = 3
+
+[node name="Margin" type="MarginContainer" parent="Content/Scroll" unique_id=1573665426]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="List" type="VBoxContainer" parent="Content/Scroll/Margin" unique_id=440240890]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 14

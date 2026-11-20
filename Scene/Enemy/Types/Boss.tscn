@@ -1,0 +1,14 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://Scripts/Enemy/Boss.gd" id="1_boss"]
+[ext_resource type="PackedScene" path="res://Assets/Enemy/boss_colossus.glb" id="2_model"]
+
+[node name="Boss" type="Node3D"]
+script = ExtResource("1_boss")
+
+[node name="Body" type="Node3D" parent="."]
+
+[node name="ModelSlot" type="Node3D" parent="Body"]
+
+[node name="Model" parent="Body/ModelSlot" instance=ExtResource("2_model")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0)
