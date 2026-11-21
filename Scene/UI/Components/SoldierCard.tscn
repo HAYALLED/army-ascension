@@ -2,108 +2,165 @@
 
 [ext_resource type="Theme" path="res://Resources/UI/ui_theme.tres" id="1_1hds0"]
 [ext_resource type="Script" path="res://Scripts/UI/Components/SoldierCard.gd" id="2_2sayk"]
-[ext_resource type="Texture2D" path="res://Assets/UI/class_rifleman.png" id="3_38qpl"]
-[ext_resource type="Texture2D" path="res://Assets/UI/icon_shard.png" id="4_nuk37"]
-[ext_resource type="Texture2D" path="res://Assets/UI/bar_frame.png" id="5_wc767"]
-[ext_resource type="Texture2D" path="res://Assets/UI/bar_fill_cyan.png" id="6_qkg1v"]
-[ext_resource type="Texture2D" path="res://Assets/UI/frame_common.png" id="7_fls74"]
+[ext_resource type="Texture2D" path="res://Assets/UI/Cards/frame_common.png" id="3_38qpl"]
+[ext_resource type="Texture2D" path="res://Assets/UI/class_rifleman.png" id="4_nuk37"]
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/icon_assault.png" id="5_wc767"]
+[ext_resource type="Texture2D" path="res://Assets/UI/Cards/gem_common.png" id="6_qkg1v"]
+[ext_resource type="Texture2D" path="res://Assets/UI/icon_shard.png" id="7_fls74"]
 
-[node name="SoldierCard" type="PanelContainer" unique_id=143685479]
-custom_minimum_size = Vector2(300, 400)
+[node name="SoldierCard" type="VBoxContainer" unique_id=1660985503]
+custom_minimum_size = Vector2(320, 0)
 size_flags_horizontal = 3
-mouse_filter = 1
 theme = ExtResource("1_1hds0")
-theme_type_variation = &"PanelCard"
+theme_override_constants/separation = 6
 script = ExtResource("2_2sayk")
 
-[node name="Content" type="VBoxContainer" parent="." unique_id=1526520649]
-layout_mode = 2
-mouse_filter = 2
-theme_override_constants/separation = 4
-
-[node name="ClassIcon" type="TextureRect" parent="Content" unique_id=1582334164]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(120, 120)
+[node name="CardArea" type="Control" parent="." unique_id=1969970565]
+custom_minimum_size = Vector2(320, 480)
 layout_mode = 2
 size_flags_horizontal = 4
 mouse_filter = 2
+
+[node name="GlowFX" type="Panel" parent="CardArea" unique_id=773585178]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+
+[node name="Frame" type="TextureRect" parent="CardArea" unique_id=1262390948]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
 texture = ExtResource("3_38qpl")
 expand_mode = 1
-stretch_mode = 5
 
-[node name="NameLabel" type="Label" parent="Content" unique_id=2083685464]
+[node name="Portrait" type="TextureRect" parent="CardArea" unique_id=1246211099]
 unique_name_in_owner = true
-layout_mode = 2
-theme_type_variation = &"LabelDark"
-text = "RIFLEMAN"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="RarityLabel" type="Label" parent="Content" unique_id=1904198686]
-unique_name_in_owner = true
-layout_mode = 2
-theme_type_variation = &"LabelDark"
-theme_override_font_sizes/font_size = 22
-text = "Common"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="LevelLabel" type="Label" parent="Content" unique_id=2018751135]
-unique_name_in_owner = true
-layout_mode = 2
-theme_type_variation = &"LabelDark"
-text = "Lv 1"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="ShardRow" type="HBoxContainer" parent="Content" unique_id=1050730292]
-layout_mode = 2
-theme_override_constants/separation = 6
-
-[node name="ShardIcon" type="TextureRect" parent="Content/ShardRow" unique_id=1094599169]
-custom_minimum_size = Vector2(34, 34)
-layout_mode = 2
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.0957
+anchor_top = 0.2174
+anchor_right = 0.9043
+anchor_bottom = 0.7565
 mouse_filter = 2
 texture = ExtResource("4_nuk37")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="ShardBar" type="TextureProgressBar" parent="Content/ShardRow" unique_id=1732382769]
+[node name="FireOverlay" type="TextureRect" parent="CardArea" unique_id=352682075]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(120, 34)
-layout_mode = 2
-size_flags_horizontal = 3
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 mouse_filter = 2
-value = 40.0
-nine_patch_stretch = true
-stretch_margin_left = 22
-stretch_margin_top = 10
-stretch_margin_right = 22
-stretch_margin_bottom = 10
-texture_under = ExtResource("5_wc767")
-texture_progress = ExtResource("6_qkg1v")
+expand_mode = 1
 
-[node name="ShardLabel" type="Label" parent="Content/ShardRow" unique_id=225970767]
+[node name="ClassIcon" type="TextureRect" parent="CardArea" unique_id=1566592037]
 unique_name_in_owner = true
-layout_mode = 2
-theme_type_variation = &"LabelDark"
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.1094
+anchor_top = 0.0781
+anchor_right = 0.2656
+anchor_bottom = 0.1719
+mouse_filter = 2
+texture = ExtResource("5_wc767")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Gem" type="TextureRect" parent="CardArea" unique_id=813179920]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.7344
+anchor_top = 0.0781
+anchor_right = 0.8906
+anchor_bottom = 0.1719
+mouse_filter = 2
+texture = ExtResource("6_qkg1v")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="NameLabel" type="Label" parent="CardArea" unique_id=802456614]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.1016
+anchor_top = 0.7865
+anchor_right = 0.8984
+anchor_bottom = 0.8438
 theme_override_font_sizes/font_size = 22
+theme_override_constants/outline_size = 5
+text = "RIFLEMAN"
+horizontal_alignment = 1
+vertical_alignment = 1
+clip_text = true
+
+[node name="LevelLabel" type="Label" parent="CardArea" unique_id=747779161]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.1172
+anchor_top = 0.8464
+anchor_right = 0.5
+anchor_bottom = 0.9089
+theme_override_font_sizes/font_size = 20
+theme_override_constants/outline_size = 5
+text = "Lv 1"
+vertical_alignment = 1
+
+[node name="ShardIcon" type="TextureRect" parent="CardArea" unique_id=932331537]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.543
+anchor_top = 0.8542
+anchor_right = 0.6094
+anchor_bottom = 0.901
+mouse_filter = 2
+texture = ExtResource("7_fls74")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ShardLabel" type="Label" parent="CardArea" unique_id=543501370]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.6133
+anchor_top = 0.8464
+anchor_right = 0.8828
+anchor_bottom = 0.9089
+theme_override_font_sizes/font_size = 20
+theme_override_constants/outline_size = 5
 text = "4/10"
 horizontal_alignment = 2
 vertical_alignment = 1
 
-[node name="UpgradeButton" type="Button" parent="Content" unique_id=689372907]
+[node name="ShardBar" type="ProgressBar" parent="CardArea" unique_id=1644020391]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 80)
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.1289
+anchor_top = 0.9141
+anchor_right = 0.8711
+anchor_bottom = 0.9401
+mouse_filter = 2
+value = 40.0
+show_percentage = false
+
+[node name="UpgradeButton" type="Button" parent="." unique_id=587345591]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(320, 76)
 layout_mode = 2
+size_flags_horizontal = 4
 focus_mode = 0
 theme_type_variation = &"ButtonPrimary"
 theme_override_font_sizes/font_size = 30
 text = "UPGRADE"
-
-[node name="Frame" type="TextureRect" parent="." unique_id=113898503]
-unique_name_in_owner = true
-layout_mode = 2
-mouse_filter = 2
-texture = ExtResource("7_fls74")
-expand_mode = 1

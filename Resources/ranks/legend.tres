@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="RankData" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://Scripts/data/RankData.gd" id="1_rank"]
+[ext_resource type="Texture2D" path="res://Assets/UI/Cards/frame_legend.png" id="2_frame"]
+[ext_resource type="Texture2D" path="res://Assets/UI/Cards/gem_legend.png" id="3_gem"]
+[ext_resource type="Texture2D" path="res://Assets/UI/Cards/fx_fire_legend.png" id="4_fire"]
+[ext_resource type="Texture2D" path="res://Assets/UI/Cards/fx_fire_legend_sheet.png" id="5_sheet"]
+
+[resource]
+script = ExtResource("1_rank")
+id = &"legend"
+display_name = "Legend"
+order = 3
+color = Color(0.9098, 0.9098, 0.9255, 1)
+glow_color = Color(1.0000, 0.9529, 0.8627, 1)
+frame_texture = ExtResource("2_frame")
+gem_texture = ExtResource("3_gem")
+fire_overlay = ExtResource("4_fire")
+fire_sheet = ExtResource("5_sheet")
+has_fire = true
+fire_sheet_frames = 6
+fire_fps = 10.0
+shards_to_unlock_mult = 3.0
+upgrade_cost_mult = 2.0

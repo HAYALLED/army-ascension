@@ -51,10 +51,11 @@ func close() -> void:
 func _refresh() -> void:
 	var d: Dictionary = SoldierDB.DATA[type]
 	var lv := PlayerData.level_of(type)
-	var rarity: int = d["rarity"]
+	var rank := RankDB.get_rank(d["rank"])
+	var unit_class := UnitClassDB.get_unit_class(d["class"])
 	_name.text = str(d["name"]).to_upper()
-	_rarity.text = SoldierDB.RARITY_NAMES[rarity]
-	_rarity.add_theme_color_override("font_color", SoldierDB.RARITY_COLORS[rarity])
+	_rarity.text = "%s - %s" % [rank.display_name, unit_class.display_name]
+	_rarity.add_theme_color_override("font_color", rank.glow_color)
 	_level.text = "Lv %d" % lv
 	_desc.text = DESCRIPTIONS[type]
 	for c in _stats.get_children():

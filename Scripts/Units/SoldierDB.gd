@@ -4,10 +4,9 @@ extends RefCounted
 ## starting balance value and can be tuned freely.
 
 enum Type { RIFLEMAN, MACHINE_GUNNER, SNIPER, ROCKET, MEDIC }
-enum Rarity { COMMON, RARE, EPIC, LEGENDARY }
-
-const RARITY_NAMES := ["Common", "Rare", "Epic", "Legendary"]
-const RARITY_COLORS := [Color(0.75, 0.75, 0.78), Color(0.3, 0.6, 1.0), Color(0.7, 0.35, 0.95), Color(1.0, 0.75, 0.2)]
+## Rank (Common/Rare/...) and class (Deadeye/Assault/...) are ids defined by the
+## RankDB / UnitClassDB resources (Resources/ranks, Resources/classes). Look and
+## colors live there; here a soldier only stores which ids it uses.
 
 ## Rifleman L1 -> L2: damage 10 -> 15, health 100 -> 120 (matches design doc).
 const DAMAGE_PER_LEVEL := 0.5
@@ -35,7 +34,7 @@ const DATA := {
 	Type.RIFLEMAN: {
 		"scene": "res://Scene/Units/Soldiers/Rifleman.tscn",
 		"model": "res://Assets/Units/rifleman.glb", "icon": "res://Assets/UI/class_rifleman.png",
-		"name": "Rifleman", "rarity": Rarity.COMMON,
+		"name": "Rifleman", "rank": &"common", "class": &"assault",
 		"health": 100.0, "damage": 10.0, "attack_speed": 3.0, "follow_rate": 11.0, "range": 15.0,
 		"bullet_speed": 48.0, "pierce": 0, "aoe": 0.0, "spread": 0.03,
 		"heal": 0.0, "heal_interval": 0.0, "heal_range": 0.0,
@@ -45,7 +44,7 @@ const DATA := {
 	Type.MACHINE_GUNNER: {
 		"scene": "res://Scene/Units/Soldiers/MachineGunner.tscn",
 		"model": "res://Assets/Units/machine_gunner.glb", "icon": "res://Assets/UI/class_machinegunner.png",
-		"name": "Machine Gunner", "rarity": Rarity.COMMON,
+		"name": "Machine Gunner", "rank": &"common", "class": &"assault",
 		"health": 90.0, "damage": 6.0, "attack_speed": 7.0, "follow_rate": 10.0, "range": 12.0,
 		"bullet_speed": 44.0, "pierce": 0, "aoe": 0.0, "spread": 0.1,
 		"heal": 0.0, "heal_interval": 0.0, "heal_range": 0.0,
@@ -55,7 +54,7 @@ const DATA := {
 	Type.SNIPER: {
 		"scene": "res://Scene/Units/Soldiers/Sniper.tscn",
 		"model": "res://Assets/Units/sniper.glb", "icon": "res://Assets/UI/class_sniper.png",
-		"name": "Sniper", "rarity": Rarity.RARE,
+		"name": "Sniper", "rank": &"common", "class": &"deadeye",
 		"health": 60.0, "damage": 60.0, "attack_speed": 0.8, "follow_rate": 9.0, "range": 30.0,
 		"bullet_speed": 95.0, "pierce": 2, "aoe": 0.0, "spread": 0.0,
 		"heal": 0.0, "heal_interval": 0.0, "heal_range": 0.0,
@@ -65,7 +64,7 @@ const DATA := {
 	Type.ROCKET: {
 		"scene": "res://Scene/Units/Soldiers/RocketSoldier.tscn",
 		"model": "res://Assets/Units/rocket_soldier.glb", "icon": "res://Assets/UI/class_rocket.png",
-		"name": "Rocket Soldier", "rarity": Rarity.RARE,
+		"name": "Rocket Soldier", "rank": &"common", "class": &"explosive",
 		"health": 80.0, "damage": 32.0, "attack_speed": 0.6, "follow_rate": 9.0, "range": 17.0,
 		"bullet_speed": 26.0, "pierce": 0, "aoe": 3.0, "spread": 0.02,
 		"heal": 0.0, "heal_interval": 0.0, "heal_range": 0.0,
@@ -75,7 +74,7 @@ const DATA := {
 	Type.MEDIC: {
 		"scene": "res://Scene/Units/Soldiers/Medic.tscn",
 		"model": "res://Assets/Units/medic.glb", "icon": "res://Assets/UI/class_medic.png",
-		"name": "Medic", "rarity": Rarity.EPIC,
+		"name": "Medic", "rank": &"rare", "class": &"support",
 		"health": 90.0, "damage": 4.0, "attack_speed": 1.5, "follow_rate": 10.0, "range": 10.0,
 		"bullet_speed": 40.0, "pierce": 0, "aoe": 0.0, "spread": 0.05,
 		"heal": 8.0, "heal_interval": 1.2, "heal_range": 6.5,

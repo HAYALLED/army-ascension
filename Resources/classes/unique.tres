@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="UnitClassData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Scripts/data/UnitClassData.gd" id="1_class"]
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/icon_unique.png" id="2_icon"]
+
+[resource]
+script = ExtResource("1_class")
+id = &"unique"
+display_name = "Unique"
+icon_texture = ExtResource("2_icon")
+description = "Special units that fit no other class."
+tint = Color(1.0000, 1.0000, 1.0000, 1)
+preferred_row = 0
+sort_order = 6

@@ -309,32 +309,85 @@ func _cur_pill() -> void:
 
 
 func _soldier_card() -> void:
-	var root := PanelContainer.new()
+	# Card art uses the rank frame (512x768); anchors below match its windows:
+	# class-icon slot, gem slot, art window, name/level strip and the shard-bar slot.
+	var root := VBoxContainer.new()
 	root.name = "SoldierCard"
-	root.theme_type_variation = "PanelCard"
-	root.custom_minimum_size = Vector2(300, 400)
+	root.add_theme_constant_override("separation", 6)
+	root.custom_minimum_size = Vector2(320, 0)
 	root.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	root.mouse_filter = Control.MOUSE_FILTER_PASS
 	root.set_script(load("res://Scripts/UI/Components/SoldierCard.gd"))
 	_begin(root)
-	var v := _box(true, root, "Content", 4)
-	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var icon := _tex(v, "ClassIcon", "class_rifleman.png", Vector2(120, 120), true)
-	icon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	_lbl(v, "NameLabel", "RIFLEMAN", "LabelDark", true, HORIZONTAL_ALIGNMENT_CENTER)
-	_lbl(v, "RarityLabel", "Common", "LabelDark", true, HORIZONTAL_ALIGNMENT_CENTER).add_theme_font_size_override("font_size", 22)
-	_lbl(v, "LevelLabel", "Lv 1", "LabelDark", true, HORIZONTAL_ALIGNMENT_CENTER)
-	var row := _box(false, v, "ShardRow", 6)
-	_tex(row, "ShardIcon", "icon_shard.png", Vector2(34, 34))
-	var bar := _bar(row, "ShardBar", "cyan", Vector2(120, 34), true)
-	bar.value = 40
-	var sl := _lbl(row, "ShardLabel", "4/10", "LabelDark", true, HORIZONTAL_ALIGNMENT_RIGHT)
-	sl.add_theme_font_size_override("font_size", 22)
-	var up := _btn(v, "UpgradeButton", "UPGRADE", "ButtonPrimary", Vector2(0, 80), true)
+	var area := Control.new()
+	area.custom_minimum_size = Vector2(320, 480)
+	area.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	area.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_add(root, area, "CardArea")
+	var glow := Panel.new()
+	glow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_add(area, glow, "GlowFX", true)
+	_card_anchor(glow, 0, 0, 1, 1)
+	var frame := _card_tex(area, "Frame", "res://Assets/UI/Cards/frame_common.png", 0, 0, 1, 1, TextureRect.STRETCH_SCALE)
+	_card_tex(area, "Portrait", "res://Assets/UI/class_rifleman.png", 0.0957, 0.2174, 0.9043, 0.7565)
+	var fire := _card_tex(area, "FireOverlay", "", 0, 0, 1, 1, TextureRect.STRETCH_SCALE)
+	fire.visible = false
+	_card_tex(area, "ClassIcon", "res://Assets/UI/Icons/icon_assault.png", 0.1094, 0.0781, 0.2656, 0.1719)
+	_card_tex(area, "Gem", "res://Assets/UI/Cards/gem_common.png", 0.7344, 0.0781, 0.8906, 0.1719)
+	var nm := _card_lbl(area, "NameLabel", "RIFLEMAN", 0.1016, 0.7865, 0.8984, 0.8438, 22, HORIZONTAL_ALIGNMENT_CENTER)
+	nm.clip_text = true
+	_card_lbl(area, "LevelLabel", "Lv 1", 0.1172, 0.8464, 0.5, 0.9089, 20, HORIZONTAL_ALIGNMENT_LEFT)
+	_card_tex(area, "ShardIcon", "res://Assets/UI/icon_shard.png", 0.5430, 0.8542, 0.6094, 0.9010)
+	_card_lbl(area, "ShardLabel", "4/10", 0.6133, 0.8464, 0.8828, 0.9089, 20, HORIZONTAL_ALIGNMENT_RIGHT)
+	var bar := ProgressBar.new()
+	bar.show_percentage = false
+	bar.value = 40.0
+	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_add(area, bar, "ShardBar", true)
+	_card_anchor(bar, 0.1289, 0.9141, 0.8711, 0.9401)
+	var up := _btn(root, "UpgradeButton", "UPGRADE", "ButtonPrimary", Vector2(320, 76), true)
+	up.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	up.add_theme_font_size_override("font_size", 30)
-	var frame := _tex(root, "Frame", "frame_common.png", Vector2.ZERO, true, TextureRect.STRETCH_SCALE)
-	frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	frame.unique_name_in_owner = true
 	_save(root, "res://Scene/UI/Components/SoldierCard.tscn")
+
+
+func _card_anchor(c: Control, l: float, t: float, r: float, b: float) -> void:
+	c.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	c.anchor_left = l
+	c.anchor_top = t
+	c.anchor_right = r
+	c.anchor_bottom = b
+	c.offset_left = 0
+	c.offset_top = 0
+	c.offset_right = 0
+	c.offset_bottom = 0
+	c.set("layout_mode", 1)
+
+
+func _card_tex(parent: Node, node_name: String, path: String, l: float, t: float, r: float, b: float, stretch: int = TextureRect.STRETCH_KEEP_ASPECT_CENTERED) -> TextureRect:
+	var tr := TextureRect.new()
+	if path != "":
+		tr.texture = load(path)
+	tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	tr.stretch_mode = stretch as TextureRect.StretchMode
+	tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_add(parent, tr, node_name, true)
+	_card_anchor(tr, l, t, r, b)
+	return tr
+
+
+func _card_lbl(parent: Node, node_name: String, text: String, l: float, t: float, r: float, b: float, font: int, align: int) -> Label:
+	var lb := Label.new()
+	lb.text = text
+	lb.horizontal_alignment = align as HorizontalAlignment
+	lb.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	lb.add_theme_font_size_override("font_size", font)
+	lb.add_theme_constant_override("outline_size", 5)
+	lb.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_add(parent, lb, node_name, true)
+	_card_anchor(lb, l, t, r, b)
+	return lb
 
 
 func _upgrade_row() -> void:

@@ -1,0 +1,181 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/UnitCard.gd" id="1_q7410"]
+
+[node name="UnitCard" type="Control" unique_id=178235016]
+custom_minimum_size = Vector2(256, 384)
+layout_mode = 3
+anchors_preset = 0
+offset_right = 256.0
+offset_bottom = 384.0
+mouse_filter = 1
+script = ExtResource("1_q7410")
+
+[node name="GlowFX" type="Panel" parent="." unique_id=1833354616]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+
+[node name="FallbackPanel" type="Panel" parent="." unique_id=570168157]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+
+[node name="ArtBackdrop" type="Panel" parent="." unique_id=186354506]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.109
+anchor_top = 0.143
+anchor_right = 0.891
+anchor_bottom = 0.664
+mouse_filter = 2
+
+[node name="ArtWindow" type="TextureRect" parent="." unique_id=280252860]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.109
+anchor_top = 0.143
+anchor_right = 0.891
+anchor_bottom = 0.664
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Frame" type="TextureRect" parent="." unique_id=836062855]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+expand_mode = 1
+
+[node name="FireOverlay" type="TextureRect" parent="." unique_id=2132993297]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+expand_mode = 1
+
+[node name="IconBase" type="TextureRect" parent="." unique_id=2123152568]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.039
+anchor_top = 0.021
+anchor_right = 0.227
+anchor_bottom = 0.146
+mouse_filter = 2
+expand_mode = 1
+
+[node name="IconBaseFallback" type="Panel" parent="." unique_id=77089465]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.039
+anchor_top = 0.021
+anchor_right = 0.227
+anchor_bottom = 0.146
+mouse_filter = 2
+
+[node name="ClassIcon" type="TextureRect" parent="." unique_id=337181346]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.049
+anchor_top = 0.031
+anchor_right = 0.217
+anchor_bottom = 0.136
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ClassIconFallback" type="Label" parent="." unique_id=177241742]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.039
+anchor_top = 0.021
+anchor_right = 0.227
+anchor_bottom = 0.146
+theme_override_font_sizes/font_size = 30
+horizontal_alignment = 1
+vertical_alignment = 1
+clip_text = true
+text_overrun_behavior = 3
+
+[node name="Gem" type="TextureRect" parent="." unique_id=1408232070]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.773
+anchor_top = 0.021
+anchor_right = 0.961
+anchor_bottom = 0.146
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="GemFallback" type="Panel" parent="." unique_id=1347282486]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.805
+anchor_top = 0.035
+anchor_right = 0.93
+anchor_bottom = 0.13
+mouse_filter = 2
+
+[node name="NameLabel" type="Label" parent="." unique_id=200953993]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.08
+anchor_top = 0.69
+anchor_right = 0.92
+anchor_bottom = 0.765
+theme_override_font_sizes/font_size = 24
+horizontal_alignment = 1
+vertical_alignment = 1
+clip_text = true
+text_overrun_behavior = 3
+
+[node name="LevelLabel" type="Label" parent="." unique_id=737201107]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.08
+anchor_top = 0.765
+anchor_right = 0.92
+anchor_bottom = 0.825
+theme_override_font_sizes/font_size = 18
+horizontal_alignment = 1
+vertical_alignment = 1
+clip_text = true
+text_overrun_behavior = 3
+
+[node name="ShardBar" type="ProgressBar" parent="." unique_id=1796858185]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.12
+anchor_top = 0.85
+anchor_right = 0.88
+anchor_bottom = 0.915
+mouse_filter = 2
+show_percentage = false
+
+[node name="ShardLabel" type="Label" parent="ShardBar" unique_id=1228443106]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_font_sizes/font_size = 14
+horizontal_alignment = 1
+vertical_alignment = 1
+clip_text = true
+text_overrun_behavior = 3
+
+[node name="SelectionOutline" type="Panel" parent="." unique_id=1255565677]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2

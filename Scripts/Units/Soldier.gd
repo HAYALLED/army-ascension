@@ -13,7 +13,7 @@ var uid: int = 0
 ## Set per class in the inherited scene (Scene/Units/Soldiers/*.tscn).
 @export var type: SoldierDB.Type = SoldierDB.Type.RIFLEMAN
 var display_name: String = ""
-var rarity: int = SoldierDB.Rarity.COMMON
+var rank_id: StringName = &"common"
 var level: int = 1
 var max_hp: float = 100.0
 var hp: float = 100.0
@@ -64,7 +64,7 @@ func setup(p_level: int = 1) -> void:
 	var d := SoldierDB.stats(type, level)
 	_data = d
 	display_name = d["name"]
-	rarity = d["rarity"]
+	rank_id = d["rank"]
 	max_hp = d["health"]
 	hp = max_hp
 	base_damage = d["damage"]

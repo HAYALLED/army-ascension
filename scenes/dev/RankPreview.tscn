@@ -1,0 +1,45 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/dev/RankPreview.gd" id="1_g55ul"]
+
+[node name="RankPreview" type="Control" unique_id=995044479]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_g55ul")
+
+[node name="Background" type="ColorRect" parent="." unique_id=964576325]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.13, 0.15, 0.2, 1)
+
+[node name="Margin" type="MarginContainer" parent="." unique_id=642130363]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="VBox" type="VBoxContainer" parent="Margin" unique_id=1633759770]
+layout_mode = 2
+
+[node name="LowGraphics" type="CheckButton" parent="Margin/VBox" unique_id=27610139]
+layout_mode = 2
+text = "Low graphics (stop fire animation)"
+
+[node name="Scroll" type="ScrollContainer" parent="Margin/VBox" unique_id=757386363]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="Grid" type="HFlowContainer" parent="Margin/VBox/Scroll" unique_id=1441321309]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/h_separation = 16
+theme_override_constants/v_separation = 16

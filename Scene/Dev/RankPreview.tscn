@@ -1,0 +1,49 @@
+[gd_scene format=3]
+
+[ext_resource type="Theme" path="res://Resources/UI/ui_theme.tres" id="1_8pg2m"]
+[ext_resource type="Script" path="res://Scripts/Dev/RankPreview.gd" id="2_7bp3b"]
+
+[node name="RankPreview" type="Control" unique_id=1128984797]
+layout_mode = 3
+anchors_preset = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme = ExtResource("1_8pg2m")
+script = ExtResource("2_7bp3b")
+
+[node name="Background" type="ColorRect" parent="." unique_id=981623977]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.13, 0.15, 0.2, 1)
+
+[node name="Content" type="VBoxContainer" parent="." unique_id=738516116]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="LowGraphics" type="CheckButton" parent="Content" unique_id=1543160048]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Low graphics (no fire animation)"
+
+[node name="Scroll" type="ScrollContainer" parent="Content" unique_id=1922274878]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="Margin" type="MarginContainer" parent="Content/Scroll" unique_id=485875139]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="Grid" type="GridContainer" parent="Content/Scroll/Margin" unique_id=1615593181]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/h_separation = 20
+theme_override_constants/v_separation = 20
+columns = 2

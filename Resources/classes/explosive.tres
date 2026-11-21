@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="UnitClassData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Scripts/data/UnitClassData.gd" id="1_class"]
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/icon_explosive.png" id="2_icon"]
+
+[resource]
+script = ExtResource("1_class")
+id = &"explosive"
+display_name = "Explosive Master"
+icon_texture = ExtResource("2_icon")
+description = "Mortar, rocket launcher, grenade launcher. Area damage."
+tint = Color(1.0000, 0.4784, 0.1804, 1)
+preferred_row = 1
+sort_order = 4

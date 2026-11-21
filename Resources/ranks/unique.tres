@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="RankData" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://Scripts/data/RankData.gd" id="1_rank"]
+[ext_resource type="Texture2D" path="res://Assets/UI/Cards/frame_unique.png" id="2_frame"]
+[ext_resource type="Texture2D" path="res://Assets/UI/Cards/gem_unique.png" id="3_gem"]
+[ext_resource type="Texture2D" path="res://Assets/UI/Cards/fx_fire_unique.png" id="4_fire"]
+[ext_resource type="Texture2D" path="res://Assets/UI/Cards/fx_fire_unique_sheet.png" id="5_sheet"]
+
+[resource]
+script = ExtResource("1_rank")
+id = &"unique"
+display_name = "Unique"
+order = 4
+color = Color(0.1098, 0.1098, 0.1333, 1)
+glow_color = Color(0.6078, 0.1765, 0.3686, 1)
+frame_texture = ExtResource("2_frame")
+gem_texture = ExtResource("3_gem")
+fire_overlay = ExtResource("4_fire")
+fire_sheet = ExtResource("5_sheet")
+has_fire = true
+fire_sheet_frames = 6
+fire_fps = 10.0
+shards_to_unlock_mult = 5.0
+upgrade_cost_mult = 3.0
