@@ -8,6 +8,9 @@ extends Node3D
 @export var armored: int = 0
 @export var ranged: int = 0
 @export var elite: int = 0
+@export var kamikaze: int = 0
+@export var sniper: int = 0
+@export var medic: int = 0
 @export var spawn_distance: float = 40.0
 
 
@@ -16,4 +19,5 @@ func composition() -> Array:
 	return [
 		[EnemyDB.Kind.BASIC, basic], [EnemyDB.Kind.FAST, fast], [EnemyDB.Kind.ARMORED, armored],
 		[EnemyDB.Kind.RANGED, ranged], [EnemyDB.Kind.ELITE, elite],
+		[EnemyDB.Kind.KAMIKAZE, kamikaze], [EnemyDB.Kind.SNIPER, sniper], [EnemyDB.Kind.MEDIC, medic],
 	]

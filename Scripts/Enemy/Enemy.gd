@@ -1,6 +1,7 @@
 class_name Enemy
 extends Node3D
-## Regular enemy (grunt, scout, brute, gunner, warlord). Boss.gd extends this.
+## Regular enemy (grunt, scout, brute, gunner, warlord, marksman). Boss, Kamikaze and
+## MedicEnemy extend this.
 ## Scene: Scene/Enemy/Enemy.tscn.  Plain Node3D, no physics: chases the
 ## nearest soldier and attacks.
 ## Node layout:  Enemy -> Body (yaw / bob / lunge) -> ModelSlot (scale) -> Model (.glb)
@@ -23,6 +24,7 @@ var gold: int = 1
 var shard_amount: int = 0
 var shard_chance: float = 0.0
 var proj_speed: float = 16.0
+var proj_kind: int = ProjectilePool.KIND_ENEMY
 var hit_color: Color = Color.RED
 var model_scale: float = 1.0
 ## Separation push written each frame by Battle (see Battle._separate_enemies).
@@ -46,6 +48,27 @@ var _bar_h: float = 2.0
 var _dmg_accum: float = 0.0
 var _popup_t: float = 0.0
 var _lunge: float = 0.0
+
+
+const MINION_MIN := 8
+const MINION_MAX := 20
+## No reinforcements while this many enemies are already alive (keeps phones smooth).
+const MAX_ALIVE := 70
+
+
+## Boss / mini boss reinforcement wave: MINION_MIN..MINION_MAX enemies, every kind random.
+## Spawns in rows in front of `origin`, spread across the arena. Returns how many spawned.
+static func spawn_minions(parent: Node3D, origin: Vector3) -> int:
+	if Game.enemies.size() >= MAX_ALIVE:
+		return 0
+	var count := randi_range(MINION_MIN, MINION_MAX)
+	for n in count:
+		var col := n % 6
+		var row := floori(n / 6.0)
+		var x := clampf(lerpf(-5.5, 5.5, col / 5.0) + randf_range(-0.5, 0.5), -6.5, 6.5)
+		var z := origin.z + 1.5 + row * 1.6 + randf() * 0.6
+		spawn(parent, EnemyDB.random_minion_kind(), Vector3(x, 0.0, z))
+	return count
 
 
 static func spawn(parent: Node3D, p_kind: int, pos: Vector3) -> Enemy:
@@ -73,6 +96,7 @@ func _ready() -> void:
 	shard_amount = d["shards"]
 	shard_chance = d["shard_chance"]
 	proj_speed = d["proj_speed"]
+	proj_kind = int(d.get("proj_kind", ProjectilePool.KIND_ENEMY))
 	hit_color = d["color"]
 	_bar_h = d["height"]
 	model_scale = _bar_h / 1.5
@@ -171,7 +195,7 @@ func _attack(face: Vector3) -> void:
 	_atk_t = attack_cd * randf_range(0.9, 1.1)
 	if ranged:
 		var from := position + Vector3(0, 1.0, 0) + face * 0.6
-		Game.enemy_bullets.fire(from, face, proj_speed, damage, attack_range + 4.0, 0, 0.0, ProjectilePool.KIND_ENEMY)
+		Game.enemy_bullets.fire(from, face, proj_speed, damage, attack_range + 4.0, 0, 0.0, proj_kind)
 		AudioManager.play("shoot_enemy")
 	else:
 		_lunge = 1.0

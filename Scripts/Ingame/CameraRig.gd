@@ -3,7 +3,7 @@ extends Camera3D
 ## Elevated third-person follow camera with smoothing and screen shake.
 
 @export var offset: Vector3 = Vector3(0.0, 15.0, 11.0)
-@export var look_offset: Vector3 = Vector3(0.0, 0.0, -9.0)
+@export var look_offset: Vector3 = Vector3(0.0, 0.0, -30.0)
 @export var follow_x: float = 0.5
 @export var smoothing: float = 7.0
 

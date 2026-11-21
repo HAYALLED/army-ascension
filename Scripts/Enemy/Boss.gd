@@ -2,13 +2,15 @@ class_name Boss
 extends Enemy
 ## Iron Colossus. Sleeps until the army gets close, then cycles three
 ## attack patterns: FAN (projectile spread), SLAM (telegraphed ground
-## smash, dodge by strafing) and SUMMON (calls reinforcements).
-## Below 50% health it enrages: faster patterns, bigger fans, more summons.
+## smash, dodge by strafing) and SUMMON (calls 8-20 random enemies, often and fast).
+## Below 50% health it enrages: faster patterns and bigger fans.
 
 enum Pattern { FAN, SLAM, SUMMON }
 enum Phase { SLEEP, WALK, WINDUP, RECOVER }
 
-const SEQUENCE := [Pattern.FAN, Pattern.SLAM, Pattern.SUMMON, Pattern.SLAM, Pattern.FAN, Pattern.SLAM]
+const SEQUENCE := [Pattern.FAN, Pattern.SUMMON, Pattern.SLAM, Pattern.SUMMON, Pattern.FAN, Pattern.SLAM]
+const SUMMON_WINDUP := 0.5
+const SUMMON_RECOVER := 0.9
 const WAKE_DISTANCE := 55.0
 const HOLD_DISTANCE := 13.0
 const SLAM_RADIUS := 3.3
@@ -97,7 +99,7 @@ func _start_pattern(army: Army) -> void:
 			_slam_pos = Vector3(army.position.x, 0.0, army.position.z)
 			_show_telegraph()
 		Pattern.SUMMON:
-			_timer = 0.9
+			_timer = SUMMON_WINDUP
 			AudioManager.play("boss_roar", 1.3)
 
 
@@ -129,7 +131,10 @@ func _finish_pattern() -> void:
 	_set_overlay(null)
 	_hide_telegraph()
 	_state = Phase.RECOVER
-	_timer = 1.4 if _enraged else 2.2
+	if _pattern == Pattern.SUMMON:
+		_timer = SUMMON_RECOVER * (0.7 if _enraged else 1.0)
+	else:
+		_timer = 1.4 if _enraged else 2.2
 
 
 func _fire_fan(face: Vector3) -> void:
@@ -159,12 +164,7 @@ func _do_slam() -> void:
 
 
 func _do_summon() -> void:
-	var count := 6 if _enraged else 4
-	for i in count:
-		var ang := TAU * float(i) / float(count) + randf() * 0.4
-		var pos := position + Vector3(cos(ang), 0.0, sin(ang)) * randf_range(3.0, 5.0)
-		pos.x = clampf(pos.x, -6.0, 6.0)
-		Enemy.spawn(get_parent(), EnemyDB.Kind.FAST if i % 3 == 2 else EnemyDB.Kind.BASIC, pos)
+	Enemy.spawn_minions(get_parent(), position)
 	Game.camera_rig.shake(0.2)
 
 

@@ -165,6 +165,7 @@ func _on_primary() -> void:
 			_close()
 			Game.set_paused(false)
 		Mode.WIN:
+			Game.next_level()
 			Game.goto_menu()
 		Mode.LOSE:
 			Game.restart()

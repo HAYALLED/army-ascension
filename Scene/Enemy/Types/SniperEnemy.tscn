@@ -1,0 +1,10 @@
+[gd_scene format=3 uid="uid://buos8b6grcrb6"]
+
+[ext_resource type="PackedScene" path="res://Scene/Enemy/Enemy.tscn" id="1_base"]
+[ext_resource type="PackedScene" uid="uid://dqii1bywp1ps3" path="res://Assets/Enemy/sniper_enemy.glb" id="2_model"]
+
+[node name="SniperEnemy" unique_id=41331482 instance=ExtResource("1_base")]
+kind = 7
+
+[node name="Model" parent="Body/ModelSlot" index="0" unique_id=99432652 instance=ExtResource("2_model")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0)

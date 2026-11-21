@@ -19,20 +19,23 @@ func _ready() -> void:
 	for b in [_sound, _music, _vibration, _gfx_low, _gfx_high]:
 		(b as Button).toggled.connect(func(_on: bool) -> void: _apply())
 	_sound.toggled.connect(func(on: bool) -> void:
-		AudioManager.sfx_enabled = on)
+		AudioManager.sfx_enabled = on
+		PlayerData.set_setting("sfx", on))
 	_music.toggled.connect(func(on: bool) -> void:
 		AudioManager.music_enabled = on
 		if not on:
-			AudioManager.stop_music())
-	_vibration.toggled.connect(func(on: bool) -> void: PlayerData.settings["vibration"] = on)
+			AudioManager.stop_music()
+		PlayerData.set_setting("music", on))
+	_vibration.toggled.connect(func(on: bool) -> void: PlayerData.set_setting("vibration", on))
 	_gfx_high.toggled.connect(func(on: bool) -> void:
 		if on:
-			PlayerData.settings["graphics_high"] = true)
+			PlayerData.set_setting("graphics_high", true))
 	_gfx_low.toggled.connect(func(on: bool) -> void:
 		if on:
-			PlayerData.settings["graphics_high"] = false)
+			PlayerData.set_setting("graphics_high", false))
 	_close.pressed.connect(func() -> void:
 		AudioManager.play("ui_click")
+		SaveManager.save_now()
 		queue_free())
 	_apply()
 

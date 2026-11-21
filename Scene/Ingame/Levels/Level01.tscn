@@ -261,6 +261,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -52)
 script = ExtResource("13_ia5dd")
 basic = 14
 fast = 5
+kamikaze = 3
 
 [node name="Wave2" type="Node3D" parent="Waves" unique_id=1170773802 instance=ExtResource("12_8qcv4")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -140)
@@ -269,6 +270,9 @@ basic = 18
 fast = 6
 armored = 6
 ranged = 4
+kamikaze = 5
+sniper = 2
+medic = 1
 
 [node name="Wave3" type="Node3D" parent="Waves" unique_id=1041031690 instance=ExtResource("12_8qcv4")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -228)
@@ -278,6 +282,9 @@ fast = 8
 armored = 8
 ranged = 6
 elite = 4
+kamikaze = 6
+sniper = 3
+medic = 2
 
 [node name="Markers" type="Node3D" parent="." unique_id=975724890]
 

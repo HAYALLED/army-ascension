@@ -2,12 +2,22 @@ class_name EnemyDB
 extends RefCounted
 ## Enemy definitions. `armor` is the fraction of incoming damage ignored.
 
-enum Kind { BASIC, FAST, ARMORED, RANGED, ELITE, BOSS }
+enum Kind { BASIC, FAST, ARMORED, RANGED, ELITE, BOSS, KAMIKAZE, SNIPER, MEDIC }
+
+## Kinds a boss / mini boss reinforcement wave picks from (uniform random).
+const MINION_POOL := [
+	Kind.BASIC, Kind.FAST, Kind.ARMORED, Kind.RANGED,
+	Kind.ELITE, Kind.KAMIKAZE, Kind.SNIPER, Kind.MEDIC,
+]
 
 static var _scenes: Dictionary = {}
 
 
 ## Enemy scene of a kind (loaded lazily; scenes live in Scene/Enemy/Types).
+static func random_minion_kind() -> int:
+	return MINION_POOL[randi() % MINION_POOL.size()]
+
+
 static func scene(kind: int) -> PackedScene:
 	if not _scenes.has(kind):
 		_scenes[kind] = load(DATA[kind]["scene"])
@@ -56,5 +66,30 @@ const DATA := {
 		"shards": 20, "shard_chance": 1.0, "radius": 1.8, "attack_range": 3.0, "attack_cd": 1.5,
 		"armor": 0.15, "scale": 2.0, "ranged": false, "proj_speed": 0.0,
 		"color": Color(0.35, 0.37, 0.45),
+	},
+	## Runs at the nearest soldier and explodes (area damage). Killed first = no blast.
+	Kind.KAMIKAZE: {
+		"scene": "res://Scene/Enemy/Types/Kamikaze.tscn", "height": 1.3,
+		"name": "Kamikaze", "health": 45.0, "damage": 32.0, "speed": 7.2, "gold": 4,
+		"shards": 1, "shard_chance": 0.1, "radius": 0.4, "attack_range": 1.6, "attack_cd": 1.0,
+		"armor": 0.0, "scale": 0.85, "ranged": false, "proj_speed": 0.0,
+		"color": Color(1.0, 0.45, 0.1),
+	},
+	## Stays far away and fires slow, hard-hitting shots.
+	Kind.SNIPER: {
+		"scene": "res://Scene/Enemy/Types/SniperEnemy.tscn", "height": 1.7,
+		"name": "Marksman", "health": 70.0, "damage": 22.0, "speed": 2.2, "gold": 6,
+		"shards": 1, "shard_chance": 0.15, "radius": 0.4, "attack_range": 26.0, "attack_cd": 2.8,
+		"armor": 0.0, "scale": 1.0, "ranged": true, "proj_speed": 46.0,
+		"proj_kind": ProjectilePool.KIND_SNIPER,
+		"color": Color(0.3, 0.75, 0.35),
+	},
+	## Hangs back and heals wounded enemies around it. Kill it first.
+	Kind.MEDIC: {
+		"scene": "res://Scene/Enemy/Types/MedicEnemy.tscn", "height": 1.5,
+		"name": "Field Medic", "health": 90.0, "damage": 0.0, "speed": 3.0, "gold": 7,
+		"shards": 1, "shard_chance": 0.2, "radius": 0.42, "attack_range": 1.0, "attack_cd": 1.0,
+		"armor": 0.0, "scale": 1.0, "ranged": false, "proj_speed": 0.0,
+		"color": Color(0.35, 0.9, 0.5),
 	},
 }

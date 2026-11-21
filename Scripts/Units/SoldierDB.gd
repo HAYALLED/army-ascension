@@ -13,6 +13,15 @@ const RARITY_COLORS := [Color(0.75, 0.75, 0.78), Color(0.3, 0.6, 1.0), Color(0.7
 const DAMAGE_PER_LEVEL := 0.5
 const HEALTH_PER_LEVEL := 0.2
 
+## Stable string ids used by the save file (never save enum ints or display names).
+const IDS := {
+	Type.RIFLEMAN: "rifleman",
+	Type.MACHINE_GUNNER: "machine_gunner",
+	Type.SNIPER: "sniper",
+	Type.ROCKET: "rocket",
+	Type.MEDIC: "medic",
+}
+
 ## Weighted pool used by "+N soldiers" gates.
 const SPAWN_WEIGHTS := {
 	Type.RIFLEMAN: 40,
@@ -121,3 +130,16 @@ static func random_type() -> int:
 		if roll < 0:
 			return k
 	return Type.RIFLEMAN
+
+
+## Save-file id of a class.
+static func id_of(type: int) -> String:
+	return String(IDS.get(type, ""))
+
+
+## Class of a save-file id, or -1 for an unknown id.
+static func type_of(id: String) -> int:
+	for t in IDS:
+		if IDS[t] == id:
+			return int(t)
+	return -1

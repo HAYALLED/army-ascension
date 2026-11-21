@@ -6,13 +6,14 @@ extends Node3D
 
 const KIND_ENEMY := 5
 const KIND_BOSS := 6
+const KIND_SNIPER := 7
 const KIND_COLOR := [
 	Color(1.0, 0.95, 0.5), Color(1.0, 0.7, 0.25), Color(0.7, 0.95, 1.0),
-	Color(1.0, 0.45, 0.15), Color(0.6, 1.0, 0.6), Color(1.0, 0.3, 0.4), Color(0.85, 0.35, 1.0),
+	Color(1.0, 0.45, 0.15), Color(0.6, 1.0, 0.6), Color(1.0, 0.3, 0.4), Color(0.85, 0.35, 1.0), Color(1.0, 0.15, 0.15),
 ]
 const KIND_SIZE := [
 	Vector3(0.08, 0.08, 0.7), Vector3(0.09, 0.09, 0.55), Vector3(0.1, 0.1, 1.7),
-	Vector3(0.28, 0.28, 0.7), Vector3(0.08, 0.08, 0.4), Vector3(0.14, 0.14, 0.5), Vector3(0.32, 0.32, 0.6),
+	Vector3(0.28, 0.28, 0.7), Vector3(0.08, 0.08, 0.4), Vector3(0.14, 0.14, 0.5), Vector3(0.32, 0.32, 0.6), Vector3(0.12, 0.12, 1.6),
 ]
 
 @export var capacity: int = 320

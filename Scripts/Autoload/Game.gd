@@ -97,6 +97,9 @@ func end_battle(won: bool) -> void:
 	get_tree().paused = false
 	Engine.time_scale = 1.0
 	_credit_rewards(won)
+	if won:
+		PlayerData.complete_level(level_index)
+	SaveManager.save_now()
 	_set_state(State.WON if won else State.LOST)
 	if won:
 		battle_won.emit()
@@ -109,6 +112,11 @@ func _credit_rewards(won: bool) -> void:
 	PlayerData.add_gold(gold if won else int(gold * 0.5))
 	for t in run_shards:
 		PlayerData.add_shards(t, int(run_shards[t]))
+
+
+## Moves to the next level after a win (never past the unlocked one).
+func next_level() -> void:
+	level_index = mini(level_index + 1, PlayerData.unlocked_level())
 
 
 func goto_menu() -> void:

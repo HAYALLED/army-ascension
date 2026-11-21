@@ -81,8 +81,12 @@ func _ready() -> void:
 			if m and m.resource_name == "Tint":
 				mi.set_surface_override_material(s, _tint)
 
-	Game.progress_changed.connect(func(t: float) -> void: _target = t)
+	Game.progress_changed.connect(_on_progress)
 	apply(0.0)
+
+
+func _on_progress(t: float) -> void:
+	_target = t
 
 
 func _process(delta: float) -> void:
