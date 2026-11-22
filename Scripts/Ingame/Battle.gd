@@ -5,7 +5,6 @@ extends Node3D
 ## Camera and HUD. This script only wires them together and runs the
 ## timeline: enemy waves, spike traps, enemy separation and progress.
 
-const BOSS_SCENE := preload("res://Scene/Enemy/Types/Boss.tscn")
 const SEPARATION_CELL := 2.5
 const SEPARATION_STRENGTH := 5.0
 
@@ -33,12 +32,13 @@ func _ready() -> void:
 	Game.enemy_bullets = $EnemyBullets
 	Game.army = army
 	Game.camera_rig = cam
+	level.configure(LevelDB.is_mini_level(Game.level_index))
 	army.position = level.army_start.position
 	army.min_z = level.arena_stop.position.z
 	cam.snap()
 
 	_spawn_start_army()
-	boss = BOSS_SCENE.instantiate() as Boss
+	boss = EnemyDB.scene(LevelDB.boss_kind(Game.level_index)).instantiate() as Boss
 	boss.position = level.boss_spawn.position
 	units.add_child(boss)
 	_waves = level.sorted_waves()
@@ -57,6 +57,8 @@ func _spawn_start_army() -> void:
 	var T := SoldierDB.Type
 	var list := [T.RIFLEMAN, T.RIFLEMAN, T.RIFLEMAN, T.RIFLEMAN, T.MACHINE_GUNNER, T.MACHINE_GUNNER, T.MACHINE_GUNNER,
 		T.SNIPER, T.SNIPER, T.ROCKET, T.ROCKET, T.MEDIC]
+	for i in PlayerData.start_bonus_soldiers():
+		list.append(T.RIFLEMAN)
 	for t in list:
 		army.add_soldier(t, PlayerData.level_of(t))
 	army.rebuild_formation()
@@ -84,7 +86,7 @@ func _spawn_wave(index: int, wave: WaveTrigger) -> void:
 	Game.banner_requested.emit("WAVE %d" % index, Color(1.0, 0.8, 0.2))
 	AudioManager.play("wave_horn")
 	var list: Array = []
-	for entry in wave.composition():
+	for entry in RoundDB.wave_composition(Game.level_index, index - 1, wave.composition()):
 		for i in int(entry[1]):
 			list.append(int(entry[0]))
 	list.shuffle()
@@ -133,7 +135,7 @@ func _separate_enemies() -> void:
 		else:
 			grid[key] = [e]
 	for e in list:
-		if e.kind == EnemyDB.Kind.BOSS:
+		if e is Boss:
 			continue
 		var cx := floori(e.position.x / SEPARATION_CELL)
 		var cz := floori(e.position.z / SEPARATION_CELL)

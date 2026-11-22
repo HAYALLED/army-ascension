@@ -168,6 +168,16 @@ func _level01() -> void:
 	_inst(IN + "arena_wall_back.glb", "BackWall", arena, root, Vector3(0, 0, -361))
 	_inst(IN + "arena_entrance.glb", "Entrance", arena, root, Vector3(0, 0, -300))
 
+	# Mini boss arena (z -300 .. -340), used on every level that is not a boss level
+	var mini_node := _n3("MiniArena", root, root)
+	for i in 4:
+		var z := -305.0 - 10.0 * i
+		_inst(IN + "miniarena_floor_tile.glb", "MiniFloor%d" % i, mini_node, root, Vector3(0, -0.16, z))
+		_inst(IN + "miniarena_wall_side.glb", "MiniWallLeft%d" % i, mini_node, root, Vector3(-7.9, 0, z))
+		_inst(IN + "miniarena_wall_side.glb", "MiniWallRight%d" % i, mini_node, root, Vector3(7.9, 0, z), 180.0)
+	_inst(IN + "miniarena_wall_back.glb", "MiniBackWall", mini_node, root, Vector3(0, 0, -341))
+	_inst(IN + "miniarena_entrance.glb", "MiniEntrance", mini_node, root, Vector3(0, 0, -300))
+
 	# Buff gates: [z, left effect, left value, right effect, right value, right risky]
 	var gates := _n3("Gates", root, root)
 	var E := GatePair.Effect
@@ -208,7 +218,7 @@ func _level01() -> void:
 
 	# Markers
 	var markers := _n3("Markers", root, root)
-	for m in [["ArmyStart", 0.0], ["ArenaStop", -318.0], ["BossSpawn", -350.0]]:
+	for m in [["ArmyStart", 0.0], ["ArenaStop", -318.0], ["BossSpawn", -350.0], ["MiniArenaStop", -313.0], ["MiniBossSpawn", -332.0]]:
 		var mk := Marker3D.new()
 		mk.name = m[0]
 		mk.position = Vector3(0, 0, m[1])

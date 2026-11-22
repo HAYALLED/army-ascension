@@ -401,19 +401,16 @@ func _upgrade_row() -> void:
 	_tex(h, "ClassIcon", "class_rifleman.png", Vector2(96, 96), true)
 	var info := _box(true, h, "Info", 2)
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	var nl := _lbl(info, "NameLabel", "RIFLEMAN  Lv 1", "LabelBig", true)
+	var nl := _lbl(info, "NameLabel", "BATTLE INCOME  Lv 0/10", "LabelBig", true)
 	nl.add_theme_font_size_override("font_size", 30)
 	nl.clip_text = true
-	var sl := _lbl(info, "StatLabel", "DMG 10>15  HP 100>120", "LabelSmall", true)
+	var sl := _lbl(info, "StatLabel", "More gold at the end of every level.\n+0% > +10%", "LabelSmall", true)
 	sl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	sl.custom_minimum_size = Vector2(120, 0)
 	var cost := _box(true, h, "Cost", 2)
 	var g := _box(false, cost, "GoldRow", 6)
 	_tex(g, "GoldIcon", "icon_gold.png", Vector2(36, 36))
 	_lbl(g, "GoldCost", "500", "LabelSmall", true)
-	var s := _box(false, cost, "ShardRow", 6)
-	_tex(s, "ShardIcon", "icon_shard.png", Vector2(36, 36))
-	_lbl(s, "ShardCost", "10", "LabelSmall", true)
 	var b := _btn(h, "UpgradeButton", "UPGRADE", "ButtonPrimary", Vector2(150, 84), true)
 	b.add_theme_font_size_override("font_size", 24)
 	_save(root, "res://Scene/UI/Components/UpgradeRow.tscn")

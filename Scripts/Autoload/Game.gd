@@ -24,8 +24,10 @@ signal banner_requested(text: String, color: Color)
 signal state_changed(new_state: int)
 signal battle_won()
 signal battle_lost()
+## The army is wiped and an ad revive is on offer (state REVIVE, tree paused).
+signal revive_offered()
 
-enum State { LOADING, PLAYING, PAUSED, WON, LOST }
+enum State { LOADING, PLAYING, PAUSED, WON, LOST, REVIVE }
 
 const MAX_SOLDIERS := 60
 
@@ -39,6 +41,12 @@ var elapsed: float = 0.0
 var damage_buff: float = 1.0
 var rate_buff: float = 1.0
 var sim_mode: bool = false
+## Gold credited to the profile when the battle ended (0 until then).
+var credited_gold: int = 0
+## True after the end-of-level "double gold" ad was claimed.
+var gold_doubled: bool = false
+## True after this run used its one ad revive.
+var revive_used: bool = false
 
 # Registries (filled by Battle and entities).
 var enemies: Array[Enemy] = []
@@ -58,6 +66,9 @@ func reset_run() -> void:
 	run_shards.clear()
 	kills = 0
 	elapsed = 0.0
+	credited_gold = 0
+	gold_doubled = false
+	revive_used = false
 	damage_buff = 1.0
 	rate_buff = 1.0
 	enemies.clear()
@@ -92,13 +103,61 @@ func set_paused(paused: bool) -> void:
 
 
 func end_battle(won: bool) -> void:
-	if state == State.WON or state == State.LOST:
+	if state == State.WON or state == State.LOST or state == State.REVIVE:
 		return
+	if not won and can_revive():
+		get_tree().paused = true
+		_set_state(State.REVIVE)
+		revive_offered.emit()
+		return
+	_finish_battle(won)
+
+
+## True when a defeat may be answered with an ad revive (once per run, never in --sim).
+func can_revive() -> bool:
+	return not revive_used and not sim_mode and AdService.is_available()
+
+
+## Ad watched: brings soldiers back, clears the enemies around the army and resumes the battle.
+func revive() -> void:
+	if state != State.REVIVE or army == null:
+		return
+	revive_used = true
+	army.revive(RewardDB.REVIVE_SOLDIERS)
+	get_tree().paused = false
+	_set_state(State.PLAYING)
+
+
+## Player refused the revive: the defeat becomes final.
+func decline_revive() -> void:
+	if state == State.REVIVE:
+		revive_used = true
+		_finish_battle(false)
+
+
+## True while the result popup may offer the "double gold" ad.
+func can_double_gold() -> bool:
+	return (state == State.WON or state == State.LOST) and credited_gold > 0 \
+		and not gold_doubled and not sim_mode and AdService.is_available()
+
+
+## Ad watched: credits the battle gold a second time. Returns false when not allowed.
+func double_gold() -> bool:
+	if not can_double_gold():
+		return false
+	gold_doubled = true
+	PlayerData.add_gold(credited_gold)
+	SaveManager.save_now()
+	return true
+
+
+func _finish_battle(won: bool) -> void:
 	get_tree().paused = false
 	Engine.time_scale = 1.0
 	_credit_rewards(won)
 	if won:
 		PlayerData.complete_level(level_index)
+	MissionManager.record_battle(won, kills, shards)
 	SaveManager.save_now()
 	_set_state(State.WON if won else State.LOST)
 	if won:
@@ -107,11 +166,28 @@ func end_battle(won: bool) -> void:
 		battle_lost.emit()
 
 
-## Battle rewards go to the player's profile: all of them on victory, half the gold on defeat.
+## Gold the player really receives for this battle: all of it on victory, half on defeat,
+## times the Battle Income upgrade (Upgrades tab).
+func final_gold(won: bool) -> int:
+	var base := gold if won else int(gold * 0.5)
+	return int(round(float(base) * PlayerData.income_mult()))
+
+
+## Battle rewards go to the player's profile.
 func _credit_rewards(won: bool) -> void:
-	PlayerData.add_gold(gold if won else int(gold * 0.5))
+	credited_gold = final_gold(won)
+	PlayerData.add_gold(credited_gold)
 	for t in run_shards:
 		PlayerData.add_shards(t, int(run_shards[t]))
+
+
+## Sets the level the next battle plays. Only beaten levels and the current unbeaten
+## level (PlayerData.unlocked_level) are allowed. Returns false and changes nothing otherwise.
+func select_level(level: int) -> bool:
+	if level < 1 or level > PlayerData.unlocked_level():
+		return false
+	level_index = level
+	return true
 
 
 ## Moves to the next level after a win (never past the unlocked one).

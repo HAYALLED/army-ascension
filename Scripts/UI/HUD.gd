@@ -123,18 +123,22 @@ func _toggle_pause() -> void:
 
 func _on_won() -> void:
 	AudioManager.play("victory")
-	_open(Mode.WIN, "VICTORY!", Color(1.0, 0.85, 0.2), _result_text(), "CONTINUE", "PLAY AGAIN", "")
+	_open(Mode.WIN, "VICTORY!", Color(1.0, 0.85, 0.2), _result_text(true), "CONTINUE", "PLAY AGAIN", "")
 
 
 func _on_lost() -> void:
 	AudioManager.play("defeat")
-	_open(Mode.LOSE, "DEFEAT", Color(1.0, 0.3, 0.25), _result_text(), "TRY AGAIN", "HOME", "")
+	_open(Mode.LOSE, "DEFEAT", Color(1.0, 0.3, 0.25), _result_text(false), "TRY AGAIN", "HOME", "")
 
 
-func _result_text() -> String:
+func _result_text(won: bool) -> String:
 	var t := int(Game.elapsed)
-	return "Kills  %d\nGold  +%d\nShards  +%d\nSurvivors  %d\nTime  %d:%02d" % [
-		Game.kills, Game.gold, Game.shards, Game.soldiers.size(), floori(t / 60.0), t % 60]
+	var bonus := int(round((PlayerData.income_mult() - 1.0) * 100.0))
+	var gold_text := "+%d" % Game.final_gold(won)
+	if bonus > 0:
+		gold_text += "  (income +%d%%)" % bonus
+	return "Kills  %d\nGold  %s\nShards  +%d\nSurvivors  %d\nTime  %d:%02d" % [
+		Game.kills, gold_text, Game.shards, Game.soldiers.size(), floori(t / 60.0), t % 60]
 
 
 func _open(mode: int, title: String, color: Color, stats: String, primary: String, secondary: String, tertiary: String) -> void:

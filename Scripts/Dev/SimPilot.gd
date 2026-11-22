@@ -41,7 +41,7 @@ func _process(delta: float) -> void:
 			Game.enemies.size(), Game.gold, Game.kills, Game.damage_buff, Game.rate_buff])
 	if _log_t == 0.0:
 		for e in Game.enemies:
-			if e.kind == EnemyDB.Kind.BOSS:
+			if e is Boss:
 				var tg := 0
 				for s in Game.soldiers:
 					if is_instance_valid(s.target) and s.target == e:

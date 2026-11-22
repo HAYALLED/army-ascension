@@ -4,7 +4,6 @@
 [ext_resource type="Script" path="res://Scripts/UI/Components/UpgradeRow.gd" id="2_fpygc"]
 [ext_resource type="Texture2D" path="res://Assets/UI/class_rifleman.png" id="3_6es4h"]
 [ext_resource type="Texture2D" path="res://Assets/UI/icon_gold.png" id="4_mcjm5"]
-[ext_resource type="Texture2D" path="res://Assets/UI/icon_shard.png" id="5_ngtax"]
 
 [node name="UpgradeRow" type="PanelContainer" unique_id=1025439048]
 custom_minimum_size = Vector2(0, 150)
@@ -35,7 +34,7 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"LabelBig"
 theme_override_font_sizes/font_size = 30
-text = "RIFLEMAN  Lv 1"
+text = "BATTLE INCOME  Lv 0/10"
 vertical_alignment = 1
 clip_text = true
 
@@ -44,7 +43,7 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(120, 0)
 layout_mode = 2
 theme_type_variation = &"LabelSmall"
-text = "DMG 10>15  HP 100>120"
+text = "More gold at the end of every level.\n+0% > +10%"
 vertical_alignment = 1
 autowrap_mode = 3
 
@@ -69,25 +68,6 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"LabelSmall"
 text = "500"
-vertical_alignment = 1
-
-[node name="ShardRow" type="HBoxContainer" parent="Row/Cost" unique_id=1887525210]
-layout_mode = 2
-theme_override_constants/separation = 6
-
-[node name="ShardIcon" type="TextureRect" parent="Row/Cost/ShardRow" unique_id=862230401]
-custom_minimum_size = Vector2(36, 36)
-layout_mode = 2
-mouse_filter = 2
-texture = ExtResource("5_ngtax")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="ShardCost" type="Label" parent="Row/Cost/ShardRow" unique_id=218163415]
-unique_name_in_owner = true
-layout_mode = 2
-theme_type_variation = &"LabelSmall"
-text = "10"
 vertical_alignment = 1
 
 [node name="UpgradeButton" type="Button" parent="Row" unique_id=1168257927]

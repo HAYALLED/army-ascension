@@ -23,7 +23,9 @@ func _ready() -> void:
 		PlayerData.set_setting("sfx", on))
 	_music.toggled.connect(func(on: bool) -> void:
 		AudioManager.music_enabled = on
-		if not on:
+		if on:
+			AudioManager.play_music()
+		else:
 			AudioManager.stop_music()
 		PlayerData.set_setting("music", on))
 	_vibration.toggled.connect(func(on: bool) -> void: PlayerData.set_setting("vibration", on))

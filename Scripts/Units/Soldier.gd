@@ -55,6 +55,13 @@ var _phase: float = 0.0
 var _scale_mul: Vector3 = Vector3.ONE
 var _jitter: Vector2 = Vector2.ZERO
 var _squeeze_var: float = 1.0
+## Enemy debuffs (Blinder / Weakener). Seconds left; 0 = not affected.
+var _blind_t: float = 0.0
+var _weak_t: float = 0.0
+
+## While blinded a soldier's shots scatter this much (radians). While weakened it deals this fraction of its damage.
+const BLIND_SPREAD := 0.5
+const WEAK_DAMAGE_MULT := 0.6
 
 
 func setup(p_level: int = 1) -> void:
@@ -65,17 +72,18 @@ func setup(p_level: int = 1) -> void:
 	_data = d
 	display_name = d["name"]
 	rank_id = d["rank"]
-	max_hp = d["health"]
+	# Army-wide upgrades (Upgrades tab) stack on top of this class's own level (Soldiers tab).
+	max_hp = float(d["health"]) * PlayerData.health_mult()
 	hp = max_hp
-	base_damage = d["damage"]
-	attack_speed = d["attack_speed"]
+	base_damage = float(d["damage"]) * PlayerData.damage_mult()
+	attack_speed = float(d["attack_speed"]) * PlayerData.rate_mult()
 	follow_rate = d["follow_rate"]
 	attack_range = d["range"]
 	bullet_speed = d["bullet_speed"]
 	pierce = d["pierce"]
 	aoe = d["aoe"]
 	spread = d["spread"]
-	heal_amount = d["heal"]
+	heal_amount = float(d["heal"]) * PlayerData.health_mult()
 	heal_interval = d["heal_interval"]
 	heal_range = d["heal_range"]
 	sfx = d["sfx"]
@@ -138,6 +146,8 @@ func _process(delta: float) -> void:
 		if is_instance_valid(target):
 			face = target.position - position
 			face.y = 0.0
+		_blind_t = maxf(_blind_t - delta, 0.0)
+		_weak_t = maxf(_weak_t - delta, 0.0)
 		_cooldown -= delta
 		if _cooldown <= 0.0 and is_instance_valid(target) and base_damage > 0.0:
 			_shoot()
@@ -186,11 +196,13 @@ func _shoot() -> void:
 	dir.y = 0.0
 	if dir.length_squared() < 0.0001:
 		dir = Vector3(0, 0, -1)
-	dir = dir.normalized().rotated(Vector3.UP, randf_range(-spread, spread))
+	var scatter := spread + (BLIND_SPREAD if _blind_t > 0.0 else 0.0)
+	dir = dir.normalized().rotated(Vector3.UP, randf_range(-scatter, scatter))
 	var travel := attack_range + 4.0
 	if aoe > 0.0:
 		travel = maxf(from.distance_to(to) - 0.5, 1.0)
-	Game.player_bullets.fire(from, dir, bullet_speed, base_damage * Game.damage_buff, travel, pierce, aoe, type)
+	var dmg := base_damage * Game.damage_buff * (WEAK_DAMAGE_MULT if _weak_t > 0.0 else 1.0)
+	Game.player_bullets.fire(from, dir, bullet_speed, dmg, travel, pierce, aoe, type)
 	_muzzle_flash.visible = true
 	_muzzle_t = 0.05
 	_recoil = 1.0
@@ -215,6 +227,26 @@ func _heal_pulse() -> void:
 	if healed > 0:
 		Game.fx.pulse(position, heal_range)
 		AudioManager.play("heal")
+
+
+## Blinder hit: shots scatter for `seconds`. A longer running effect is never shortened.
+func apply_blind(seconds: float) -> void:
+	if not dead:
+		_blind_t = maxf(_blind_t, seconds)
+
+
+## Weakener hit: damage is reduced for `seconds`. A longer running effect is never shortened.
+func apply_weaken(seconds: float) -> void:
+	if not dead:
+		_weak_t = maxf(_weak_t, seconds)
+
+
+func is_blinded() -> bool:
+	return _blind_t > 0.0
+
+
+func is_weakened() -> bool:
+	return _weak_t > 0.0
 
 
 func heal(amount: float) -> void:

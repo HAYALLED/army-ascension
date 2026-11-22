@@ -48,6 +48,7 @@ var _bar_h: float = 2.0
 var _dmg_accum: float = 0.0
 var _popup_t: float = 0.0
 var _lunge: float = 0.0
+var _gun: Node3D = null
 
 
 const MINION_MIN := 8
@@ -56,18 +57,18 @@ const MINION_MAX := 20
 const MAX_ALIVE := 70
 
 
-## Boss / mini boss reinforcement wave: MINION_MIN..MINION_MAX enemies, every kind random.
+## Boss / mini boss reinforcement wave: min_count..max_count enemies, every kind random.
 ## Spawns in rows in front of `origin`, spread across the arena. Returns how many spawned.
-static func spawn_minions(parent: Node3D, origin: Vector3) -> int:
+static func spawn_minions(parent: Node3D, origin: Vector3, min_count: int = MINION_MIN, max_count: int = MINION_MAX) -> int:
 	if Game.enemies.size() >= MAX_ALIVE:
 		return 0
-	var count := randi_range(MINION_MIN, MINION_MAX)
+	var count := randi_range(mini(min_count, max_count), maxi(min_count, max_count))
 	for n in count:
 		var col := n % 6
 		var row := floori(n / 6.0)
 		var x := clampf(lerpf(-5.5, 5.5, col / 5.0) + randf_range(-0.5, 0.5), -6.5, 6.5)
 		var z := origin.z + 1.5 + row * 1.6 + randf() * 0.6
-		spawn(parent, EnemyDB.random_minion_kind(), Vector3(x, 0.0, z))
+		spawn(parent, RoundDB.random_minion_kind(Game.level_index), Vector3(x, 0.0, z))
 	return count
 
 
@@ -101,6 +102,7 @@ func _ready() -> void:
 	_bar_h = d["height"]
 	model_scale = _bar_h / 1.5
 	_phase = randf() * TAU
+	_apply_round_model()
 	_meshes = Models.collect_meshes(_model)
 	_anim = Models.find_anim_player(_model)
 	_bar_w = clampf(0.4 * _bar_h, 0.7, 1.8)
@@ -110,6 +112,30 @@ func _ready() -> void:
 
 func _post_ready() -> void:
 	pass
+
+
+## Round 2 / 3 levels swap the scene's round 1 model for the kind's _r2 / _r3 variant.
+func _apply_round_model() -> void:
+	var path := EnemyDB.round_model_path(kind, LevelDB.chapter_of(Game.level_index))
+	if path == "":
+		return
+	var old := _model.get_node_or_null("Model") as Node3D
+	var packed := load(path) as PackedScene
+	if old == null or packed == null:
+		return
+	var fresh := packed.instantiate() as Node3D
+	fresh.name = "Model"
+	fresh.transform = old.transform
+	_model.remove_child(old)
+	old.queue_free()
+	_model.add_child(fresh)
+
+
+## World position bullets leave from: the model's "Muzzle" node when it has one, else `fallback`.
+func _gun_origin(fallback: Vector3) -> Vector3:
+	if _gun == null:
+		_gun = _model.find_child("Muzzle", true, false) as Node3D
+	return _gun.global_position if is_instance_valid(_gun) else fallback
 
 
 func _exit_tree() -> void:
@@ -245,7 +271,7 @@ func _ensure_bar() -> void:
 
 
 func _update_bar() -> void:
-	if kind == EnemyDB.Kind.BOSS:
+	if EnemyDB.is_boss_kind(kind):
 		return
 	_ensure_bar()
 	var ratio := clampf(hp / max_hp, 0.0, 1.0)
@@ -262,7 +288,7 @@ func _set_overlay(mat: Material) -> void:
 func _grant_rewards() -> void:
 	Game.add_gold(gold)
 	Game.add_kill()
-	if shard_amount > 0 and randf() < shard_chance:
+	if shard_amount > 0 and randf() < shard_chance * PlayerData.shard_mult():
 		var type := Game.add_shards(shard_amount)
 		var who: String = SoldierDB.DATA[type]["name"]
 		Game.fx.popup(position + Vector3(0, _bar_h + 0.9, 0), "+%d %s SHARD" % [shard_amount, who.to_upper()], Color(0.5, 0.9, 1.0), 0.9)

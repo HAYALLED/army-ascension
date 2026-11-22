@@ -12,6 +12,8 @@ const SLOW_NEAR := 8.0
 const MIN_SPEED := 0.25
 ## Strafe "crowd" effect: sideways speed (units/s) that gives the full squeeze.
 const SQUEEZE_SPEED := 6.0
+## Ad revive: regular enemies this close (in z) to the army are wiped.
+const REVIVE_CLEAR_RANGE := 14.0
 
 @export var units: Node3D = null
 var forward_speed: float = 6.0
@@ -145,6 +147,14 @@ func remove_soldiers(count: int) -> void:
 	for i in mini(count, list.size()):
 		var s: Soldier = list[i]
 		s.take_damage(99999.0)
+
+
+## Ad revive: wipes the regular enemies around the army (bosses stay) and brings soldiers back.
+func revive(count: int) -> void:
+	for e in Game.enemies.duplicate():
+		if not (e is Boss) and absf(e.position.z - position.z) < REVIVE_CLEAR_RANGE:
+			e.take_damage(99999.0)
+	add_random_soldiers(count)
 
 
 func on_soldier_died() -> void:

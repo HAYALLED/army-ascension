@@ -31,6 +31,8 @@ func _ready() -> void:
 	PlayerData.soldier_changed.connect(_on_soldier_changed)
 	PlayerData.level_progress_changed.connect(request_save)
 	PlayerData.settings_changed.connect(request_save)
+	PlayerData.shop_changed.connect(request_save)
+	MissionManager.changed.connect(request_save)
 
 
 func _notification(what: int) -> void:

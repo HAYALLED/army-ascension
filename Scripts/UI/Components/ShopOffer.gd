@@ -27,3 +27,10 @@ func _ready() -> void:
 	_button.pressed.connect(func() -> void:
 		AudioManager.play("ui_click")
 		buy.emit(item_id))
+
+
+## Replaces the buy button text; a disabled button (OWNED, SOON) uses the gray style.
+func set_button(text: String, disabled: bool) -> void:
+	_button.text = text
+	_button.disabled = disabled
+	_button.theme_type_variation = &"ButtonDisabled" if disabled else StringName(button_style)

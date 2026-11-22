@@ -13,6 +13,10 @@
 [ext_resource type="Script" path="res://Scripts/Ingame/SpikeWall.gd" id="11_62awn"]
 [ext_resource type="PackedScene" path="res://Scene/Ingame/WaveTrigger.tscn" id="12_8qcv4"]
 [ext_resource type="Script" path="res://Scripts/Ingame/WaveTrigger.gd" id="13_ia5dd"]
+[ext_resource type="PackedScene" path="res://Assets/Ingame/miniarena_floor_tile.glb" id="14_mfloor"]
+[ext_resource type="PackedScene" path="res://Assets/Ingame/miniarena_wall_side.glb" id="15_mwall"]
+[ext_resource type="PackedScene" path="res://Assets/Ingame/miniarena_wall_back.glb" id="16_mback"]
+[ext_resource type="PackedScene" path="res://Assets/Ingame/miniarena_entrance.glb" id="17_mgate"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_wkgov"]
 albedo_color = Color(0.45, 0.62, 0.34, 1)
@@ -201,6 +205,50 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -361)
 [node name="Entrance" type="Node3D" parent="Arena" unique_id=1125434444 instance=ExtResource("7_n358c")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -300)
 
+[node name="MiniArena" type="Node3D" parent="."]
+
+[node name="MiniFloor0" type="Node3D" parent="MiniArena" instance=ExtResource("14_mfloor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.16, -305)
+
+[node name="MiniWallLeft0" type="Node3D" parent="MiniArena" instance=ExtResource("15_mwall")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.9, 0, -305)
+
+[node name="MiniWallRight0" type="Node3D" parent="MiniArena" instance=ExtResource("15_mwall")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 7.9, 0, -305)
+
+[node name="MiniFloor1" type="Node3D" parent="MiniArena" instance=ExtResource("14_mfloor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.16, -315)
+
+[node name="MiniWallLeft1" type="Node3D" parent="MiniArena" instance=ExtResource("15_mwall")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.9, 0, -315)
+
+[node name="MiniWallRight1" type="Node3D" parent="MiniArena" instance=ExtResource("15_mwall")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 7.9, 0, -315)
+
+[node name="MiniFloor2" type="Node3D" parent="MiniArena" instance=ExtResource("14_mfloor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.16, -325)
+
+[node name="MiniWallLeft2" type="Node3D" parent="MiniArena" instance=ExtResource("15_mwall")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.9, 0, -325)
+
+[node name="MiniWallRight2" type="Node3D" parent="MiniArena" instance=ExtResource("15_mwall")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 7.9, 0, -325)
+
+[node name="MiniFloor3" type="Node3D" parent="MiniArena" instance=ExtResource("14_mfloor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.16, -335)
+
+[node name="MiniWallLeft3" type="Node3D" parent="MiniArena" instance=ExtResource("15_mwall")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.9, 0, -335)
+
+[node name="MiniWallRight3" type="Node3D" parent="MiniArena" instance=ExtResource("15_mwall")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 7.9, 0, -335)
+
+[node name="MiniBackWall" type="Node3D" parent="MiniArena" instance=ExtResource("16_mback")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -341)
+
+[node name="MiniEntrance" type="Node3D" parent="MiniArena" instance=ExtResource("17_mgate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -300)
+
 [node name="Gates" type="Node3D" parent="." unique_id=1412899669]
 
 [node name="Gate1" type="Node3D" parent="Gates" unique_id=1904896826 instance=ExtResource("8_5vvh6")]
@@ -295,3 +343,9 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -318)
 
 [node name="BossSpawn" type="Marker3D" parent="Markers" unique_id=391949047]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -350)
+
+[node name="MiniArenaStop" type="Marker3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -313)
+
+[node name="MiniBossSpawn" type="Marker3D" parent="Markers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -332)

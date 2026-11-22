@@ -1,6 +1,7 @@
 class_name UpgradePage
 extends Control
-## Quick upgrade list: one row per soldier class.
+## Army-wide upgrades: income, damage, health, fire rate, shard luck, reinforcements.
+## They affect every soldier. Per-soldier upgrades are in the Soldiers tab.
 
 const ROW := preload("res://Scene/UI/Components/UpgradeRow.tscn")
 
@@ -8,7 +9,7 @@ const ROW := preload("res://Scene/UI/Components/UpgradeRow.tscn")
 
 
 func _ready() -> void:
-	for type in SoldierDB.DATA:
+	for id in GlobalUpgradeDB.DATA:
 		var row := ROW.instantiate() as UpgradeRow
-		row.setup(type)
+		row.setup(id)
 		_list.add_child(row)

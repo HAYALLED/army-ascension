@@ -1,21 +1,153 @@
 class_name Boss
 extends Enemy
-## Iron Colossus. Sleeps until the army gets close, then cycles three
-## attack patterns: FAN (projectile spread), SLAM (telegraphed ground
-## smash, dodge by strafing) and SUMMON (calls 8-20 random enemies, often and fast).
-## Below 50% health it enrages: faster patterns and bigger fans.
+## Boss brain shared by the three full bosses (Iron Colossus, Yeti King, Magma Drake: levels 5, 10, 15)
+## and the twelve mini bosses (every other level, four per round). Sleeps until the army gets close, then cycles its pattern
+## sequence from CONFIGS: FAN (projectile spread), SLAM (telegraphed ground smash),
+## BOMBS (several small telegraphed blasts on random soldiers) and SUMMON
+## (reinforcement wave of random enemies). Below 50% health it enrages: faster
+## patterns and bigger fans. Dying ends the battle with a victory.
 
-enum Pattern { FAN, SLAM, SUMMON }
+enum Pattern { FAN, SLAM, SUMMON, BOMBS }
 enum Phase { SLEEP, WALK, WINDUP, RECOVER }
 
-const SEQUENCE := [Pattern.FAN, Pattern.SUMMON, Pattern.SLAM, Pattern.SUMMON, Pattern.FAN, Pattern.SLAM]
 const SUMMON_WINDUP := 0.5
 const SUMMON_RECOVER := 0.9
-const WAKE_DISTANCE := 55.0
-const HOLD_DISTANCE := 13.0
-const SLAM_RADIUS := 3.3
-const SLAM_DAMAGE := 40.0
-const SLAM_TIME := 1.4
+## Animation clip tried per pattern (models without clips ignore it).
+const PATTERN_ANIMS := ["shoot", "slam", "roar", "attack"]
+
+## Values every kind starts from. A CONFIGS entry only needs the keys it changes (config_of merges them).
+const DEFAULTS := {
+	"banner": "MINI BOSS", "wake": 48.0, "hold": 12.0, "death_blasts": 5,
+	"sequence": [Pattern.SLAM, Pattern.FAN, Pattern.SUMMON],
+	"fan_shots": 5, "fan_shots_enraged": 9, "fan_arc": 0.45, "fan_damage": 7.0, "fan_volleys": 2,
+	"slam_radius": 3.2, "slam_damage": 32.0, "slam_time": 1.3,
+	"bomb_count": 4, "bomb_count_enraged": 6, "bomb_radius": 2.4, "bomb_damage": 30.0, "bomb_time": 1.1,
+	"summon_min": 8, "summon_max": 14,
+	"recover": 1.8, "recover_enraged": 1.2,
+}
+
+## Per-kind behaviour. Every number is a starting balance value and can be tuned.
+const CONFIGS := {
+	EnemyDB.Kind.BOSS: {
+		"banner": "BOSS!", "wake": 55.0, "hold": 13.0, "death_blasts": 9,
+		"sequence": [Pattern.FAN, Pattern.SUMMON, Pattern.SLAM, Pattern.SUMMON, Pattern.FAN, Pattern.SLAM],
+		"fan_shots": 9, "fan_shots_enraged": 13, "fan_arc": 0.66, "fan_damage": 8.0, "fan_volleys": 2,
+		"slam_radius": 3.3, "slam_damage": 40.0, "slam_time": 1.4,
+		"bomb_count": 0, "bomb_count_enraged": 0, "bomb_radius": 2.0, "bomb_damage": 0.0, "bomb_time": 1.0,
+		"summon_min": 8, "summon_max": 20,
+		"recover": 2.2, "recover_enraged": 1.4,
+	},
+	## Brawler: slams the ground over and over, calls a small wave now and then.
+	EnemyDB.Kind.MINI_CRUSHER: {
+		"banner": "MINI BOSS: CRUSHER", "wake": 48.0, "hold": 11.0, "death_blasts": 5,
+		"sequence": [Pattern.SLAM, Pattern.SLAM, Pattern.SUMMON, Pattern.SLAM],
+		"fan_shots": 5, "fan_shots_enraged": 7, "fan_arc": 0.4, "fan_damage": 6.0, "fan_volleys": 1,
+		"slam_radius": 3.6, "slam_damage": 34.0, "slam_time": 1.2,
+		"bomb_count": 0, "bomb_count_enraged": 0, "bomb_radius": 2.0, "bomb_damage": 0.0, "bomb_time": 1.0,
+		"summon_min": 8, "summon_max": 12,
+		"recover": 1.8, "recover_enraged": 1.2,
+	},
+	## Gunner mech: wide minigun fans fired from its Muzzle, sometimes a wave.
+	EnemyDB.Kind.MINI_GATLING: {
+		"banner": "MINI BOSS: GATLING", "wake": 48.0, "hold": 12.0, "death_blasts": 5,
+		"sequence": [Pattern.FAN, Pattern.FAN, Pattern.SUMMON, Pattern.FAN],
+		"fan_shots": 7, "fan_shots_enraged": 11, "fan_arc": 0.5, "fan_damage": 6.0, "fan_volleys": 3,
+		"slam_radius": 3.0, "slam_damage": 30.0, "slam_time": 1.2,
+		"bomb_count": 0, "bomb_count_enraged": 0, "bomb_radius": 2.0, "bomb_damage": 0.0, "bomb_time": 1.0,
+		"summon_min": 8, "summon_max": 14,
+		"recover": 1.6, "recover_enraged": 1.1,
+	},
+	## Bomb chief: bombs land on random soldiers, plus the biggest reinforcement waves.
+	EnemyDB.Kind.MINI_BOMBER: {
+		"banner": "MINI BOSS: BOMBER CHIEF", "wake": 48.0, "hold": 12.0, "death_blasts": 5,
+		"sequence": [Pattern.BOMBS, Pattern.SUMMON, Pattern.BOMBS, Pattern.BOMBS, Pattern.SUMMON],
+		"fan_shots": 5, "fan_shots_enraged": 7, "fan_arc": 0.4, "fan_damage": 6.0, "fan_volleys": 1,
+		"slam_radius": 3.0, "slam_damage": 30.0, "slam_time": 1.2,
+		"bomb_count": 4, "bomb_count_enraged": 6, "bomb_radius": 2.4, "bomb_damage": 30.0, "bomb_time": 1.1,
+		"summon_min": 12, "summon_max": 20,
+		"recover": 1.7, "recover_enraged": 1.1,
+	},
+	## Warlord: mostly calls reinforcements, backed by a small fan and a slam.
+	EnemyDB.Kind.MINI_COMMANDER: {
+		"banner": "MINI BOSS: COMMANDER", "wake": 48.0, "hold": 12.0, "death_blasts": 5,
+		"sequence": [Pattern.SUMMON, Pattern.FAN, Pattern.SUMMON, Pattern.SLAM],
+		"fan_shots": 5, "fan_shots_enraged": 9, "fan_arc": 0.45, "fan_damage": 7.0, "fan_volleys": 2,
+		"slam_radius": 3.2, "slam_damage": 32.0, "slam_time": 1.3,
+		"bomb_count": 0, "bomb_count_enraged": 0, "bomb_radius": 2.0, "bomb_damage": 0.0, "bomb_time": 1.0,
+		"summon_min": 10, "summon_max": 20,
+		"recover": 1.8, "recover_enraged": 1.2,
+	},
+	## ---- Round 2 (ice) ----
+	## Yeti King: heavy slams, ice shard fans, ice bombs, big summons.
+	EnemyDB.Kind.BOSS_YETI: {
+		"banner": "BOSS: YETI KING", "wake": 55.0, "hold": 14.0, "death_blasts": 9,
+		"sequence": [Pattern.SLAM, Pattern.FAN, Pattern.SUMMON, Pattern.SLAM, Pattern.BOMBS, Pattern.SUMMON],
+		"fan_shots": 9, "fan_shots_enraged": 13, "fan_arc": 0.7, "fan_damage": 9.0, "fan_volleys": 2,
+		"slam_radius": 3.8, "slam_damage": 46.0, "slam_time": 1.4,
+		"bomb_count": 5, "bomb_count_enraged": 8, "bomb_radius": 2.4, "bomb_damage": 34.0, "bomb_time": 1.2,
+		"summon_min": 10, "summon_max": 20, "recover": 2.0, "recover_enraged": 1.3,
+	},
+	## Icebreaker: ground slams.
+	EnemyDB.Kind.MINI_ICEBREAKER: {
+		"banner": "MINI BOSS: ICEBREAKER", "hold": 11.0,
+		"sequence": [Pattern.SLAM, Pattern.SLAM, Pattern.SUMMON, Pattern.SLAM],
+		"slam_radius": 3.8, "slam_damage": 38.0, "slam_time": 1.2, "summon_min": 8, "summon_max": 12,
+	},
+	## Blizzard Gunner: wide twin-gun fans.
+	EnemyDB.Kind.MINI_BLIZZARD: {
+		"banner": "MINI BOSS: BLIZZARD GUNNER",
+		"sequence": [Pattern.FAN, Pattern.FAN, Pattern.SUMMON, Pattern.FAN],
+		"fan_shots": 8, "fan_shots_enraged": 12, "fan_arc": 0.55, "fan_damage": 7.0, "fan_volleys": 3,
+	},
+	## Sled Rider: lobbed ice bombs and big waves.
+	EnemyDB.Kind.MINI_SLED: {
+		"banner": "MINI BOSS: SLED RIDER",
+		"sequence": [Pattern.BOMBS, Pattern.SUMMON, Pattern.BOMBS, Pattern.BOMBS, Pattern.SUMMON],
+		"bomb_count": 5, "bomb_count_enraged": 7, "bomb_radius": 2.4, "bomb_damage": 32.0, "summon_min": 12, "summon_max": 20,
+	},
+	## Frost Commander: calls reinforcements.
+	EnemyDB.Kind.MINI_FROST_COMMANDER: {
+		"banner": "MINI BOSS: FROST COMMANDER",
+		"sequence": [Pattern.SUMMON, Pattern.FAN, Pattern.SUMMON, Pattern.SLAM],
+		"fan_damage": 8.0, "slam_damage": 34.0, "summon_min": 10, "summon_max": 20,
+	},
+	## ---- Round 3 (lava) ----
+	## Magma Drake: fire fans from its Muzzle, fire rain, slams, big summons.
+	EnemyDB.Kind.BOSS_DRAKE: {
+		"banner": "BOSS: MAGMA DRAKE", "wake": 55.0, "hold": 14.0, "death_blasts": 9,
+		"sequence": [Pattern.FAN, Pattern.BOMBS, Pattern.SUMMON, Pattern.FAN, Pattern.BOMBS, Pattern.SLAM],
+		"fan_shots": 11, "fan_shots_enraged": 15, "fan_arc": 0.75, "fan_damage": 10.0, "fan_volleys": 3,
+		"slam_radius": 3.8, "slam_damage": 50.0, "slam_time": 1.3,
+		"bomb_count": 6, "bomb_count_enraged": 9, "bomb_radius": 2.5, "bomb_damage": 38.0, "bomb_time": 1.1,
+		"summon_min": 12, "summon_max": 20, "recover": 1.9, "recover_enraged": 1.2,
+	},
+	## Forge Smasher: ground slams.
+	EnemyDB.Kind.MINI_FORGE_SMASHER: {
+		"banner": "MINI BOSS: FORGE SMASHER", "hold": 11.0,
+		"sequence": [Pattern.SLAM, Pattern.SLAM, Pattern.SUMMON, Pattern.SLAM],
+		"slam_radius": 4.0, "slam_damage": 42.0, "slam_time": 1.1, "summon_min": 8, "summon_max": 12,
+	},
+	## Flamecaster: fire fans from its Muzzle.
+	EnemyDB.Kind.MINI_FLAMECASTER: {
+		"banner": "MINI BOSS: FLAMECASTER",
+		"sequence": [Pattern.FAN, Pattern.FAN, Pattern.SUMMON, Pattern.FAN],
+		"fan_shots": 8, "fan_shots_enraged": 13, "fan_arc": 0.55, "fan_damage": 8.0, "fan_volleys": 3,
+	},
+	## Lava Mortar: lava bombs and big waves.
+	EnemyDB.Kind.MINI_LAVA_MORTAR: {
+		"banner": "MINI BOSS: LAVA MORTAR",
+		"sequence": [Pattern.BOMBS, Pattern.SUMMON, Pattern.BOMBS, Pattern.BOMBS, Pattern.SUMMON],
+		"bomb_count": 5, "bomb_count_enraged": 8, "bomb_radius": 2.6, "bomb_damage": 36.0, "summon_min": 12, "summon_max": 20,
+	},
+	## Foundry Overseer: calls reinforcements.
+	EnemyDB.Kind.MINI_FOUNDRY_OVERSEER: {
+		"banner": "MINI BOSS: FOUNDRY OVERSEER",
+		"sequence": [Pattern.SUMMON, Pattern.FAN, Pattern.SUMMON, Pattern.SLAM],
+		"fan_damage": 9.0, "slam_damage": 38.0, "summon_min": 12, "summon_max": 20,
+	},
+}
+
+var cfg: Dictionary = DEFAULTS.merged(CONFIGS[EnemyDB.Kind.BOSS], true)
 
 var _state: int = Phase.SLEEP
 var _pattern: int = Pattern.FAN
@@ -23,9 +155,13 @@ var _timer: float = 0.0
 var _seq_i: int = 0
 var _volleys: int = 0
 var _slam_pos: Vector3 = Vector3.ZERO
-var _slam_total: float = SLAM_TIME
-var _tele: MeshInstance3D = null
-var _tele_fill: MeshInstance3D = null
+var _slam_total: float = 1.4
+var _bomb_spots: Array = []
+var _bomb_total: float = 1.0
+var _tele_rings: Array = []
+var _tele_fills: Array = []
+var _tele_radius: float = 1.0
+var _muzzle: Node3D = null
 var _enraged: bool = false
 
 
@@ -33,29 +169,45 @@ func _init() -> void:
 	kind = EnemyDB.Kind.BOSS
 
 
+## Behaviour table of a kind (falls back to the Iron Colossus).
+static func config_of(p_kind: int) -> Dictionary:
+	return DEFAULTS.merged(CONFIGS.get(p_kind, CONFIGS[EnemyDB.Kind.BOSS]), true)
+
+
+func _post_ready() -> void:
+	cfg = config_of(kind)
+	_slam_total = float(cfg["slam_time"])
+	_muzzle = _model.find_child("Muzzle", true, false) as Node3D
+
+
 func _exit_tree() -> void:
 	super._exit_tree()
-	if is_instance_valid(_tele):
-		_tele.queue_free()
-	if is_instance_valid(_tele_fill):
-		_tele_fill.queue_free()
+	for n in _tele_rings:
+		if is_instance_valid(n):
+			(n as Node).queue_free()
+	for n in _tele_fills:
+		if is_instance_valid(n):
+			(n as Node).queue_free()
+	_tele_rings.clear()
+	_tele_fills.clear()
 
 
 func _think(delta: float) -> void:
 	var army := Game.army
 	if army == null:
 		return
+	var hold := float(cfg["hold"])
 	var to := army.position - position
 	to.y = 0.0
 	var dist := to.length()
 	var face := to / dist if dist > 0.01 else Vector3(0, 0, 1)
 	match _state:
 		Phase.SLEEP:
-			if dist < WAKE_DISTANCE:
+			if dist < float(cfg["wake"]):
 				_wake()
 			return
 		Phase.WALK:
-			if dist > HOLD_DISTANCE:
+			if dist > hold:
 				position += face * speed * delta
 			_timer -= delta
 			if _timer <= 0.0:
@@ -64,43 +216,51 @@ func _think(delta: float) -> void:
 			_timer -= delta
 			_update_windup(delta, face)
 		Phase.RECOVER:
-			if dist > HOLD_DISTANCE:
+			if dist > hold:
 				position += face * speed * delta
 			_timer -= delta
 			if _timer <= 0.0:
 				_state = Phase.WALK
 				_timer = 0.2
-	_animate(delta, face, _state == Phase.WALK and dist > HOLD_DISTANCE)
+	_animate(delta, face, _state == Phase.WALK and dist > hold)
 
 
 func _wake() -> void:
 	_state = Phase.WALK
 	_timer = 1.5
 	Game.boss_spawned.emit(enemy_name, max_hp)
-	Game.banner_requested.emit("BOSS!", Color(1.0, 0.25, 0.2))
+	Game.banner_requested.emit(str(cfg["banner"]), Color(1.0, 0.25, 0.2))
 	AudioManager.play("boss_roar")
 	Game.camera_rig.shake(0.35)
 
 
 func _start_pattern(army: Army) -> void:
-	_pattern = SEQUENCE[_seq_i % SEQUENCE.size()]
+	var seq: Array = cfg["sequence"]
+	_pattern = int(seq[_seq_i % seq.size()])
 	_seq_i += 1
 	_state = Phase.WINDUP
 	_set_overlay(Mats.warn())
 	if _anim != null:
-		Models.play(_anim, ["shoot", "slam", "roar"][_pattern])
+		Models.play(_anim, PATTERN_ANIMS[_pattern])
 	match _pattern:
 		Pattern.FAN:
 			_timer = 0.7
-			_volleys = 2
+			_volleys = int(cfg["fan_volleys"])
 		Pattern.SLAM:
-			_slam_total = SLAM_TIME * (0.75 if _enraged else 1.0)
+			_slam_total = float(cfg["slam_time"]) * (0.75 if _enraged else 1.0)
 			_timer = _slam_total
 			_slam_pos = Vector3(army.position.x, 0.0, army.position.z)
-			_show_telegraph()
+			_show_telegraph([_slam_pos], float(cfg["slam_radius"]))
 		Pattern.SUMMON:
 			_timer = SUMMON_WINDUP
 			AudioManager.play("boss_roar", 1.3)
+		Pattern.BOMBS:
+			_bomb_total = float(cfg["bomb_time"]) * (0.8 if _enraged else 1.0)
+			_timer = _bomb_total
+			var n := int(cfg["bomb_count_enraged"] if _enraged else cfg["bomb_count"])
+			_bomb_spots = _pick_bomb_spots(n)
+			_show_telegraph(_bomb_spots, float(cfg["bomb_radius"]))
+			AudioManager.play("boss_roar", 1.15)
 
 
 func _update_windup(_delta: float, face: Vector3) -> void:
@@ -114,12 +274,19 @@ func _update_windup(_delta: float, face: Vector3) -> void:
 				else:
 					_finish_pattern()
 		Pattern.SLAM:
-			var k := clampf(1.0 - _timer / _slam_total, 0.0, 1.0)
-			if is_instance_valid(_tele_fill):
-				var s := maxf(SLAM_RADIUS * k, 0.01)
-				_tele_fill.scale = Vector3(s, 1.0, s)
+			_fill_telegraph(clampf(1.0 - _timer / _slam_total, 0.0, 1.0))
 			if _timer <= 0.0:
-				_do_slam()
+				_do_blast(_slam_pos, float(cfg["slam_radius"]), float(cfg["slam_damage"]))
+				AudioManager.play("slam")
+				Game.camera_rig.shake(0.5)
+				_finish_pattern()
+		Pattern.BOMBS:
+			_fill_telegraph(clampf(1.0 - _timer / _bomb_total, 0.0, 1.0))
+			if _timer <= 0.0:
+				for spot: Vector3 in _bomb_spots:
+					_do_blast(spot, float(cfg["bomb_radius"]), float(cfg["bomb_damage"]))
+				AudioManager.play("explosion")
+				Game.camera_rig.shake(0.35)
 				_finish_pattern()
 		Pattern.SUMMON:
 			if _timer <= 0.0:
@@ -134,65 +301,105 @@ func _finish_pattern() -> void:
 	if _pattern == Pattern.SUMMON:
 		_timer = SUMMON_RECOVER * (0.7 if _enraged else 1.0)
 	else:
-		_timer = 1.4 if _enraged else 2.2
+		_timer = float(cfg["recover_enraged"] if _enraged else cfg["recover"])
 
 
 func _fire_fan(face: Vector3) -> void:
 	var army := Game.army
 	var from := position + Vector3(0, 2.5, 0) + face * 2.0
+	if is_instance_valid(_muzzle):
+		from = _muzzle.global_position
 	var dir := army.position - from
 	dir.y = 0.0
 	dir = dir.normalized()
-	var shots := 13 if _enraged else 9
+	var shots := int(cfg["fan_shots_enraged"] if _enraged else cfg["fan_shots"])
+	var arc := float(cfg["fan_arc"])
+	var dmg := float(cfg["fan_damage"]) * Game.difficulty_scale()
 	for i in shots:
-		var ang := lerpf(-0.66, 0.66, float(i) / float(shots - 1))
-		Game.enemy_bullets.fire(from, dir.rotated(Vector3.UP, ang), 15.0, 8.0 * Game.difficulty_scale(), 45.0, 0, 0.0, ProjectilePool.KIND_BOSS, 0.3)
+		var t := 0.5 if shots < 2 else float(i) / float(shots - 1)
+		var ang := lerpf(-arc, arc, t)
+		Game.enemy_bullets.fire(from, dir.rotated(Vector3.UP, ang), 15.0, dmg, 45.0, 0, 0.0, ProjectilePool.KIND_BOSS, 0.3)
 	AudioManager.play("boss_shoot")
 	Game.camera_rig.shake(0.12)
 
 
-func _do_slam() -> void:
+## Area damage on the player's soldiers around `center` (slam and bombs).
+func _do_blast(center: Vector3, blast_radius: float, base_damage: float) -> void:
 	for s: Soldier in Game.soldiers.duplicate():
-		var dx := s.position.x - _slam_pos.x
-		var dz := s.position.z - _slam_pos.z
-		var r := SLAM_RADIUS + s.radius
+		var dx := s.position.x - center.x
+		var dz := s.position.z - center.z
+		var r := blast_radius + s.radius
 		if dx * dx + dz * dz <= r * r:
-			s.take_damage(SLAM_DAMAGE * Game.difficulty_scale())
-	Game.fx.explosion(_slam_pos, SLAM_RADIUS)
-	AudioManager.play("slam")
-	Game.camera_rig.shake(0.5)
+			s.take_damage(base_damage * Game.difficulty_scale())
+	Game.fx.explosion(center, blast_radius)
+
+
+func _pick_bomb_spots(count: int) -> Array:
+	var spots: Array = []
+	var pool: Array = Game.soldiers.duplicate()
+	pool.shuffle()
+	for i in count:
+		var p: Vector3 = Game.army.position
+		if i < pool.size():
+			p = (pool[i] as Soldier).position
+		else:
+			p += Vector3(randf_range(-3.0, 3.0), 0.0, randf_range(-2.0, 2.0))
+		spots.append(Vector3(p.x, 0.0, p.z))
+	return spots
 
 
 func _do_summon() -> void:
-	Enemy.spawn_minions(get_parent(), position)
+	Enemy.spawn_minions(get_parent(), position, int(cfg["summon_min"]), int(cfg["summon_max"]))
 	Game.camera_rig.shake(0.2)
 
 
-func _show_telegraph() -> void:
-	if _tele == null:
-		_tele = MeshInstance3D.new()
-		_tele.mesh = Mats.cylinder(1.0, 1.0, 0.04, 32)
-		_tele.material_override = Mats.unshaded(Color(1.0, 0.1, 0.1, 0.28))
-		_tele.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		get_parent().add_child(_tele)
-		_tele_fill = MeshInstance3D.new()
-		_tele_fill.mesh = Mats.cylinder(1.0, 1.0, 0.05, 32)
-		_tele_fill.material_override = Mats.unshaded(Color(1.0, 0.15, 0.1, 0.5))
-		_tele_fill.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		get_parent().add_child(_tele_fill)
-	_tele.position = _slam_pos + Vector3(0, 0.1, 0)
-	_tele.scale = Vector3(SLAM_RADIUS, 1.0, SLAM_RADIUS)
-	_tele.visible = true
-	_tele_fill.position = _slam_pos + Vector3(0, 0.11, 0)
-	_tele_fill.scale = Vector3(0.01, 1.0, 0.01)
-	_tele_fill.visible = true
+## Red warning discs on the ground: one per spot, all the same radius.
+func _show_telegraph(spots: Array, p_radius: float) -> void:
+	_tele_radius = p_radius
+	while _tele_rings.size() < spots.size():
+		var ring := MeshInstance3D.new()
+		ring.mesh = Mats.cylinder(1.0, 1.0, 0.04, 32)
+		ring.material_override = Mats.unshaded(Color(1.0, 0.1, 0.1, 0.28))
+		ring.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		get_parent().add_child(ring)
+		_tele_rings.append(ring)
+		var fill := MeshInstance3D.new()
+		fill.mesh = Mats.cylinder(1.0, 1.0, 0.05, 32)
+		fill.material_override = Mats.unshaded(Color(1.0, 0.15, 0.1, 0.5))
+		fill.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		get_parent().add_child(fill)
+		_tele_fills.append(fill)
+	for i in _tele_rings.size():
+		var ring := _tele_rings[i] as MeshInstance3D
+		var fill := _tele_fills[i] as MeshInstance3D
+		if i < spots.size():
+			var spot: Vector3 = spots[i]
+			ring.position = spot + Vector3(0, 0.1, 0)
+			ring.scale = Vector3(p_radius, 1.0, p_radius)
+			ring.visible = true
+			fill.position = spot + Vector3(0, 0.11, 0)
+			fill.scale = Vector3(0.01, 1.0, 0.01)
+			fill.visible = true
+		else:
+			ring.visible = false
+			fill.visible = false
+
+
+## 0..1: how far the warning discs have filled (blast happens at 1).
+func _fill_telegraph(k: float) -> void:
+	var s := maxf(_tele_radius * k, 0.01)
+	for fill in _tele_fills:
+		if is_instance_valid(fill):
+			(fill as MeshInstance3D).scale = Vector3(s, 1.0, s)
 
 
 func _hide_telegraph() -> void:
-	if is_instance_valid(_tele):
-		_tele.visible = false
-	if is_instance_valid(_tele_fill):
-		_tele_fill.visible = false
+	for n in _tele_rings:
+		if is_instance_valid(n):
+			(n as MeshInstance3D).visible = false
+	for n in _tele_fills:
+		if is_instance_valid(n):
+			(n as MeshInstance3D).visible = false
 
 
 func _on_damaged() -> void:
@@ -217,7 +424,7 @@ func _die() -> void:
 	Game.camera_rig.shake(0.6)
 	AudioManager.play("explosion")
 	var tw := create_tween()
-	for i in 9:
+	for i in int(cfg["death_blasts"]):
 		tw.tween_callback(_death_blast)
 		tw.tween_interval(0.2)
 	tw.tween_property(_model, "scale", Vector3.ZERO, 0.5).set_ease(Tween.EASE_IN)
@@ -225,7 +432,7 @@ func _die() -> void:
 
 
 func _death_blast() -> void:
-	var p := position + Vector3(randf_range(-1.8, 1.8), randf_range(0.5, 4.0), randf_range(-1.5, 1.5))
+	var p := position + Vector3(randf_range(-1.8, 1.8), randf_range(0.07, 0.6) * _bar_h, randf_range(-1.5, 1.5))
 	Game.fx.explosion(p, 2.2)
 	Game.camera_rig.shake(0.25)
 

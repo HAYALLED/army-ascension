@@ -39,6 +39,7 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="LevelBanner" type="Control" parent="Margin/Content" unique_id=1619142688]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 110)
 layout_mode = 2
 mouse_filter = 2
@@ -107,6 +108,11 @@ theme_override_font_sizes/font_size = 30
 text = "FREE CHEST"
 icon = ExtResource("7_m3vpb")
 expand_icon = true
+
+[node name="ChestSlots" type="HBoxContainer" parent="Margin/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 16
 
 [node name="@Control@19" type="Control" parent="Margin/Content" unique_id=1550702672]
 custom_minimum_size = Vector2(0, 8)

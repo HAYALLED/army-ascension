@@ -22,7 +22,7 @@ func _ready() -> void:
 
 	# every kind spawns from its scene with the right data
 	for kind in EnemyDB.DATA:
-		if kind == EnemyDB.Kind.BOSS:
+		if EnemyDB.is_boss_kind(kind):
 			continue
 		var e := Enemy.spawn(units, kind, Vector3(0, 0, -30))
 		await get_tree().process_frame
@@ -88,5 +88,19 @@ func _ready() -> void:
 
 	# level rule
 	_check("boss levels are 5, 10", LevelDB.is_boss_level(5) and LevelDB.is_boss_level(10) and not LevelDB.is_boss_level(1) and not LevelDB.is_boss_level(4) and not LevelDB.is_boss_level(0))
+
+	# mini bosses: level 1 fights the Crusher in the mini arena
+	_check("level 1 battle uses the mini arena", battle.level.is_mini and battle.level.boss_spawn.name == "MiniBossSpawn")
+	_check("level 1 boss is the Crusher mini boss", boss.kind == EnemyDB.Kind.MINI_CRUSHER and boss.enemy_name == "CRUSHER")
+	for kind in EnemyDB.BOSS_KINDS:
+		var mb := Enemy.spawn(units, kind, Vector3(0, 0, -400)) as Boss
+		await get_tree().process_frame
+		var seq: Array = mb.cfg["sequence"]
+		_check("%s is a Boss with a pattern sequence" % EnemyDB.DATA[kind]["name"], mb != null and mb.kind == kind and not seq.is_empty() and EnemyDB.is_boss_kind(kind))
+		_check("%s is smaller than the Colossus unless it is a full boss" % EnemyDB.DATA[kind]["name"], EnemyDB.FULL_BOSS_KINDS.has(kind) or mb.max_hp < float(EnemyDB.DATA[EnemyDB.Kind.BOSS]["health"]) * Game.difficulty_scale())
+		mb.queue_free()
+	await get_tree().process_frame
+	var n := Enemy.spawn_minions(units, Vector3(0, 0, -400), 12, 20)
+	_check("custom summon range 12..20", n >= 12 and n <= 20)
 
 	get_tree().quit(0 if _failed == 0 else 1)
