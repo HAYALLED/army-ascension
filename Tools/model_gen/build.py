@@ -2,10 +2,10 @@
 import os, sys, json
 import numpy as np
 from glbkit import Model
-import units, props, env
+import units, units_rank, props, env
 
-BUDGET = {"soldier": 900, "enemy": 2000, "boss": 8000, "prop": 1500}
-HEIGHT = {"rifleman": 1.3, "machine_gunner": 1.3, "sniper": 1.3, "rocket_soldier": 1.3, "medic": 1.3,
+BUDGET = {"soldier": 900, "rank": 1100, "enemy": 2000, "boss": 8000, "prop": 1500}
+HEIGHT = {**{f.__name__: 1.3 for f in units_rank.RANK_UNITS}, "rifleman": 1.3, "machine_gunner": 1.3, "sniper": 1.3, "rocket_soldier": 1.3, "medic": 1.3,
           "grunt": 1.5, "scout": 1.2, "brute": 2.2, "gunner": 1.6, "warlord": 3.6, "boss_colossus": 6.8}
 SIZE = {"tree_a": (2.5, 3.5, 2.5), "tree_b": (2.2, 4.5, 2.2), "rock_a": (1.4, 1.0, 1.2), "rock_b": (0.9, 0.7, 0.9),
         "building_a": (6, 7, 6), "building_b": (5, 11, 5), "building_c": (9, 5, 6), "barrier_a": (0.7, 0.85, 2.0),
@@ -17,6 +17,7 @@ SIZE = {"tree_a": (2.5, 3.5, 2.5), "tree_b": (2.2, 4.5, 2.2), "rock_a": (1.4, 1.
 out = sys.argv[1]
 report = []
 jobs = [("Units", f, "soldier") for f in units.SOLDIERS] + \
+       [("Units", f, "rank") for f in units_rank.RANK_UNITS] + \
        [("Enemy", f, "boss" if f.__name__ == "boss_colossus" else "enemy") for f in units.ENEMIES] + \
        [("Ingame", f, "prop") for f in list(props.PROPS.values()) + list(env.ENV.values())]
 ok = True

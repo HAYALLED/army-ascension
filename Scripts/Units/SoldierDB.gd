@@ -119,12 +119,18 @@ static func scene(type: int) -> PackedScene:
 	return _scenes[type]
 
 
+## Weighted random class among the classes the player owns.
 static func random_type() -> int:
 	var total := 0
 	for k in SPAWN_WEIGHTS:
-		total += int(SPAWN_WEIGHTS[k])
+		if PlayerData.owns(k):
+			total += int(SPAWN_WEIGHTS[k])
+	if total <= 0:
+		return Type.RIFLEMAN
 	var roll := randi() % total
 	for k in SPAWN_WEIGHTS:
+		if not PlayerData.owns(k):
+			continue
 		roll -= int(SPAWN_WEIGHTS[k])
 		if roll < 0:
 			return k

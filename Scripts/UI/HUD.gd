@@ -1,10 +1,10 @@
 class_name HUD
 extends CanvasLayer
 ## Battle HUD (scene: Scene/UI/HUD.tscn): resources, army status, level
-## progress, boss bar, banners and the pause / victory / defeat popup.
+## progress, boss bar, banners and the pause / revive offer / victory / defeat popup.
 ## Listens to Game signals; contains no layout code.
 
-enum Mode { NONE, PAUSE, WIN, LOSE }
+enum Mode { NONE, PAUSE, WIN, LOSE, REVIVE }
 
 @onready var _gold: Label = %GoldLabel
 @onready var _shards: Label = %ShardLabel
@@ -29,6 +29,7 @@ enum Mode { NONE, PAUSE, WIN, LOSE }
 var _boss_target: float = 0.0
 var _banner_tween: Tween = null
 var _mode: int = Mode.NONE
+var _ad_running: bool = false
 
 
 func _ready() -> void:
@@ -56,6 +57,7 @@ func _ready() -> void:
 	Game.boss_defeated.connect(func() -> void: _boss_panel.visible = false)
 	Game.battle_won.connect(_on_won)
 	Game.battle_lost.connect(_on_lost)
+	Game.revive_offered.connect(_on_revive_offered)
 
 
 func _process(delta: float) -> void:
@@ -126,6 +128,35 @@ func _on_won() -> void:
 	_open(Mode.WIN, "VICTORY!", Color(1.0, 0.85, 0.2), _result_text(true), "CONTINUE", "PLAY AGAIN", "")
 
 
+## Army wiped and an ad revive is available (Game state REVIVE, tree paused): offer it.
+## Declining ends the battle with the normal defeat screen.
+func _on_revive_offered() -> void:
+	_open(Mode.REVIVE, "ARMY DOWN!", Color(1.0, 0.3, 0.25),
+		"Watch a short ad to bring back %d soldiers\nwith +%d%% damage and keep fighting." % [Game.revive_count(), int(round(RewardDB.REVIVE_DAMAGE_BUFF * 100.0))],
+		"REVIVE  (WATCH AD)", "NO THANKS", "")
+
+
+## Plays the revive ad. Reward earned: army returns and the battle resumes. Ad closed early or
+## failed: the offer stays open so the player can try again or decline.
+func _watch_revive_ad() -> void:
+	if _ad_running:
+		return
+	_ad_running = true
+	_set_buttons_enabled(false)
+	var earned := await AdService.show_rewarded("revive")
+	_ad_running = false
+	_set_buttons_enabled(true)
+	if earned and _mode == Mode.REVIVE:
+		_close()
+		Game.revive()
+
+
+func _set_buttons_enabled(enabled: bool) -> void:
+	_primary.disabled = not enabled
+	_secondary.disabled = not enabled
+	_tertiary.disabled = not enabled
+
+
 func _on_lost() -> void:
 	AudioManager.play("defeat")
 	_open(Mode.LOSE, "DEFEAT", Color(1.0, 0.3, 0.25), _result_text(false), "TRY AGAIN", "HOME", "")
@@ -137,8 +168,18 @@ func _result_text(won: bool) -> String:
 	var gold_text := "+%d" % Game.final_gold(won)
 	if bonus > 0:
 		gold_text += "  (income +%d%%)" % bonus
-	return "Kills  %d\nGold  %s\nShards  +%d\nSurvivors  %d\nTime  %d:%02d" % [
-		Game.kills, gold_text, Game.shards, Game.soldiers.size(), floori(t / 60.0), t % 60]
+	return "Kills  %d\nGold  %s\nShards  +%d\nSurvivors  %d\nTime  %d:%02d%s" % [
+		Game.kills, gold_text, Game.shards, Game.soldiers.size(), floori(t / 60.0), t % 60, _chest_text(won)]
+
+
+## Result line for the chest a won level dropped (it waits in a home slot).
+func _chest_text(won: bool) -> String:
+	if not won or Game.dropped_chest.is_empty():
+		return ""
+	var chest_name := ChestDB.name_of(int(Game.dropped_chest["tier"]))
+	if Game.dropped_slot < 0:
+		return "\nChest  %s  (slots full, lost)" % chest_name
+	return "\nChest  %s  (open it on Home)" % chest_name
 
 
 func _open(mode: int, title: String, color: Color, stats: String, primary: String, secondary: String, tertiary: String) -> void:
@@ -173,6 +214,8 @@ func _on_primary() -> void:
 			Game.goto_menu()
 		Mode.LOSE:
 			Game.restart()
+		Mode.REVIVE:
+			_watch_revive_ad()
 
 
 func _on_secondary() -> void:
@@ -182,6 +225,8 @@ func _on_secondary() -> void:
 			Game.restart()
 		Mode.LOSE:
 			Game.goto_menu()
+		Mode.REVIVE:
+			Game.decline_revive()
 
 
 func _on_tertiary() -> void:

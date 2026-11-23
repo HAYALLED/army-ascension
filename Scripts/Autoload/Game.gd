@@ -37,6 +37,11 @@ var gold: int = 0
 var shards: int = 0
 var run_shards: Dictionary = {}   # SoldierDB.Type -> shards earned this battle
 var kills: int = 0
+## Chest the won battle dropped ({} = none) and the home slot it went into (-1 = slots were full).
+var dropped_chest: Dictionary = {}
+var dropped_slot: int = -1
+## Most soldiers the army had at one time this run (an ad revive brings back this many).
+var peak_soldiers: int = 0
 var elapsed: float = 0.0
 var damage_buff: float = 1.0
 var rate_buff: float = 1.0
@@ -65,6 +70,9 @@ func reset_run() -> void:
 	shards = 0
 	run_shards.clear()
 	kills = 0
+	dropped_chest = {}
+	dropped_slot = -1
+	peak_soldiers = 0
 	elapsed = 0.0
 	credited_gold = 0
 	gold_doubled = false
@@ -118,12 +126,18 @@ func can_revive() -> bool:
 	return not revive_used and not sim_mode and AdService.is_available()
 
 
+## Soldiers an ad revive brings back: the biggest army of this run, never fewer than REVIVE_SOLDIERS.
+func revive_count() -> int:
+	return clampi(maxi(peak_soldiers, RewardDB.REVIVE_SOLDIERS), 1, MAX_SOLDIERS)
+
+
 ## Ad watched: brings soldiers back, clears the enemies around the army and resumes the battle.
 func revive() -> void:
 	if state != State.REVIVE or army == null:
 		return
 	revive_used = true
-	army.revive(RewardDB.REVIVE_SOLDIERS)
+	army.revive(revive_count())
+	add_damage_buff(RewardDB.REVIVE_DAMAGE_BUFF)
 	get_tree().paused = false
 	_set_state(State.PLAYING)
 
@@ -157,6 +171,7 @@ func _finish_battle(won: bool) -> void:
 	_credit_rewards(won)
 	if won:
 		PlayerData.complete_level(level_index)
+		_drop_chest()
 	MissionManager.record_battle(won, kills, shards)
 	SaveManager.save_now()
 	_set_state(State.WON if won else State.LOST)
@@ -164,6 +179,14 @@ func _finish_battle(won: bool) -> void:
 		battle_won.emit()
 	else:
 		battle_lost.emit()
+
+
+## Every won level drops one chest (60% wood, 30% silver, 10% gold) into a free home slot.
+func _drop_chest() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.randomize()
+	dropped_chest = ChestDB.roll(ChestDB.roll_tier(rng), rng)
+	dropped_slot = PlayerData.add_chest(dropped_chest)
 
 
 ## Gold the player really receives for this battle: all of it on victory, half on defeat,

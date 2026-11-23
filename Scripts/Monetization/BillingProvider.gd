@@ -6,6 +6,7 @@ extends RefCounted
 ## same call). A real adapter must verify the purchase with the store before it reports ok = true,
 ## and must re-deliver purchases that were paid but not yet reported (app killed mid-payment).
 
+@warning_ignore("unused_signal")
 signal progress(text: String, ratio: float)
 signal finished(product_id: String, ok: bool, error: String)
 

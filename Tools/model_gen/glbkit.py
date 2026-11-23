@@ -204,12 +204,13 @@ class Model:
         return s
 
     # ---------------------------------------------------------------- export
-    def build_mesh(self, parts=None):
+    def build_mesh(self, parts=None, colors=None):
         parts = self.parts if parts is None else parts
-        colors = []
-        for _, c in parts:
-            if c not in colors:
-                colors.append(c)
+        if colors is None:
+            colors = []
+            for _, c in parts:
+                if c not in colors:
+                    colors.append(c)
         if len(colors) > GRID * GRID:
             raise ValueError("too many colors")
         hulls = []
@@ -284,9 +285,15 @@ class Model:
     def write_glb(self, path, as_unit=True):
         """Parts colored "TINT" become a second primitive with a plain white, texture-less
         material named "Tint" (the game recolors it). Everything else = material "Frame"/"palette"."""
-        main_parts = [p for p in self.parts if p[1] != "TINT"]
+        main_parts = [p for p in self.parts if p[1] != "TINT" and not p[1].startswith("G:")]
         tint_parts = [p for p in self.parts if p[1] == "TINT"]
-        pos, nor, uv, idx, colors = self.build_mesh(main_parts)
+        # "G:#RRGGBB" parts = rank glow: second primitive, same palette texture, emissive material
+        glow_parts = [(pts, c[2:]) for pts, c in self.parts if c.startswith("G:")]
+        colors = []
+        for _, c in main_parts + glow_parts:
+            if c not in colors:
+                colors.append(c)
+        pos, nor, uv, idx, colors = self.build_mesh(main_parts, colors)
         png = self.palette_png(colors)
         blob = bytearray()
         views, accs = [], []
@@ -326,10 +333,17 @@ class Model:
             "baseColorTexture": {"index": 0}, "metallicFactor": 0.0, "roughnessFactor": 0.9}}]
         if tint_parts:
             tpos, tnor, _, tidx, _ = self.build_mesh(tint_parts)
-            prims.append(add_prim(tpos, tnor, None, tidx, 1))
+            prims.append(add_prim(tpos, tnor, None, tidx, len(materials)))
             total_tris += len(tidx) // 3
             materials.append({"name": "Tint", "pbrMetallicRoughness": {
                 "baseColorFactor": [1.0, 1.0, 1.0, 1.0], "metallicFactor": 0.0, "roughnessFactor": 0.9}})
+        if glow_parts:
+            gpos, gnor, guv, gidx, _ = self.build_mesh(glow_parts, colors)
+            prims.append(add_prim(gpos, gnor, guv, gidx, len(materials)))
+            total_tris += len(gidx) // 3
+            materials.append({"name": "Glow", "pbrMetallicRoughness": {
+                "baseColorTexture": {"index": 0}, "metallicFactor": 0.0, "roughnessFactor": 0.9},
+                "emissiveTexture": {"index": 0}, "emissiveFactor": [1.0, 1.0, 1.0]})
         img_view = add_view(png)
 
         gltf = {

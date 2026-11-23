@@ -30,11 +30,17 @@ func _test_costs() -> void:
 	var ok := true
 	for id in GlobalUpgradeDB.DATA:
 		var prev := 0
-		for lv in GlobalUpgradeDB.max_level(id):
+		for lv in 60:
 			var c := GlobalUpgradeDB.cost(id, lv)
-			ok = ok and c > prev
+			ok = ok and (c > prev if lv < 45 else c >= prev)
 			prev = c
-	_check("global costs rise with every level", ok)
+	_check("global costs rise with every level (0-44, also after level 10) and never shrink after", ok)
+	_check("costs stay inside the currency limit", GlobalUpgradeDB.cost(U.FIRE_RATE, 5000) <= PlayerData.MAX_CURRENCY and GlobalUpgradeDB.cost(U.FIRE_RATE, 5000) > 0)
+	_check("tier helpers", GlobalUpgradeDB.tier_of(9.0) == 0 and GlobalUpgradeDB.tier_of(10.0) == 1 and GlobalUpgradeDB.tier_of(37.0) == 3
+		and is_equal_approx(GlobalUpgradeDB.tier_progress(23.0), 0.3) and is_equal_approx(GlobalUpgradeDB.tier_progress(20.0), 0.0))
+	_check("every tier has its own color, they repeat after the last",
+		GlobalUpgradeDB.tier_color(0) != GlobalUpgradeDB.tier_color(1) and GlobalUpgradeDB.tier_color(0) != GlobalUpgradeDB.tier_color(2)
+		and GlobalUpgradeDB.tier_color(GlobalUpgradeDB.TIER_COLORS.size()) == GlobalUpgradeDB.tier_color(0))
 	_check("effect text", GlobalUpgradeDB.effect_text(U.INCOME, 3) == "+30%" and GlobalUpgradeDB.effect_text(U.REINFORCEMENTS, 2) == "+2")
 	_check("ids round trip", GlobalUpgradeDB.from_id(GlobalUpgradeDB.id_of(U.HEALTH)) == U.HEALTH and GlobalUpgradeDB.from_id("nope") == -1)
 
@@ -46,12 +52,18 @@ func _test_buy() -> void:
 	var cost := GlobalUpgradeDB.cost(U.DAMAGE, 0)
 	PlayerData.gold = cost + 7
 	_check("buy spends exactly the cost", PlayerData.try_buy_upgrade(U.DAMAGE) and PlayerData.gold == 7 and PlayerData.upgrade_level(U.DAMAGE) == 1)
-	PlayerData.gold = PlayerData.MAX_CURRENCY
-	for i in 20:
+	var all_bought := true
+	for i in 45:
+		PlayerData.gold = PlayerData.MAX_CURRENCY
+		all_bought = all_bought and PlayerData.try_buy_upgrade(U.INCOME)
+	_check("no level limit: Battle Income bought 45 times", all_bought and PlayerData.upgrade_level(U.INCOME) == 45)
+	for i in 40:
+		PlayerData.gold = PlayerData.MAX_CURRENCY
 		PlayerData.try_buy_upgrade(U.REINFORCEMENTS)
-	_check("stops at max level", PlayerData.upgrade_level(U.REINFORCEMENTS) == GlobalUpgradeDB.max_level(U.REINFORCEMENTS))
-	var gold_before := PlayerData.gold
-	_check("max level buy is refused and free", not PlayerData.try_buy_upgrade(U.REINFORCEMENTS) and PlayerData.gold == gold_before)
+	var cap := GlobalUpgradeDB.cap_of(U.REINFORCEMENTS)
+	_check("Reinforcements stops at its army-size cap", PlayerData.upgrade_level(U.REINFORCEMENTS) == cap and PlayerData.start_bonus_soldiers() == cap)
+	PlayerData.gold = PlayerData.MAX_CURRENCY
+	_check("capped buy is refused and free", not PlayerData.try_buy_upgrade(U.REINFORCEMENTS) and PlayerData.gold == PlayerData.MAX_CURRENCY)
 	_check("unknown id refused", not PlayerData.try_buy_upgrade(999))
 
 
@@ -105,8 +117,11 @@ func _test_save() -> void:
 	_check("upgrades survive save / load", PlayerData.upgrade_level(U.INCOME) == 4 and PlayerData.upgrade_level(U.SHARD_LUCK) == 2
 		and PlayerData.upgrade_level(U.DAMAGE) == 0)
 	PlayerData.apply_save({"upgrades": {"income": 999, "damage": -5, "health": "x", "bogus": 3, "fire_rate": 2.0}})
-	_check("hostile upgrade data is clamped or ignored", PlayerData.upgrade_level(U.INCOME) == GlobalUpgradeDB.max_level(U.INCOME)
+	_check("hostile upgrade data is clamped or ignored", PlayerData.upgrade_level(U.INCOME) == 999
 		and PlayerData.upgrade_level(U.DAMAGE) == 0 and PlayerData.upgrade_level(U.HEALTH) == 0 and PlayerData.upgrade_level(U.FIRE_RATE) == 2)
+	PlayerData.apply_save({"upgrades": {"income": 99999999, "reinforcements": 500}})
+	_check("absurd levels are clamped, reinforcement effect stays at the cap",
+		PlayerData.upgrade_level(U.INCOME) == GlobalUpgradeDB.MAX_SAVED_LEVEL and PlayerData.start_bonus_soldiers() == GlobalUpgradeDB.cap_of(U.REINFORCEMENTS))
 	PlayerData.apply_save({"gold": 50})
 	_check("old save without upgrades loads (all level 0)", PlayerData.upgrade_level(U.INCOME) == 0 and PlayerData.gold == 50)
 

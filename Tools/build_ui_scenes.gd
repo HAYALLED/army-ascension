@@ -401,7 +401,7 @@ func _upgrade_row() -> void:
 	_tex(h, "ClassIcon", "class_rifleman.png", Vector2(96, 96), true)
 	var info := _box(true, h, "Info", 2)
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	var nl := _lbl(info, "NameLabel", "BATTLE INCOME  Lv 0/10", "LabelBig", true)
+	var nl := _lbl(info, "NameLabel", "BATTLE INCOME  Lv 0", "LabelBig", true)
 	nl.add_theme_font_size_override("font_size", 30)
 	nl.clip_text = true
 	var sl := _lbl(info, "StatLabel", "More gold at the end of every level.\n+0% > +10%", "LabelSmall", true)
@@ -517,8 +517,8 @@ func _unit_preview() -> void:
 	we.environment = env
 	_add(vp, we, "WorldEnvironment")
 	var cam := Camera3D.new()
-	cam.position = Vector3(0, 0.78, 3.1)
-	cam.rotation_degrees = Vector3(-5, 0, 0)
+	cam.position = Vector3(0, 2.384, 3.391)
+	cam.rotation_degrees = Vector3(-30, 0, 0)
 	cam.fov = 32.0
 	_add(vp, cam, "Camera3D")
 	var sun := DirectionalLight3D.new()
@@ -636,16 +636,17 @@ func _shop_page() -> void:
 	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_offer(col, "AdShards", "ad_shards", "FREE SHARDS", "Watch a short video: +5 shards", "WATCH", "icon_ad_video.png", "ButtonPrimary")
 	_offer(col, "Starter", "starter_bundle", "STARTER BUNDLE", "Gold, shards and a chest", "$2.99", "shop_bundle_starter.png", "ButtonGold")
+	_offer(col, "GoldChest", "gold_chest", "GOLD CHEST", "", "20 GEMS", "chest_gold.png", "ButtonGold")
 	_lbl(col, "GoldTitle", "GOLD", "LabelBig")
 	var g := _box(false, col, "GoldRow", 16)
 	_item(g, "Gold1", "gold_s", "SMALL", "x500", "$0.99", "shop_gold_s.png", "ButtonGold")
 	_item(g, "Gold2", "gold_m", "MEDIUM", "x1,500", "$2.99", "shop_gold_m.png", "ButtonGold")
 	_item(g, "Gold3", "gold_l", "LARGE", "x5,000", "$7.99", "shop_gold_l.png", "ButtonGold")
-	_lbl(col, "ShardTitle", "SHARDS", "LabelBig")
-	var sh := _box(false, col, "ShardRow", 16)
-	_item(sh, "Shard1", "shards_s", "SMALL", "x20", "$0.99", "shop_shards_s.png", "ButtonGold")
-	_item(sh, "Shard2", "shards_m", "MEDIUM", "x60", "$2.99", "shop_shards_m.png", "ButtonGold")
-	_item(sh, "Shard3", "shards_l", "LARGE", "x200", "$7.99", "shop_shards_l.png", "ButtonGold")
+	_lbl(col, "GemTitle", "GEMS", "LabelBig")
+	var sh := _box(false, col, "GemRow", 16)
+	_item(sh, "Gem1", "gems_s", "SMALL", "x50", "$0.99", "icon_gem.png", "ButtonGold")
+	_item(sh, "Gem2", "gems_m", "MEDIUM", "x150", "$2.99", "icon_gem.png", "ButtonGold")
+	_item(sh, "Gem3", "gems_l", "LARGE", "x500", "$7.99", "icon_gem.png", "ButtonGold")
 	_lbl(col, "MoreTitle", "MORE", "LabelBig")
 	var mo := _box(false, col, "MoreRow", 16)
 	_item(mo, "NoAds", "remove_ads", "NO ADS", "", "$4.99", "shop_no_ads.png", "ButtonSecondary")

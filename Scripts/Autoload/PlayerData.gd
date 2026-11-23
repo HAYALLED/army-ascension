@@ -11,6 +11,8 @@ signal level_progress_changed()
 signal settings_changed()
 ## Purchases or timers changed (shop, chest cooldown).
 signal shop_changed()
+## A chest slot was filled or emptied.
+signal chests_changed()
 ## Gold was spent on an upgrade (soldier or army). Missions count it.
 signal spent(gold: int)
 
@@ -19,6 +21,11 @@ const START_GOLD := 600
 const START_SHARDS := 12
 const START_GEMS := 0
 const MAX_CURRENCY := 999_999_999
+## Soldier classes owned from the start. Every other class is unlocked by a chest.
+const STARTER_TYPES := [
+	SoldierDB.Type.RIFLEMAN, SoldierDB.Type.MACHINE_GUNNER, SoldierDB.Type.SNIPER,
+	SoldierDB.Type.ROCKET, SoldierDB.Type.MEDIC,
+]
 
 var gold: int = START_GOLD
 var gems: int = START_GEMS
@@ -35,6 +42,10 @@ var settings: Dictionary = {}
 var purchases: Dictionary = {}
 ## Unix time when the next free chest is ready (0 = ready now).
 var chest_ready_at: int = 0
+## Soldier classes the player owns: SoldierDB.Type -> true.
+var unlocked: Dictionary = {}
+## Chests waiting on the home page, ChestDB.SLOTS entries; {} = empty slot (see ChestDB for the format).
+var chest_slots: Array[Dictionary] = []
 
 
 func _ready() -> void:
@@ -57,6 +68,12 @@ func reset_to_defaults() -> void:
 	highest_level = 0
 	purchases.clear()
 	chest_ready_at = 0
+	unlocked.clear()
+	for t in STARTER_TYPES:
+		unlocked[t] = true
+	chest_slots.clear()
+	for i in ChestDB.SLOTS:
+		chest_slots.append({})
 	MissionManager.reset()
 	settings = {"vibration": true, "graphics_high": true, "sfx": true, "music": true}
 	_push_audio_settings()
@@ -72,6 +89,7 @@ func notify_all() -> void:
 	level_progress_changed.emit()
 	settings_changed.emit()
 	shop_changed.emit()
+	chests_changed.emit()
 
 
 func set_setting(key: String, value: bool) -> void:
@@ -108,6 +126,15 @@ func add_gems(amount: int) -> void:
 		return
 	gems = mini(gems + amount, MAX_CURRENCY)
 	wallet_changed.emit()
+
+
+## Spends gems. Returns false (and changes nothing) when the player has too few.
+func spend_gems(amount: int) -> bool:
+	if amount <= 0 or gems < amount:
+		return false
+	gems -= amount
+	wallet_changed.emit()
+	return true
 
 
 func add_shards(type: int, amount: int) -> void:
@@ -151,11 +178,11 @@ func can_buy_upgrade(id: int) -> bool:
 	if not GlobalUpgradeDB.DATA.has(id):
 		return false
 	var lv := upgrade_level(id)
-	return lv < GlobalUpgradeDB.max_level(id) and gold >= GlobalUpgradeDB.cost(id, lv)
+	return not GlobalUpgradeDB.is_capped(id, lv) and lv < GlobalUpgradeDB.MAX_SAVED_LEVEL and gold >= GlobalUpgradeDB.cost(id, lv)
 
 
-## Spends gold and raises the upgrade one level. Returns false (and changes nothing)
-## when it is maxed out or the player cannot afford it.
+## Spends gold and raises the upgrade one level. Returns false (and changes nothing) when
+## the player cannot afford it or the upgrade is capped (only Reinforcements has a cap).
 func try_buy_upgrade(id: int) -> bool:
 	if not can_buy_upgrade(id):
 		return false
@@ -197,10 +224,18 @@ func start_bonus_soldiers() -> int:
 
 ## ---- Ownership, rewards, shop ------------------------------------------------
 
-## True when the player has this soldier class. Every class is owned from the start for now;
-## when classes become unlockable, only this function changes.
+## True when the player has this soldier class (STARTER_TYPES, or unlocked by a chest).
 func owns(type: int) -> bool:
-	return levels.has(type)
+	return unlocked.has(type)
+
+
+## Gives the player a soldier class. Returns false when it is unknown or already owned.
+func unlock(type: int) -> bool:
+	if not SoldierDB.DATA.has(type) or unlocked.has(type):
+		return false
+	unlocked[type] = true
+	soldier_changed.emit(type)
+	return true
 
 
 func owned_types() -> Array[int]:
@@ -211,11 +246,13 @@ func owned_types() -> Array[int]:
 	return out
 
 
-## Applies a RewardDB reward ({"gold", "gems", "shards": {type: n}}). Shards for a class the
-## player does not own are dropped.
+## Applies a RewardDB reward ({"gold", "gems", "shards": {type: n}, "unlock": [type]}). Classes in
+## "unlock" are unlocked first; shards for a class the player still does not own are dropped.
 func grant(reward: Dictionary) -> void:
 	add_gold(int(reward.get("gold", 0)))
 	add_gems(int(reward.get("gems", 0)))
+	for t in reward.get("unlock", []):
+		unlock(int(t))
 	var s: Dictionary = reward.get("shards", {})
 	for t in s:
 		if owns(t):
@@ -230,6 +267,30 @@ func mark_purchased(id: String) -> void:
 	if ProductDB.is_once(id) and not purchases.has(id):
 		purchases[id] = true
 		shop_changed.emit()
+
+
+## ---- Chest slots (chests dropped by beaten levels) ----------------------------
+
+## Puts a chest into the first empty slot. Returns the slot index, or -1 when every slot is full.
+func add_chest(chest: Dictionary) -> int:
+	for i in chest_slots.size():
+		if chest_slots[i].is_empty():
+			chest_slots[i] = chest
+			chests_changed.emit()
+			return i
+	return -1
+
+
+## Opens the chest in `slot`: empties the slot and grants the contents. Returns the reward
+## (RewardDB format), or {} when the slot is empty.
+func open_chest(slot: int) -> Dictionary:
+	if slot < 0 or slot >= chest_slots.size() or chest_slots[slot].is_empty():
+		return {}
+	var reward := ChestDB.to_reward(chest_slots[slot])
+	chest_slots[slot] = {}
+	grant(reward)
+	chests_changed.emit()
+	return reward
 
 
 func chest_seconds_left() -> int:
@@ -275,6 +336,8 @@ func to_save() -> Dictionary:
 		"progress": {"highest_level": highest_level},
 		"purchases": purchases.keys(),
 		"timers": {"chest_ready_at": chest_ready_at},
+		"unlocked": _unlocked_ids(),
+		"chests": chest_slots.map(func(c: Dictionary) -> Dictionary: return ChestDB.to_save(c)),
 		"missions": MissionManager.to_save(),
 		"settings": {
 			"vibration": bool(settings.get("vibration", true)),
@@ -312,7 +375,7 @@ func apply_save(d: Dictionary) -> void:
 			var u := GlobalUpgradeDB.from_id(uid)
 			if u < 0:
 				continue
-			upgrades[u] = _read_int(saved_upgrades[uid], 0, GlobalUpgradeDB.max_level(u), 0)
+			upgrades[u] = _read_int(saved_upgrades[uid], 0, GlobalUpgradeDB.MAX_SAVED_LEVEL, 0)
 
 	var progress: Variant = d.get("progress")
 	if progress is Dictionary:
@@ -330,6 +393,17 @@ func apply_save(d: Dictionary) -> void:
 		var now := int(Time.get_unix_time_from_system())
 		chest_ready_at = _read_int(timers.get("chest_ready_at"), 0, now + RewardDB.CHEST_COOLDOWN, 0)
 
+	var saved_unlocked: Variant = d.get("unlocked")
+	if saved_unlocked is Array:
+		for uid in saved_unlocked:
+			if uid is String and SoldierDB.type_of(uid) >= 0:
+				unlocked[SoldierDB.type_of(uid)] = true
+
+	var saved_chests: Variant = d.get("chests")
+	if saved_chests is Array:
+		for i in mini(saved_chests.size(), chest_slots.size()):
+			chest_slots[i] = ChestDB.from_save(saved_chests[i])
+
 	MissionManager.apply_save(d.get("missions"))
 
 	var saved_settings: Variant = d.get("settings")
@@ -341,8 +415,16 @@ func apply_save(d: Dictionary) -> void:
 	notify_all()
 
 
+func _unlocked_ids() -> Array:
+	var ids: Array = []
+	for t in SoldierDB.DATA:
+		if unlocked.has(t):
+			ids.append(SoldierDB.id_of(t))
+	return ids
+
+
 ## Number validated and clamped to lo..hi; `fallback` when the value is not a finite number.
-static func _read_int(v: Variant, lo: int, hi: int, fallback: int) -> int:
+func _read_int(v: Variant, lo: int, hi: int, fallback: int) -> int:
 	if typeof(v) != TYPE_INT and typeof(v) != TYPE_FLOAT:
 		return fallback
 	var f := float(v)

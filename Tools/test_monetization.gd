@@ -84,14 +84,14 @@ func _test_chest_roll() -> void:
 		var shards: Dictionary = r["shards"]
 		ok = ok and shards.size() == 1
 		for t in shards:
-			ok = ok and int(shards[t]) >= RewardDB.CHEST_SHARDS_MIN and int(shards[t]) <= RewardDB.CHEST_SHARDS_MAX
+			ok = ok and int(shards[t]) >= 3 and int(shards[t]) <= 5
 			seen[int(shards[t])] = true
-		ok = ok and int(r["gold"]) >= RewardDB.CHEST_GOLD_MIN and int(r["gold"]) <= RewardDB.CHEST_GOLD_MAX
+		ok = ok and int(r["gold"]) >= 50 and int(r["gold"]) <= 100
 		ok = ok and (int(r["gems"]) == 0 or int(r["gems"]) == 1)
 		gems += int(r["gems"])
-	_check("1a chest: 2-7 shards on one soldier, few coins", ok and seen.size() == 6)
-	# Expected 200 gems (0.1%); +-5 sigma is 130..270.
-	_check("1b chest: gem chance about 0.1%% (%d gems in %d)" % [gems, n], gems >= 130 and gems <= 270)
+	_check("1a free chest = wooden chest: 3-5 shards on one soldier, 50-100 gold", ok and seen.size() == 3)
+	# Expected 4000 gems (2%); +-5 sigma is 3690..4310.
+	_check("1b chest: gem chance about 2%% (%d gems in %d)" % [gems, n], gems >= 3690 and gems <= 4310)
 
 
 # 2
@@ -238,15 +238,16 @@ func _test_purchases() -> void:
 	_check("7a gold pack pays +500 gold and saves at once",
 		r["ok"] and PlayerData.gold == gold + 500 and SaveManager.write_count > writes and pm.state == PurchaseManager.State.IDLE)
 
-	var shards := PlayerData.shards_of(T.SNIPER)
-	r = await pm.buy("shards_m", T.SNIPER)
-	_check("7b shard pack goes to the chosen soldier", r["ok"] and PlayerData.shards_of(T.SNIPER) == shards + 60)
+	var gems := PlayerData.gems
+	r = await pm.buy("gems_m")
+	_check("7b gem pack pays +150 gems", r["ok"] and PlayerData.gems == gems + 150)
+	_check("7b2 the shop sells no shard packs", not ProductDB.has("shards_s") and not ProductDB.has("shards_m") and not ProductDB.has("shards_l"))
 
 	gold = PlayerData.gold
-	shards = PlayerData.shards_of(T.ROCKET)
-	r = await pm.buy("shards_s", -1)
-	_check("7c shard pack without a soldier is refused, nothing charged",
-		not r["ok"] and PlayerData.shards_of(T.ROCKET) == shards and PlayerData.gold == gold)
+	var shards := PlayerData.shards_of(T.ROCKET)
+	r = await pm.buy("starter_bundle", -1)
+	_check("7c starter bundle without a soldier is refused, nothing charged",
+		not r["ok"] and PlayerData.shards_of(T.ROCKET) == shards and PlayerData.gold == gold and not PlayerData.has_purchase("starter_bundle"))
 
 	r = await pm.buy("remove_ads")
 	var again: Dictionary = await pm.buy("remove_ads")
@@ -281,7 +282,7 @@ func _test_purchases() -> void:
 	var again2: Dictionary = await pm.buy("starter_bundle", T.MEDIC)
 	var shard_gain := PlayerData.shards_of(T.MEDIC) - shards
 	_check("7i starter bundle: 1000 gold + 30 shards + a chest, once",
-		r["ok"] and PlayerData.gold >= gold + 1000 + RewardDB.CHEST_GOLD_MIN and shard_gain >= 30 and not again2["ok"])
+		r["ok"] and PlayerData.gold >= gold + 1000 + 50 and shard_gain >= 30 and not again2["ok"])
 
 	pm.provider = SilentBilling.new()
 	pm.timeout = 0.3

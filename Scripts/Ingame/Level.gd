@@ -24,6 +24,13 @@ var arena_stop: Marker3D = null
 var is_mini: bool = false
 
 
+## Level 1 keeps the hand-placed Gates / Traps; every later level gets a fresh random
+## layout each battle. Runs before the children's _ready, so they register the new nodes.
+func _enter_tree() -> void:
+	if Game.level_index > 1:
+		LevelRandomizer.apply(self, Game.level_index)
+
+
 func _ready() -> void:
 	mini_arena.visible = false
 	boss_spawn = $Markers/BossSpawn

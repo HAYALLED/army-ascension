@@ -1,7 +1,8 @@
 class_name HomePage
 extends Control
 ## Main menu home: logo, level banner (tap to pick a beaten level), PLAY, daily reward,
-## the free chest (rewarded ad, 30 min cooldown) and the 4 chest slots (empty for now).
+## the free chest (rewarded ad, 30 min cooldown) and the 4 chest slots (chests dropped by beaten levels:
+## tap one to see what is inside and open it).
 
 signal play_pressed()
 signal toast_requested(text: String)
@@ -20,9 +21,10 @@ func _ready() -> void:
 	_refresh_level()
 	_level_banner.mouse_filter = Control.MOUSE_FILTER_STOP
 	_level_banner.gui_input.connect(_on_banner_input)
-	for i in 4:
+	for i in ChestDB.SLOTS:
 		var slot := ChestSlot.new()
 		slot.setup(i)
+		slot.pressed.connect(_on_slot_pressed)
 		_chest_slots.add_child(slot)
 	_play.pressed.connect(func() -> void:
 		AudioManager.play("ui_click")
@@ -103,3 +105,21 @@ func _open_chest() -> void:
 	SaveManager.save_now()
 	_refresh_chest()
 	await RewardPopup.show_reward(get_tree().current_scene, "WOODEN CHEST", reward, "", RewardDB.ICON_CHEST)
+
+
+## Tap on a chest slot: show what is inside (unknown units as ???), then open it on request.
+func _on_slot_pressed(index: int) -> void:
+	AudioManager.play("ui_click")
+	var chest: Dictionary = PlayerData.chest_slots[index]
+	if chest.is_empty():
+		toast_requested.emit("Empty slot. Beat a level to get a chest")
+		return
+	var host := get_tree().current_scene
+	if not await ChestPopup.ask(host, chest):
+		return
+	var reward := PlayerData.open_chest(index)
+	if reward.is_empty():
+		return
+	SaveManager.save_now()
+	var tier := int(chest["tier"])
+	await RewardPopup.show_reward(host, ChestDB.name_of(tier).to_upper(), reward, "", ChestDB.icon_of(tier))

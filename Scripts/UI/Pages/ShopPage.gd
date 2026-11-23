@@ -1,6 +1,6 @@
 class_name ShopPage
 extends Control
-## Shop page: the free-shards ad and the store products. Purchases run through PurchaseManager
+## Shop page: the free-shards ad, the gold chest (gems) and the store products. Purchases run through PurchaseManager
 ## (mock payment in debug builds only, never in a release build).
 
 signal toast_requested(text: String)
@@ -13,6 +13,8 @@ func _ready() -> void:
 		if node is ShopItem or node is ShopOffer:
 			node.buy.connect(_on_buy)
 			_cards.append(node)
+			if node.item_id == "gold_chest":
+				node.set_button("%d GEMS" % ChestDB.SHOP_GOLD_GEMS, false)
 	PlayerData.shop_changed.connect(_refresh)
 	_refresh()
 
@@ -30,6 +32,9 @@ func _refresh() -> void:
 func _on_buy(id: String) -> void:
 	if id == "ad_shards":
 		await _watch_for_shards()
+		return
+	if id == "gold_chest":
+		await _buy_gold_chest()
 		return
 	var product := ProductDB.get_product(id)
 	if product.is_empty():
@@ -63,6 +68,19 @@ func _watch_for_shards() -> void:
 	PlayerData.grant(reward)
 	SaveManager.save_now()
 	await RewardPopup.show_reward(_host(), "FREE SHARDS", reward)
+
+
+## Gold chest for gems. The shop shows no contents: the chest opens at once and pays out.
+func _buy_gold_chest() -> void:
+	if not PlayerData.spend_gems(ChestDB.SHOP_GOLD_GEMS):
+		toast_requested.emit("Not enough gems")
+		return
+	var rng := RandomNumberGenerator.new()
+	rng.randomize()
+	var reward := ChestDB.to_reward(ChestDB.roll(ChestDB.Tier.GOLD, rng))
+	PlayerData.grant(reward)
+	SaveManager.save_now()
+	await RewardPopup.show_reward(_host(), "GOLD CHEST", reward, "", ChestDB.icon_of(ChestDB.Tier.GOLD))
 
 
 ## Popups sit on the menu root so they cover the tab bar too.

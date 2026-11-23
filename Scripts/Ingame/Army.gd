@@ -117,6 +117,7 @@ func add_soldier(type: int, level: int = 1, pop: bool = false) -> Soldier:
 	s.position = position + Vector3(randf_range(-1.0, 1.0), 0.0, randf_range(0.0, 2.0))
 	units.add_child(s)
 	Game.soldiers.append(s)
+	Game.peak_soldiers = maxi(Game.peak_soldiers, Game.soldiers.size())
 	if pop:
 		AudioManager.play("soldier_spawn")
 	return s

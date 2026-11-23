@@ -21,6 +21,7 @@ signal buy(item_id: String)
 func _ready() -> void:
 	_title.text = title
 	_desc.text = description
+	_desc.visible = description != ""
 	_icon.texture = icon
 	_button.text = price_text
 	_button.theme_type_variation = button_style

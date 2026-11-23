@@ -60,7 +60,8 @@ func _spawn_start_army() -> void:
 	for i in PlayerData.start_bonus_soldiers():
 		list.append(T.RIFLEMAN)
 	for t in list:
-		army.add_soldier(t, PlayerData.level_of(t))
+		if PlayerData.owns(t):
+			army.add_soldier(t, PlayerData.level_of(t))
 	army.rebuild_formation()
 	for s in Game.soldiers:
 		s.position = army.position + s.slot
