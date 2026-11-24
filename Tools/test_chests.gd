@@ -6,6 +6,18 @@ const T := SoldierDB.Type
 var _failed := 0
 
 
+## Ad backend that always pays out one frame after show().
+class FakeAds extends AdProvider:
+	var shown := 0
+
+	func is_ready() -> bool:
+		return true
+
+	func show(_placement: String) -> void:
+		shown += 1
+		finished.emit.call_deferred(true)
+
+
 func _check(name: String, ok: bool) -> void:
 	print("%s  %s" % ["PASS" if ok else "FAIL", name])
 	if not ok:
@@ -207,5 +219,23 @@ func _test_shop_chest() -> void:
 	_check("shop: 20 gems spent, gold chest paid out at once (3 units, 600+ gold)",
 		PlayerData.gems >= 5 and PlayerData.gems <= 6 and PlayerData.gold >= gold + 600 and PlayerData.total_shards() >= total + 60)
 	_check("shop: bought chest is not stored in a slot", PlayerData.chest_slots.all(func(c: Dictionary) -> bool: return c.is_empty()))
+	# wooden chest by video: above the gold chest, shares the home cooldown
+	var cards: Array = shop.find_children("*", "PanelContainer", true, false).filter(func(c: Node) -> bool: return c is ShopOffer)
+	var ids: Array = cards.map(func(c: ShopOffer) -> String: return c.item_id)
+	_check("shop: wood chest card sits right above the gold chest", ids.find("wood_chest") >= 0 and ids.find("wood_chest") + 1 == ids.find("gold_chest"))
+	_check("shop: no season pass, NO RANDOM ADS card present", not ids.has("season_pass") and ids.has("remove_ads"))
+	var saved_provider := AdService.provider
+	var ads := FakeAds.new()
+	AdService.provider = ads
+	PlayerData.chest_ready_at = 0
+	gold = PlayerData.gold
+	total = PlayerData.total_shards()
+	closer.call()
+	await shop._watch_for_wood_chest()
+	_check("shop: watching the video pays a wooden chest at once and starts the cooldown",
+		ads.shown == 1 and PlayerData.gold > gold and PlayerData.total_shards() >= total + 3 and PlayerData.chest_seconds_left() > 0)
+	await shop._watch_for_wood_chest()
+	_check("shop: wood chest on cooldown shows no second ad", ads.shown == 1)
+	AdService.provider = saved_provider
 	shop.queue_free()
 	_fresh()

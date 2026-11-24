@@ -13,9 +13,9 @@
 [ext_resource type="Texture2D" path="res://Assets/UI/shop_gold_m.png" id="11_0fpay"]
 [ext_resource type="Texture2D" path="res://Assets/UI/shop_gold_l.png" id="12_k66qb"]
 [ext_resource type="Texture2D" path="res://Assets/UI/shop_no_ads.png" id="16_kehqu"]
-[ext_resource type="Texture2D" path="res://Assets/UI/shop_season_pass.png" id="17_njana"]
 [ext_resource type="Texture2D" path="res://Assets/UI/icon_gem.png" id="18_gemic"]
 [ext_resource type="Texture2D" path="res://Assets/UI/chest_gold.png" id="19_chestg"]
+[ext_resource type="Texture2D" path="res://Assets/UI/chest_wood.png" id="20_chestw"]
 
 [node name="ShopPage" type="Control" unique_id=765228179]
 layout_mode = 3
@@ -100,6 +100,20 @@ title = "STARTER BUNDLE"
 description = "Gold, shards and a chest"
 icon = ExtResource("7_54yms")
 
+[node name="WoodChest" type="PanelContainer" parent="Content/Scroll/Margin/List" instance=ExtResource("4_kfarw")]
+custom_minimum_size = Vector2(0, 170)
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("1_cdcyf")
+theme_type_variation = &"PanelDark"
+script = ExtResource("5_qprct")
+item_id = "wood_chest"
+title = "WOODEN CHEST"
+description = "Watch a video to get a wooden chest"
+price_text = "WATCH"
+icon = ExtResource("20_chestw")
+button_style = "ButtonPrimary"
+
 [node name="GoldChest" type="PanelContainer" parent="Content/Scroll/Margin/List" instance=ExtResource("4_kfarw")]
 custom_minimum_size = Vector2(0, 170)
 layout_mode = 2
@@ -178,7 +192,7 @@ theme_type_variation = &"PanelCard"
 script = ExtResource("9_o5m7a")
 item_id = "gems_s"
 title = "SMALL"
-amount_text = "x50"
+amount_text = "x40"
 icon = ExtResource("18_gemic")
 
 [node name="Gem2" type="PanelContainer" parent="Content/Scroll/Margin/List/GemRow" unique_id=2007121208 instance=ExtResource("8_qbnpw")]
@@ -207,40 +221,15 @@ amount_text = "x500"
 price_text = "$7.99"
 icon = ExtResource("18_gemic")
 
-[node name="MoreTitle" type="Label" parent="Content/Scroll/Margin/List" unique_id=1990903851]
-layout_mode = 2
-theme_type_variation = &"LabelBig"
-text = "MORE"
-vertical_alignment = 1
-
-[node name="MoreRow" type="HBoxContainer" parent="Content/Scroll/Margin/List" unique_id=611768512]
-layout_mode = 2
-theme_override_constants/separation = 16
-
-[node name="NoAds" type="PanelContainer" parent="Content/Scroll/Margin/List/MoreRow" unique_id=2145211453 instance=ExtResource("8_qbnpw")]
-custom_minimum_size = Vector2(200, 330)
+[node name="NoAds" type="PanelContainer" parent="Content/Scroll/Margin/List" instance=ExtResource("4_kfarw")]
+custom_minimum_size = Vector2(0, 170)
 layout_mode = 2
 size_flags_horizontal = 3
 theme = ExtResource("1_cdcyf")
-theme_type_variation = &"PanelCard"
-script = ExtResource("9_o5m7a")
+theme_type_variation = &"PanelDark"
+script = ExtResource("5_qprct")
 item_id = "remove_ads"
-title = "NO ADS"
-amount_text = ""
+title = "NO RANDOM ADS"
+description = "No more ad after every 2 games! Reward ads pay instantly"
 price_text = "$4.99"
 icon = ExtResource("16_kehqu")
-button_style = "ButtonSecondary"
-
-[node name="Pass" type="PanelContainer" parent="Content/Scroll/Margin/List/MoreRow" unique_id=1107933129 instance=ExtResource("8_qbnpw")]
-custom_minimum_size = Vector2(200, 330)
-layout_mode = 2
-size_flags_horizontal = 3
-theme = ExtResource("1_cdcyf")
-theme_type_variation = &"PanelCard"
-script = ExtResource("9_o5m7a")
-item_id = "season_pass"
-title = "SEASON PASS"
-amount_text = ""
-price_text = "$4.99"
-icon = ExtResource("17_njana")
-button_style = "ButtonSecondary"

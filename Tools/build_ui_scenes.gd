@@ -636,6 +636,7 @@ func _shop_page() -> void:
 	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_offer(col, "AdShards", "ad_shards", "FREE SHARDS", "Watch a short video: +5 shards", "WATCH", "icon_ad_video.png", "ButtonPrimary")
 	_offer(col, "Starter", "starter_bundle", "STARTER BUNDLE", "Gold, shards and a chest", "$2.99", "shop_bundle_starter.png", "ButtonGold")
+	_offer(col, "WoodChest", "wood_chest", "WOODEN CHEST", "Watch a video to get a wooden chest", "WATCH", "chest_wood.png", "ButtonPrimary")
 	_offer(col, "GoldChest", "gold_chest", "GOLD CHEST", "", "20 GEMS", "chest_gold.png", "ButtonGold")
 	_lbl(col, "GoldTitle", "GOLD", "LabelBig")
 	var g := _box(false, col, "GoldRow", 16)
@@ -644,13 +645,10 @@ func _shop_page() -> void:
 	_item(g, "Gold3", "gold_l", "LARGE", "x5,000", "$7.99", "shop_gold_l.png", "ButtonGold")
 	_lbl(col, "GemTitle", "GEMS", "LabelBig")
 	var sh := _box(false, col, "GemRow", 16)
-	_item(sh, "Gem1", "gems_s", "SMALL", "x50", "$0.99", "icon_gem.png", "ButtonGold")
+	_item(sh, "Gem1", "gems_s", "SMALL", "x40", "$0.99", "icon_gem.png", "ButtonGold")
 	_item(sh, "Gem2", "gems_m", "MEDIUM", "x150", "$2.99", "icon_gem.png", "ButtonGold")
 	_item(sh, "Gem3", "gems_l", "LARGE", "x500", "$7.99", "icon_gem.png", "ButtonGold")
-	_lbl(col, "MoreTitle", "MORE", "LabelBig")
-	var mo := _box(false, col, "MoreRow", 16)
-	_item(mo, "NoAds", "remove_ads", "NO ADS", "", "$4.99", "shop_no_ads.png", "ButtonSecondary")
-	_item(mo, "Pass", "season_pass", "SEASON PASS", "", "$4.99", "shop_season_pass.png", "ButtonSecondary")
+	_offer(col, "NoAds", "remove_ads", "NO RANDOM ADS", "No more ad after every 2 games! Reward ads pay instantly", "$4.99", "shop_no_ads.png", "ButtonGold")
 	_save(root, "res://Scene/Menus/Pages/ShopPage.tscn")
 
 

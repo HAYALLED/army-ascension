@@ -125,8 +125,8 @@ func _test_save_fields() -> void:
 	var ok := PlayerData.has_purchase("remove_ads") and not PlayerData.has_purchase("gold_s")
 	ok = ok and PlayerData.chest_ready_at == at and PlayerData.chest_seconds_left() > 0
 	_check("3a purchases and chest timer survive save/load", ok)
-	PlayerData.apply_save({"purchases": ["bogus", 5, "season_pass", "gold_m"], "timers": {"chest_ready_at": 9999999999999}})
-	ok = PlayerData.has_purchase("season_pass") and not PlayerData.has_purchase("bogus") and not PlayerData.has_purchase("gold_m")
+	PlayerData.apply_save({"purchases": ["bogus", 5, "starter_bundle", "gold_m"], "timers": {"chest_ready_at": 9999999999999}})
+	ok = PlayerData.has_purchase("starter_bundle") and not PlayerData.has_purchase("bogus") and not PlayerData.has_purchase("gold_m")
 	ok = ok and PlayerData.chest_seconds_left() <= RewardDB.CHEST_COOLDOWN
 	PlayerData.apply_save({"purchases": "x", "timers": [1]})
 	ok = ok and PlayerData.purchases.is_empty() and PlayerData.chest_ready_at == 0
@@ -239,8 +239,8 @@ func _test_purchases() -> void:
 		r["ok"] and PlayerData.gold == gold + 500 and SaveManager.write_count > writes and pm.state == PurchaseManager.State.IDLE)
 
 	var gems := PlayerData.gems
-	r = await pm.buy("gems_m")
-	_check("7b gem pack pays +150 gems", r["ok"] and PlayerData.gems == gems + 150)
+	r = await pm.buy("gems_s")
+	_check("7b small gem pack pays +40 gems", r["ok"] and PlayerData.gems == gems + 40)
 	_check("7b2 the shop sells no shard packs", not ProductDB.has("shards_s") and not ProductDB.has("shards_m") and not ProductDB.has("shards_l"))
 
 	gold = PlayerData.gold
@@ -253,8 +253,7 @@ func _test_purchases() -> void:
 	var again: Dictionary = await pm.buy("remove_ads")
 	_check("7d remove ads is bought once", r["ok"] and PlayerData.has_purchase("remove_ads") and not again["ok"] and again["message"] == "Already owned")
 
-	r = await pm.buy("season_pass")
-	_check("7e season pass is not for sale yet", not r["ok"] and not PlayerData.has_purchase("season_pass"))
+	_check("7e season pass is gone", not ProductDB.has("season_pass"))
 
 	r = await pm.buy("nope")
 	_check("7f unknown product refused", not r["ok"])

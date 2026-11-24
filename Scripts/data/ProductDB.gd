@@ -8,13 +8,12 @@ const PRODUCTS := {
 	"gold_s": {"reward": {"gold": 500}},
 	"gold_m": {"reward": {"gold": 1500}},
 	"gold_l": {"reward": {"gold": 5000}},
-	"gems_s": {"reward": {"gems": 50}},
+	"gems_s": {"reward": {"gems": 40}},
 	"gems_m": {"reward": {"gems": 150}},
 	"gems_l": {"reward": {"gems": 500}},
 	"starter_bundle": {"reward": {"gold": 1000, "shards": 30, "chest": true}, "pick_unit": true, "once": true},
 	"remove_ads": {"reward": {}, "once": true,
-		"note": "Ads removed. Rewarded ads now pay out instantly."},
-	"season_pass": {"reward": {}, "once": true, "available": false},
+		"note": "No more ad after every 2 games! Reward ads now pay out instantly."},
 }
 
 
