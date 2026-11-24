@@ -20,13 +20,22 @@ func _ready() -> void:
 
 
 func _run() -> void:
+	var T := SoldierDB.Type
 	var expected_rank := {
-		SoldierDB.Type.RIFLEMAN: &"common", SoldierDB.Type.MACHINE_GUNNER: &"common",
-		SoldierDB.Type.SNIPER: &"common", SoldierDB.Type.ROCKET: &"common", SoldierDB.Type.MEDIC: &"rare",
+		T.RIFLEMAN: &"common", T.MACHINE_GUNNER: &"common", T.SNIPER: &"common", T.ROCKET: &"common", T.MEDIC: &"rare",
+		T.RIFLEMAN_RARE: &"rare", T.MACHINE_GUNNER_RARE: &"rare", T.SNIPER_RARE: &"rare", T.ROCKET_RARE: &"rare",
+		T.MEDIC_SUPER_RARE: &"super_rare",
+		T.MORTAR: &"common", T.MORTAR_RARE: &"rare", T.WEAKENER: &"common", T.WEAKENER_RARE: &"rare",
+		T.DRUMMER: &"common", T.DRUMMER_RARE: &"rare", T.BLINDER: &"common", T.BLINDER_RARE: &"rare",
+		T.SHIELD_KNIGHT: &"common", T.SHIELD_KNIGHT_RARE: &"rare",
 	}
 	var expected_class := {
-		SoldierDB.Type.RIFLEMAN: &"assault", SoldierDB.Type.MACHINE_GUNNER: &"assault",
-		SoldierDB.Type.SNIPER: &"deadeye", SoldierDB.Type.ROCKET: &"explosive", SoldierDB.Type.MEDIC: &"support",
+		T.RIFLEMAN: &"assault", T.MACHINE_GUNNER: &"assault", T.SNIPER: &"deadeye", T.ROCKET: &"explosive", T.MEDIC: &"support",
+		T.RIFLEMAN_RARE: &"assault", T.MACHINE_GUNNER_RARE: &"assault", T.SNIPER_RARE: &"deadeye", T.ROCKET_RARE: &"explosive",
+		T.MEDIC_SUPER_RARE: &"support",
+		T.MORTAR: &"explosive", T.MORTAR_RARE: &"explosive", T.WEAKENER: &"debuffer", T.WEAKENER_RARE: &"debuffer",
+		T.DRUMMER: &"support", T.DRUMMER_RARE: &"support", T.BLINDER: &"debuffer", T.BLINDER_RARE: &"debuffer",
+		T.SHIELD_KNIGHT: &"defender", T.SHIELD_KNIGHT_RARE: &"defender",
 	}
 	for t in SoldierDB.DATA:
 		check(SoldierDB.DATA[t]["rank"] == expected_rank[t], "%s rank" % SoldierDB.DATA[t]["name"])
@@ -97,11 +106,11 @@ func _run() -> void:
 	var page: Control = (load("res://Scene/Menus/Pages/SoldiersPage.tscn") as PackedScene).instantiate()
 	holder.add_child(page)
 	await get_tree().process_frame
-	check(page.get_node("%Grid").get_child_count() == 5, "soldiers page has 5 cards")
+	check(page.get_node("%Grid").get_child_count() == SoldierDB.DATA.size(), "soldiers page has one card per soldier")
 	var prev: Control = (load("res://Scene/Dev/RankPreview.tscn") as PackedScene).instantiate()
 	holder.add_child(prev)
 	await get_tree().process_frame
-	check(prev.get_node("%Grid").get_child_count() == 25, "rank preview has 25 cards")
+	check(prev.get_node("%Grid").get_child_count() == 5 * SoldierDB.DATA.size(), "rank preview has every soldier in every rank")
 	# detail popup
 	var popup: Control = (load("res://Scene/Menus/Popups/UnitDetailPopup.tscn") as PackedScene).instantiate()
 	popup.setup(SoldierDB.Type.MEDIC)

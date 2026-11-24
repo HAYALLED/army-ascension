@@ -34,6 +34,27 @@ var dead: bool = false
 var slot: Vector3 = Vector3.ZERO
 var radius: float = 0.35
 var target: Enemy = null
+## Projectile look in ProjectilePool (index into its KIND_ tables).
+var proj_kind: int = 0
+## "nearest" | "strongest" (highest max hp first) | "cluster" (biggest crowd first, for mortars).
+var prefer: StringName = &"nearest"
+## Share of incoming damage that is ignored (Shield Knight).
+var armor: float = 0.0
+## Enemies within this distance attack this soldier first (Shield Knight). 0 = no taunt.
+var taunt_radius: float = 0.0
+## Melee soldiers only hit enemies in `attack_range`; `cleave` also hits enemies that close to the target.
+var melee: bool = false
+var cleave: float = 0.0
+## Lobbed shell (Mortar): lands `lob_flight` seconds after the shot.
+var lob: bool = false
+var lob_flight: float = 0.9
+## Auras, refreshed every AURA_INTERVAL. Drummer: allies get +damage / +fire rate.
+## Weakener: enemies deal less damage. Blinder: enemies may miss. All stay in `aura_range`.
+var buff_dmg: float = 0.0
+var buff_rate: float = 0.0
+var weaken_frac: float = 0.0
+var blind_chance: float = 0.0
+var aura_range: float = 0.0
 
 @onready var _body: Node3D = $Body
 @onready var _slot: Node3D = $Body/ModelSlot
@@ -58,10 +79,23 @@ var _squeeze_var: float = 1.0
 ## Enemy debuffs (Blinder / Weakener). Seconds left; 0 = not affected.
 var _blind_t: float = 0.0
 var _weak_t: float = 0.0
+## Drummer buff received from an ally. Seconds left; 0 = not affected.
+var _drum_t: float = 0.0
+var _drum_dmg: float = 0.0
+var _drum_rate: float = 0.0
+var _aura_t: float = 0.0
+var _beat_t: float = 0.0
 
 ## While blinded a soldier's shots scatter this much (radians). While weakened it deals this fraction of its damage.
 const BLIND_SPREAD := 0.5
 const WEAK_DAMAGE_MULT := 0.6
+## Aura soldiers (Drummer / Weakener / Blinder) refresh their effect this often; an effect lasts AURA_SECONDS.
+const AURA_INTERVAL := 0.5
+const AURA_SECONDS := 1.2
+## Pulse ring + sound at most this often per aura soldier.
+const BEAT_INTERVAL := 1.2
+## A blinded mortar's shell lands up to this far from its aim point.
+const BLIND_LOB_SCATTER := 4.0
 
 
 func setup(p_level: int = 1) -> void:
@@ -88,6 +122,20 @@ func setup(p_level: int = 1) -> void:
 	heal_range = d["heal_range"]
 	sfx = d["sfx"]
 	row_priority = d["row"]
+	proj_kind = int(d.get("proj", int(type)))
+	prefer = d.get("prefer", &"nearest")
+	armor = float(d.get("armor", 0.0))
+	taunt_radius = float(d.get("taunt", 0.0))
+	melee = bool(d.get("melee", false))
+	cleave = float(d.get("cleave", 0.0))
+	lob = bool(d.get("lob", false))
+	lob_flight = float(d.get("flight", 0.9))
+	radius = float(d.get("radius", 0.35))
+	buff_dmg = float(d.get("buff_dmg", 0.0))
+	buff_rate = float(d.get("buff_rate", 0.0))
+	weaken_frac = float(d.get("weaken", 0.0))
+	blind_chance = float(d.get("blind", 0.0))
+	aura_range = float(d.get("aura_range", 0.0))
 
 
 func _ready() -> void:
@@ -148,6 +196,12 @@ func _process(delta: float) -> void:
 			face.y = 0.0
 		_blind_t = maxf(_blind_t - delta, 0.0)
 		_weak_t = maxf(_weak_t - delta, 0.0)
+		_drum_t = maxf(_drum_t - delta, 0.0)
+		if aura_range > 0.0:
+			_aura_t -= delta
+			if _aura_t <= 0.0:
+				_aura_t = AURA_INTERVAL
+				_aura_pulse()
 		_cooldown -= delta
 		if _cooldown <= 0.0 and is_instance_valid(target) and base_damage > 0.0:
 			_shoot()
@@ -177,21 +231,46 @@ func _acquire_target() -> void:
 		var dx := e.position.x - position.x
 		var dz := e.position.z - position.z
 		var d2 := dx * dx + dz * dz
-		if d2 > r2:
+		var reach2 := r2
+		if melee:
+			var reach := attack_range + e.radius
+			reach2 = reach * reach
+		if d2 > reach2:
 			continue
 		var score := -d2
-		if type == SoldierDB.Type.SNIPER:
+		if prefer == &"strongest":
 			score = e.max_hp * 1000.0 - d2
+		elif prefer == &"cluster":
+			score = float(_cluster_size(e)) * 1000.0 - d2
 		if score > best_score:
 			best_score = score
 			best = e
 	target = best
 
 
+## Enemies (itself included) inside one blast radius around `center`.
+func _cluster_size(center: Enemy) -> int:
+	var r2 := aoe * aoe
+	var n := 0
+	for o in Game.enemies:
+		var dx := o.position.x - center.position.x
+		var dz := o.position.z - center.position.z
+		if dx * dx + dz * dz <= r2:
+			n += 1
+	return n
+
+
 func _shoot() -> void:
-	_cooldown = 1.0 / (attack_speed * Game.rate_buff)
+	_cooldown = 1.0 / (attack_speed * Game.rate_buff * _drum_rate_mult())
+	var dmg := base_damage * Game.damage_buff * _drum_dmg_mult() * (WEAK_DAMAGE_MULT if _weak_t > 0.0 else 1.0)
 	var from := _muzzle.global_position
 	var to := target.position
+	if melee:
+		_melee_hit(dmg)
+		return
+	if lob:
+		_lob_shell(from, to, dmg)
+		return
 	var dir := to - from
 	dir.y = 0.0
 	if dir.length_squared() < 0.0001:
@@ -201,14 +280,94 @@ func _shoot() -> void:
 	var travel := attack_range + 4.0
 	if aoe > 0.0:
 		travel = maxf(from.distance_to(to) - 0.5, 1.0)
-	var dmg := base_damage * Game.damage_buff * (WEAK_DAMAGE_MULT if _weak_t > 0.0 else 1.0)
-	Game.player_bullets.fire(from, dir, bullet_speed, dmg, travel, pierce, aoe, type)
+	Game.player_bullets.fire(from, dir, bullet_speed, dmg, travel, pierce, aoe, proj_kind)
 	_muzzle_flash.visible = true
 	_muzzle_t = 0.05
 	_recoil = 1.0
 	if _anim != null:
 		Models.play(_anim, "shoot")
 	AudioManager.play(sfx)
+
+
+## Shield Knight: a direct hit on the target, plus a weaker hit on enemies close to it (cleave).
+func _melee_hit(dmg: float) -> void:
+	var victim := target
+	var at := Vector3(victim.position.x, 0.9, victim.position.z)
+	victim.take_damage(dmg, at)
+	if cleave > 0.0:
+		var r2 := cleave * cleave
+		for e: Enemy in Game.enemies.duplicate():
+			if e == victim or e.dead:
+				continue
+			var dx := e.position.x - at.x
+			var dz := e.position.z - at.z
+			if dx * dx + dz * dz <= r2:
+				e.take_damage(dmg * 0.6, Vector3(e.position.x, 0.9, e.position.z))
+	_recoil = 1.0
+	if _anim != null:
+		Models.play(_anim, "attack")
+	AudioManager.play(sfx, 0.8)
+
+
+## Mortar: aims a little ahead of the target (enemies walk toward the army), then lobs a shell.
+func _lob_shell(from: Vector3, to: Vector3, dmg: float) -> void:
+	var spot := to
+	var back := position - to
+	back.y = 0.0
+	if back.length_squared() > 0.01:
+		spot += back.normalized() * minf(target.speed * lob_flight, back.length())
+	if _blind_t > 0.0:
+		spot += Vector3(randf_range(-1.0, 1.0), 0.0, randf_range(-1.0, 1.0)) * BLIND_LOB_SCATTER
+	LobShell.fire(get_parent() as Node3D, from, spot, lob_flight, aoe, dmg)
+	_muzzle_flash.visible = true
+	_muzzle_t = 0.08
+	_recoil = 1.0
+	AudioManager.play(sfx, 0.7)
+
+
+func _drum_dmg_mult() -> float:
+	return 1.0 + _drum_dmg if _drum_t > 0.0 else 1.0
+
+
+func _drum_rate_mult() -> float:
+	return 1.0 + _drum_rate if _drum_t > 0.0 else 1.0
+
+
+## Drummer / Weakener / Blinder: refreshes the effect on everyone in `aura_range`.
+func _aura_pulse() -> void:
+	var r2 := aura_range * aura_range
+	var touched := 0
+	if buff_dmg > 0.0 or buff_rate > 0.0:
+		for s in Game.soldiers:
+			if s == self:
+				continue
+			var dx := s.position.x - position.x
+			var dz := s.position.z - position.z
+			if dx * dx + dz * dz <= r2:
+				s.apply_drum(buff_dmg, buff_rate, AURA_SECONDS)
+				touched += 1
+	if weaken_frac > 0.0 or blind_chance > 0.0:
+		for e in Game.enemies:
+			var ex := e.position.x - position.x
+			var ez := e.position.z - position.z
+			if ex * ex + ez * ez <= r2:
+				if weaken_frac > 0.0:
+					e.apply_weaken(weaken_frac, AURA_SECONDS)
+				if blind_chance > 0.0:
+					e.apply_blind(blind_chance, AURA_SECONDS)
+				touched += 1
+	_beat_t -= AURA_INTERVAL
+	if touched > 0 and _beat_t <= 0.0:
+		_beat_t = BEAT_INTERVAL
+		if buff_dmg > 0.0 or buff_rate > 0.0:
+			Game.fx.pulse(position, aura_range, Color(1.0, 0.85, 0.3, 0.45))
+			AudioManager.play("hit", 0.5)
+		elif weaken_frac > 0.0:
+			Game.fx.pulse(position, aura_range, Color(0.7, 0.4, 1.0, 0.4))
+			AudioManager.play("heal", 0.6)
+		else:
+			Game.fx.pulse(position, aura_range, Color(1.0, 0.95, 0.6, 0.45))
+			AudioManager.play("shoot_sniper", 1.6)
 
 
 func _heal_pulse() -> void:
@@ -241,6 +400,19 @@ func apply_weaken(seconds: float) -> void:
 		_weak_t = maxf(_weak_t, seconds)
 
 
+## Drummer aura: +damage / +fire rate for `seconds`. Several drummers do not stack; the best value wins.
+func apply_drum(dmg: float, rate: float, seconds: float) -> void:
+	if dead:
+		return
+	if _drum_t <= 0.0:
+		_drum_dmg = dmg
+		_drum_rate = rate
+	else:
+		_drum_dmg = maxf(_drum_dmg, dmg)
+		_drum_rate = maxf(_drum_rate, rate)
+	_drum_t = maxf(_drum_t, seconds)
+
+
 func is_blinded() -> bool:
 	return _blind_t > 0.0
 
@@ -258,7 +430,7 @@ func heal(amount: float) -> void:
 func take_damage(amount: float) -> void:
 	if dead:
 		return
-	hp -= amount
+	hp -= amount * (1.0 - armor)
 	_flash_t = 0.07
 	_set_overlay(Mats.flash())
 	if hp <= 0.0:

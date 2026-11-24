@@ -29,6 +29,8 @@ var hit_color: Color = Color.RED
 var model_scale: float = 1.0
 ## Separation push written each frame by Battle (see Battle._separate_enemies).
 var push: Vector3 = Vector3.ZERO
+## Bosses ignore the Weakener / Blinder soldiers.
+var debuff_immune: bool = false
 
 var target: Soldier = null
 var _retarget_t: float = 0.0
@@ -49,12 +51,20 @@ var _dmg_accum: float = 0.0
 var _popup_t: float = 0.0
 var _lunge: float = 0.0
 var _gun: Node3D = null
+## Soldier debuffs. Seconds left; 0 = not affected (see apply_weaken / apply_blind).
+var _weak_t: float = 0.0
+var _weak_frac: float = 0.0
+var _blind_t: float = 0.0
+var _blind_chance: float = 0.0
+var _miss_pop_t: float = 0.0
 
 
 const MINION_MIN := 8
 const MINION_MAX := 20
 ## No reinforcements while this many enemies are already alive (keeps phones smooth).
 const MAX_ALIVE := 70
+## A blinded enemy's shot is turned this far (radians) away from its target.
+const MISS_ANGLE := 0.4
 
 
 ## Boss / mini boss reinforcement wave: min_count..max_count enemies, every kind random.
@@ -157,6 +167,9 @@ func _process(delta: float) -> void:
 		_popup_t = 0.3
 	if Game.state != Game.State.PLAYING:
 		return
+	_weak_t = maxf(_weak_t - delta, 0.0)
+	_blind_t = maxf(_blind_t - delta, 0.0)
+	_miss_pop_t = maxf(_miss_pop_t - delta, 0.0)
 	_think(delta)
 
 
@@ -204,9 +217,12 @@ func _animate(delta: float, face: Vector3, moving: bool) -> void:
 			Models.play(_anim, "run" if moving else "idle")
 
 
+## Nearest soldier, except that a taunting soldier (Shield Knight) within its taunt radius wins.
 func _find_target() -> void:
 	var best: Soldier = null
 	var best_d := INF
+	var taunter: Soldier = null
+	var taunt_d := INF
 	for s in Game.soldiers:
 		var dx := s.position.x - position.x
 		var dz := s.position.z - position.z
@@ -214,20 +230,70 @@ func _find_target() -> void:
 		if d2 < best_d:
 			best_d = d2
 			best = s
-	target = best
+		if s.taunt_radius > 0.0 and d2 < taunt_d and d2 <= s.taunt_radius * s.taunt_radius:
+			taunt_d = d2
+			taunter = s
+	target = taunter if taunter != null else best
+
+
+## Weakener aura: this enemy deals `frac` less damage for `seconds`. The strongest running effect wins.
+func apply_weaken(frac: float, seconds: float) -> void:
+	if dead or debuff_immune:
+		return
+	if _weak_t <= 0.0:
+		_weak_frac = frac
+	else:
+		_weak_frac = maxf(_weak_frac, frac)
+	_weak_t = maxf(_weak_t, seconds)
+
+
+## Blinder aura: this enemy misses with probability `chance` for `seconds`. The strongest running effect wins.
+func apply_blind(chance: float, seconds: float) -> void:
+	if dead or debuff_immune:
+		return
+	if _blind_t <= 0.0:
+		_blind_chance = chance
+	else:
+		_blind_chance = maxf(_blind_chance, chance)
+	_blind_t = maxf(_blind_t, seconds)
+
+
+## 1.0 normally, less while a Weakener soldier is near. Multiply every damage number an enemy deals with it.
+func dmg_mult() -> float:
+	return (1.0 - _weak_frac) if _weak_t > 0.0 else 1.0
+
+
+## True when this attack misses because of a Blinder soldier. Shows MISS (at most every 0.6 s).
+func miss_roll() -> bool:
+	if _blind_t <= 0.0 or randf() >= _blind_chance:
+		return false
+	if _miss_pop_t <= 0.0:
+		_miss_pop_t = 0.6
+		Game.fx.popup(position + Vector3(0, _bar_h + 0.4, 0), "MISS", Color(1.0, 0.95, 0.4), 0.8)
+	return true
+
+
+## `dir` turned away from the target when the attack missed (always the same sign per shot).
+func miss_dir(dir: Vector3, missed: bool) -> Vector3:
+	if not missed:
+		return dir
+	return dir.rotated(Vector3.UP, MISS_ANGLE * randf_range(1.0, 1.6) * (1.0 if randf() < 0.5 else -1.0))
 
 
 func _attack(face: Vector3) -> void:
 	_atk_t = attack_cd * randf_range(0.9, 1.1)
+	var missed := miss_roll()
+	var dmg := damage * dmg_mult()
 	if ranged:
 		var from := position + Vector3(0, 1.0, 0) + face * 0.6
-		Game.enemy_bullets.fire(from, face, proj_speed, damage, attack_range + 4.0, 0, 0.0, proj_kind)
+		Game.enemy_bullets.fire(from, miss_dir(face, missed), proj_speed, dmg, attack_range + 4.0, 0, 0.0, proj_kind)
 		AudioManager.play("shoot_enemy")
 	else:
 		_lunge = 1.0
 		if _anim != null:
 			Models.play(_anim, "attack")
-		target.take_damage(damage)
+		if not missed:
+			target.take_damage(dmg)
 
 
 func take_damage(amount: float, hit_pos: Vector3 = Vector3.ZERO) -> void:

@@ -21,6 +21,8 @@ const START_GOLD := 600
 const START_SHARDS := 12
 const START_GEMS := 0
 const MAX_CURRENCY := 999_999_999
+## Battles a new player gets the NO RANDOM ADS perk for free (auto 2X gold, no random ads).
+const NO_ADS_TRIAL_BATTLES := 3
 ## Soldier classes owned from the start. Every other class is unlocked by a chest.
 const STARTER_TYPES := [
 	SoldierDB.Type.RIFLEMAN, SoldierDB.Type.MACHINE_GUNNER, SoldierDB.Type.SNIPER,
@@ -42,6 +44,8 @@ var settings: Dictionary = {}
 var purchases: Dictionary = {}
 ## Unix time when the next free chest is ready (0 = ready now).
 var chest_ready_at: int = 0
+## Free-trial battles left of the NO RANDOM ADS perk (counts down once per battle until the product is bought).
+var no_ads_trial_left: int = NO_ADS_TRIAL_BATTLES
 ## Soldier classes the player owns: SoldierDB.Type -> true.
 var unlocked: Dictionary = {}
 ## Chests waiting on the home page, ChestDB.SLOTS entries; {} = empty slot (see ChestDB for the format).
@@ -68,6 +72,7 @@ func reset_to_defaults() -> void:
 	highest_level = 0
 	purchases.clear()
 	chest_ready_at = 0
+	no_ads_trial_left = NO_ADS_TRIAL_BATTLES
 	unlocked.clear()
 	for t in STARTER_TYPES:
 		unlocked[t] = true
@@ -147,9 +152,10 @@ func add_shards(type: int, amount: int) -> void:
 
 func can_upgrade(type: int) -> bool:
 	var lv := level_of(type)
-	return lv < SoldierDB.MAX_LEVEL \
-		and gold >= SoldierDB.upgrade_gold(lv) \
-		and shards_of(type) >= SoldierDB.upgrade_shards(lv)
+	return owns(type) \
+		and lv < SoldierDB.MAX_LEVEL \
+		and gold >= SoldierDB.upgrade_gold(lv, type) \
+		and shards_of(type) >= SoldierDB.upgrade_shards(lv, type)
 
 
 ## Spends gold + class shards and raises the level. Returns false (and
@@ -158,9 +164,9 @@ func try_upgrade(type: int) -> bool:
 	if not can_upgrade(type):
 		return false
 	var lv := level_of(type)
-	var cost := SoldierDB.upgrade_gold(lv)
+	var cost := SoldierDB.upgrade_gold(lv, type)
 	gold -= cost
-	shards[type] -= SoldierDB.upgrade_shards(lv)
+	shards[type] -= SoldierDB.upgrade_shards(lv, type)
 	levels[type] = lv + 1
 	wallet_changed.emit()
 	soldier_changed.emit(type)
@@ -284,13 +290,51 @@ func add_chest(chest: Dictionary) -> int:
 ## Opens the chest in `slot`: empties the slot and grants the contents. Returns the reward
 ## (RewardDB format), or {} when the slot is empty.
 func open_chest(slot: int) -> Dictionary:
-	if slot < 0 or slot >= chest_slots.size() or chest_slots[slot].is_empty():
+	if slot < 0 or slot >= chest_slots.size() or chest_slots[slot].is_empty() or chest_left(slot) > 0:
 		return {}
 	var reward := ChestDB.to_reward(chest_slots[slot])
 	chest_slots[slot] = {}
 	grant(reward)
 	chests_changed.emit()
 	return reward
+
+
+## Seconds until the chest in `slot` can be opened (0 = ready or empty slot).
+func chest_left(slot: int) -> int:
+	if slot < 0 or slot >= chest_slots.size() or chest_slots[slot].is_empty():
+		return 0
+	return maxi(int(chest_slots[slot].get("ready_at", 0)) - int(Time.get_unix_time_from_system()), 0)
+
+
+## Takes `seconds` off the wait of the chest in `slot` (a watched ad).
+func speed_up_chest(slot: int, seconds: int) -> void:
+	if chest_left(slot) <= 0:
+		return
+	chest_slots[slot]["ready_at"] = maxi(int(chest_slots[slot]["ready_at"]) - seconds, 0)
+	chests_changed.emit()
+
+
+## Pays ChestDB.skip_gems gems and makes the chest in `slot` ready now. False (nothing changes) when
+## the slot is empty, already ready, or the player has too few gems.
+func skip_chest_with_gems(slot: int) -> bool:
+	var left := chest_left(slot)
+	if left <= 0 or not spend_gems(ChestDB.skip_gems(left)):
+		return false
+	chest_slots[slot]["ready_at"] = 0
+	chests_changed.emit()
+	return true
+
+
+## True while the NO RANDOM ADS perk is active: owned, or free trial battles left.
+func has_no_ads() -> bool:
+	return has_purchase("remove_ads") or no_ads_trial_left > 0
+
+
+## One battle played: uses up a trial battle unless the product is owned.
+func use_trial_battle() -> void:
+	if not has_purchase("remove_ads") and no_ads_trial_left > 0:
+		no_ads_trial_left -= 1
+		shop_changed.emit()
 
 
 func chest_seconds_left() -> int:
@@ -336,6 +380,7 @@ func to_save() -> Dictionary:
 		"progress": {"highest_level": highest_level},
 		"purchases": purchases.keys(),
 		"timers": {"chest_ready_at": chest_ready_at},
+		"no_ads_trial_left": no_ads_trial_left,
 		"unlocked": _unlocked_ids(),
 		"chests": chest_slots.map(func(c: Dictionary) -> Dictionary: return ChestDB.to_save(c)),
 		"missions": MissionManager.to_save(),
@@ -392,6 +437,8 @@ func apply_save(d: Dictionary) -> void:
 		# Capped at one cooldown from now, so a bad value or a changed clock never locks the chest for long.
 		var now := int(Time.get_unix_time_from_system())
 		chest_ready_at = _read_int(timers.get("chest_ready_at"), 0, now + RewardDB.CHEST_COOLDOWN, 0)
+
+	no_ads_trial_left = _read_int(d.get("no_ads_trial_left"), 0, NO_ADS_TRIAL_BATTLES, NO_ADS_TRIAL_BATTLES)
 
 	var saved_unlocked: Variant = d.get("unlocked")
 	if saved_unlocked is Array:

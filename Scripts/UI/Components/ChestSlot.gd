@@ -13,6 +13,14 @@ var index: int = 0
 
 var _icon: TextureRect
 var _label: Label
+var _tick := 0.0
+
+
+## "H:MM:SS" from 1 hour up, "M:SS" below.
+static func clock(seconds: int) -> String:
+	if seconds >= 3600:
+		return "%d:%02d:%02d" % [floori(seconds / 3600.0), floori((seconds % 3600) / 60.0), seconds % 60]
+	return "%d:%02d" % [floori(seconds / 60.0), seconds % 60]
 
 
 func setup(p_index: int) -> void:
@@ -60,9 +68,18 @@ func refresh() -> void:
 	else:
 		path = ChestDB.icon_of(int(chest["tier"]))
 		_icon.modulate = Color.WHITE
-		_label.text = String(ChestDB.DATA[int(chest["tier"])]["short"])
+		var left := PlayerData.chest_left(index)
+		_label.text = String(ChestDB.DATA[int(chest["tier"])]["short"]) if left <= 0 else clock(left)
 	if ResourceLoader.exists(path):
 		_icon.texture = load(path)
+
+
+func _process(delta: float) -> void:
+	_tick -= delta
+	if _tick <= 0.0:
+		_tick = 1.0
+		if is_visible_in_tree():
+			refresh()
 
 
 func _on_gui_input(event: InputEvent) -> void:

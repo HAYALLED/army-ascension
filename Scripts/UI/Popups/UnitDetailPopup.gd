@@ -19,14 +19,6 @@ var type: int = SoldierDB.Type.RIFLEMAN
 @onready var _close: Button = %CloseButton
 @onready var _desc: Label = %DescLabel
 
-const DESCRIPTIONS := {
-	SoldierDB.Type.RIFLEMAN: "Balanced damage and fire rate. The backbone of every army.",
-	SoldierDB.Type.MACHINE_GUNNER: "Very fast fire, moderate damage. Melts crowds up close.",
-	SoldierDB.Type.SNIPER: "Slow, powerful shots that pierce enemies and reach far.",
-	SoldierDB.Type.ROCKET: "Explosive rockets that damage whole groups of enemies.",
-	SoldierDB.Type.MEDIC: "Heals nearby soldiers. Keep the medics in the back rows.",
-}
-
 
 func setup(p_type: int) -> void:
 	type = p_type
@@ -56,8 +48,9 @@ func _refresh() -> void:
 	_name.text = str(d["name"]).to_upper()
 	_rarity.text = "%s - %s" % [rank.display_name, unit_class.display_name]
 	_rarity.add_theme_color_override("font_color", rank.glow_color)
-	_level.text = "Lv %d" % lv
-	_desc.text = DESCRIPTIONS[type]
+	_level.text = "Lv %d" % lv if PlayerData.owns(type) else "LOCKED"
+	var ability := SoldierDB.ability_text(type)
+	_desc.text = str(d.get("desc", "")) + ("\n" + ability if ability != "" else "")
 	for c in _stats.get_children():
 		c.queue_free()
 	var now := SoldierDB.stats(type, lv)
@@ -73,13 +66,13 @@ func _refresh() -> void:
 		_upgrade.text = "MAX LEVEL"
 		_upgrade.disabled = true
 		return
-	var gold_need := SoldierDB.upgrade_gold(lv)
-	var shard_need := SoldierDB.upgrade_shards(lv)
+	var gold_need := SoldierDB.upgrade_gold(lv, type)
+	var shard_need := SoldierDB.upgrade_shards(lv, type)
 	_gold.text = str(gold_need)
 	_gold.modulate = Color.WHITE if PlayerData.gold >= gold_need else Color(1.0, 0.45, 0.4)
 	_shards.text = "%d/%d" % [PlayerData.shards_of(type), shard_need]
 	_shards.modulate = Color.WHITE if PlayerData.shards_of(type) >= shard_need else Color(1.0, 0.45, 0.4)
-	_upgrade.text = "UPGRADE"
+	_upgrade.text = "UPGRADE" if PlayerData.owns(type) else "LOCKED"
 	_upgrade.disabled = not PlayerData.can_upgrade(type)
 
 

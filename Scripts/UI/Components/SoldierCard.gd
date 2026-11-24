@@ -67,12 +67,15 @@ func _refresh() -> void:
 	var unit_class := UnitClassDB.get_unit_class(d["class"])
 	_portrait.texture = load(d["icon"])
 	_name.text = str(d["name"]).to_upper()
-	_level.text = "Lv %d" % lv
+	var owned := PlayerData.owns(type)
+	_level.text = "Lv %d" % lv if owned else "LOCKED"
+	# Units the player has not unlocked yet (chest drops) stay visible but dimmed.
+	modulate = Color.WHITE if owned else Color(0.55, 0.55, 0.62)
 	tooltip_text = "%s - %s" % [_rank.display_name, unit_class.display_name]
 	_apply_rank(_rank)
 	_class_icon.texture = unit_class.icon_texture
 	_class_icon.modulate = unit_class.tint
-	var need := SoldierDB.upgrade_shards(lv)
+	var need := SoldierDB.upgrade_shards(lv, type)
 	var have := PlayerData.shards_of(type)
 	_bar.max_value = need
 	_bar.value = mini(have, need)
@@ -82,7 +85,7 @@ func _refresh() -> void:
 		_upgrade.disabled = true
 	else:
 		_shard_label.text = "%d/%d" % [have, need]
-		_upgrade.text = "UPGRADE"
+		_upgrade.text = "UPGRADE" if owned else "LOCKED"
 		_upgrade.disabled = not PlayerData.can_upgrade(type)
 
 

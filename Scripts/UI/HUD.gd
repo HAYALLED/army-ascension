@@ -165,11 +165,20 @@ func _on_lost() -> void:
 func _result_text(won: bool) -> String:
 	var t := int(Game.elapsed)
 	var bonus := int(round((PlayerData.income_mult() - 1.0) * 100.0))
-	var gold_text := "+%d" % Game.final_gold(won)
+	var gold_text := "+%d" % Game.credited_gold
+	if Game.auto_doubled:
+		gold_text += "  (x2 NO ADS)"
 	if bonus > 0:
 		gold_text += "  (income +%d%%)" % bonus
 	return "Kills  %d\nGold  %s\nShards  +%d\nSurvivors  %d\nTime  %d:%02d%s" % [
-		Game.kills, gold_text, Game.shards, Game.soldiers.size(), floori(t / 60.0), t % 60, _chest_text(won)]
+		Game.kills, gold_text, Game.shards, Game.soldiers.size(), floori(t / 60.0), t % 60, _chest_text(won) + _trial_text()]
+
+
+## Result line while the free NO RANDOM ADS trial is running.
+func _trial_text() -> String:
+	if not Game.auto_doubled or PlayerData.has_purchase("remove_ads"):
+		return ""
+	return "\nNo-ads trial  %d battles left" % PlayerData.no_ads_trial_left
 
 
 ## Result line for the chest a won level dropped (it waits in a home slot).
@@ -179,7 +188,7 @@ func _chest_text(won: bool) -> String:
 	var chest_name := ChestDB.name_of(int(Game.dropped_chest["tier"]))
 	if Game.dropped_slot < 0:
 		return "\nChest  %s  (slots full, lost)" % chest_name
-	return "\nChest  %s  (open it on Home)" % chest_name
+	return "\nChest  %s  (opens in %s, tap it on Home)" % [chest_name, ChestSlot.clock(PlayerData.chest_left(Game.dropped_slot))]
 
 
 func _open(mode: int, title: String, color: Color, stats: String, primary: String, secondary: String, tertiary: String) -> void:
@@ -210,10 +219,11 @@ func _on_primary() -> void:
 			_close()
 			Game.set_paused(false)
 		Mode.WIN:
-			Game.next_level()
-			Game.goto_menu()
+			await _leave(func() -> void:
+				Game.next_level()
+				Game.goto_menu())
 		Mode.LOSE:
-			Game.restart()
+			await _leave(Game.restart)
 		Mode.REVIVE:
 			_watch_revive_ad()
 
@@ -221,12 +231,21 @@ func _on_primary() -> void:
 func _on_secondary() -> void:
 	AudioManager.play("ui_click")
 	match _mode:
-		Mode.PAUSE, Mode.WIN:
+		Mode.PAUSE:
 			Game.restart()
+		Mode.WIN:
+			await _leave(Game.restart)
 		Mode.LOSE:
-			Game.goto_menu()
+			await _leave(Game.goto_menu)
 		Mode.REVIVE:
 			Game.decline_revive()
+
+
+## Leaves the result screen; plays the random ad first when one is due.
+func _leave(action: Callable) -> void:
+	_set_buttons_enabled(false)
+	await Game.play_due_interstitial()
+	action.call()
 
 
 func _on_tertiary() -> void:

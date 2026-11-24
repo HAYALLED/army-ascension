@@ -6,7 +6,6 @@
 [ext_resource type="Texture2D" path="res://Assets/UI/panel_header.png" id="4_831b7"]
 [ext_resource type="Texture2D" path="res://Assets/UI/icon_play.png" id="5_4bq80"]
 [ext_resource type="Texture2D" path="res://Assets/UI/icon_calendar_gift.png" id="6_5w6pw"]
-[ext_resource type="Texture2D" path="res://Assets/UI/icon_ad_video.png" id="7_m3vpb"]
 
 [node name="HomePage" type="Control" unique_id=806928833]
 layout_mode = 3
@@ -96,17 +95,6 @@ theme_type_variation = &"ButtonGold"
 theme_override_font_sizes/font_size = 32
 text = "DAILY"
 icon = ExtResource("6_5w6pw")
-expand_icon = true
-
-[node name="ChestButton" type="Button" parent="Margin/Content/Extras" unique_id=329399138]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(290, 90)
-layout_mode = 2
-focus_mode = 0
-theme_type_variation = &"ButtonSecondary"
-theme_override_font_sizes/font_size = 30
-text = "FREE CHEST"
-icon = ExtResource("7_m3vpb")
 expand_icon = true
 
 [node name="ChestSlots" type="HBoxContainer" parent="Margin/Content"]

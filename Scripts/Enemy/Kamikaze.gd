@@ -45,7 +45,7 @@ func _explode() -> void:
 		var dz := s.position.z - position.z
 		var r := BLAST_RADIUS + s.radius
 		if dx * dx + dz * dz <= r * r:
-			s.take_damage(damage)
+			s.take_damage(damage * dmg_mult())
 	Game.fx.explosion(position, BLAST_RADIUS)
 	AudioManager.play("explosion")
 	Game.camera_rig.shake(0.15)

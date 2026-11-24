@@ -32,6 +32,7 @@ func _ready() -> void:
 	_test_slots()
 	_test_save()
 	await _test_win_drop()
+	await _test_timers()
 	await _test_shop_chest()
 	print("CHESTS %s" % ("OK" if _failed == 0 else "FAILED (%d)" % _failed))
 	get_tree().quit(1 if _failed > 0 else 0)
@@ -181,6 +182,74 @@ func _test_win_drop() -> void:
 
 
 ## Shop gold chest: 20 gems, opens at once, nothing is stored in a slot.
+## Won chests are locked (wood 30 min, silver 1 h, gold 2 h); an ad takes 15 min off, gems skip the rest (1 gem per 360 s).
+func _test_timers() -> void:
+	_fresh()
+	var now := int(Time.get_unix_time_from_system())
+	_check("unlock times: wood 30 min, silver 1 h, gold 2 h", ChestDB.UNLOCK_SECONDS == [1800, 3600, 7200])
+	_check("skip cost: 2 h = 20 gems, 360 s = 1 gem, 361 s = 2 gems, 0 = 0",
+		ChestDB.skip_gems(7200) == 20 and ChestDB.skip_gems(360) == 1 and ChestDB.skip_gems(361) == 2 and ChestDB.skip_gems(0) == 0)
+	Game.sim_mode = true
+	Game.reset_run()
+	Game._finish_battle(true)
+	var tier := int(Game.dropped_chest["tier"])
+	var left := PlayerData.chest_left(0)
+	_check("a dropped chest is locked for its tier time", left > ChestDB.UNLOCK_SECONDS[tier] - 5 and left <= ChestDB.UNLOCK_SECONDS[tier])
+	_check("a locked chest cannot be opened", PlayerData.open_chest(0).is_empty() and not PlayerData.chest_slots[0].is_empty())
+	PlayerData.speed_up_chest(0, ChestDB.AD_SKIP_SECONDS)
+	_check("an ad takes 15 minutes off", PlayerData.chest_left(0) == maxi(left - 900, 0) or PlayerData.chest_left(0) == maxi(left - 899, 0))
+	PlayerData.gems = 0
+	_check("gem skip refused without gems, nothing changes", not PlayerData.skip_chest_with_gems(0) and PlayerData.chest_left(0) > 0)
+	PlayerData.chest_slots[0]["ready_at"] = now + 7200
+	PlayerData.gems = 25
+	_check("gem skip: 2 h left costs 20 gems and the chest opens", PlayerData.skip_chest_with_gems(0) and PlayerData.gems == 5 and PlayerData.chest_left(0) == 0 and not PlayerData.open_chest(0).is_empty())
+	PlayerData.chest_slots[1] = {"tier": ChestDB.Tier.WOOD, "units": [{"type": T.RIFLEMAN, "shards": 3}], "gold": 50, "gems": 0, "ready_at": now + 1000}
+	PlayerData.apply_save(JSON.parse_string(JSON.stringify(PlayerData.to_save())) as Dictionary)
+	_check("timer survives save / load", absi(PlayerData.chest_left(1) - 1000) <= 3)
+	PlayerData.apply_save({"chests": [{"tier": "wood", "units": [{"id": "sniper", "shards": 4}], "gold": 60, "gems": 0, "ready_at": now + 999999999}]})
+	_check("hostile timer is capped to one unlock time", PlayerData.chest_left(0) <= 1800)
+	_fresh()
+	var slot := ChestSlot.new()
+	slot.setup(0)
+	add_child(slot)
+	PlayerData.chest_slots[0] = {"tier": ChestDB.Tier.GOLD, "units": [{"type": T.SNIPER, "shards": 20}], "gold": 600, "gems": 0, "ready_at": now + 5000}
+	slot.refresh()
+	_check("slot shows the countdown while locked", slot._label.text.contains(":") and slot._label.text != "GOLD")
+	PlayerData.chest_slots[0]["ready_at"] = 0
+	slot.refresh()
+	_check("slot shows the tier name when ready", slot._label.text == "GOLD")
+	_check("clock format", ChestSlot.clock(7200) == "2:00:00" and ChestSlot.clock(1799) == "29:59")
+	slot.queue_free()
+	# popup on a locked chest: WATCH AD takes 15 min off, OPEN NOW pays gems and answers true
+	var saved_provider := AdService.provider
+	AdService.provider = FakeAds.new()
+	PlayerData.chest_slots[0]["ready_at"] = now + 7200
+	PlayerData.gems = 20
+	var answer := {}
+	var popup := ChestPopup.new()
+	popup._slot = 0
+	popup._chest = PlayerData.chest_slots[0]
+	popup.answered.connect(func(open: bool) -> void: answer["open"] = open)
+	add_child(popup)
+	await get_tree().process_frame
+	var buttons: Array = popup.find_children("*", "Button", true, false)
+	_check("popup (locked): WATCH AD, OPEN NOW (20 GEMS), CLOSE", buttons.map(func(b: Button) -> String: return b.text) == ["WATCH AD  (-15 MIN)", "OPEN NOW  (20 GEMS)", "CLOSE"] and not buttons[1].disabled)
+	buttons[0].pressed.emit()
+	for i in 4:
+		await get_tree().process_frame
+	_check("popup: watching the ad takes 15 minutes off", PlayerData.chest_left(0) <= 7200 - 899 and PlayerData.chest_left(0) >= 7200 - 902)
+	buttons = popup.find_children("*", "Button", true, false).filter(func(b: Button) -> bool: return not b.is_queued_for_deletion())
+	_check("popup: gem button shows the new price (18 gems) and is still affordable", buttons[1].text == "OPEN NOW  (18 GEMS)" and not buttons[1].disabled)
+	buttons[1].pressed.emit()
+	await get_tree().process_frame
+	_check("popup: OPEN NOW spent 18 gems, chest ready, answered open", answer.get("open") == true and PlayerData.gems == 2 and PlayerData.chest_left(0) == 0)
+	AdService.provider = saved_provider
+	Game.sim_mode = false
+	Game.reset_run()
+	_fresh()
+	await get_tree().process_frame
+
+
 func _test_shop_chest() -> void:
 	_fresh()
 	var shop := (load("res://Scene/Menus/Pages/ShopPage.tscn") as PackedScene).instantiate() as ShopPage
@@ -219,7 +288,7 @@ func _test_shop_chest() -> void:
 	_check("shop: 20 gems spent, gold chest paid out at once (3 units, 600+ gold)",
 		PlayerData.gems >= 5 and PlayerData.gems <= 6 and PlayerData.gold >= gold + 600 and PlayerData.total_shards() >= total + 60)
 	_check("shop: bought chest is not stored in a slot", PlayerData.chest_slots.all(func(c: Dictionary) -> bool: return c.is_empty()))
-	# wooden chest by video: above the gold chest, shares the home cooldown
+	# wooden chest by video: above the gold chest, has its own 30 min cooldown
 	var cards: Array = shop.find_children("*", "PanelContainer", true, false).filter(func(c: Node) -> bool: return c is ShopOffer)
 	var ids: Array = cards.map(func(c: ShopOffer) -> String: return c.item_id)
 	_check("shop: wood chest card sits right above the gold chest", ids.find("wood_chest") >= 0 and ids.find("wood_chest") + 1 == ids.find("gold_chest"))

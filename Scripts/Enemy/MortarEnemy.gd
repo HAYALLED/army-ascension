@@ -12,7 +12,11 @@ func _attack(_face: Vector3) -> void:
 	if not is_instance_valid(target):
 		return
 	AudioManager.play("shoot_enemy")
-	lob_shell(get_parent(), target.position, BLAST_RADIUS, damage, SHELL_DELAY)
+	var spot := target.position
+	if miss_roll():
+		# Blinded: the shell lands well outside the blast radius.
+		spot += Vector3(randf_range(-1.0, 1.0), 0.0, randf_range(-1.0, 1.0)).normalized() * randf_range(BLAST_RADIUS * 2.0, BLAST_RADIUS * 3.0)
+	lob_shell(get_parent(), spot, BLAST_RADIUS, damage * dmg_mult(), SHELL_DELAY)
 
 
 ## Marks `pos`, then after `delay` seconds damages every soldier within `blast_radius`.

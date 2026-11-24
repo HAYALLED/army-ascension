@@ -7,13 +7,26 @@ extends Node3D
 const KIND_ENEMY := 5
 const KIND_BOSS := 6
 const KIND_SNIPER := 7
+## Player kinds of the higher-rank and support soldiers (SoldierDB "proj").
+const KIND_RIFLE_RARE := 8
+const KIND_MG_RARE := 9
+const KIND_SNIPER_RARE := 10
+const KIND_ROCKET_RARE := 11
+const KIND_MEDIC_SUPER := 12
+const KIND_WEAKENER := 13
+const KIND_BLINDER := 14
+const KIND_DRUMMER := 15
 const KIND_COLOR := [
 	Color(1.0, 0.95, 0.5), Color(1.0, 0.7, 0.25), Color(0.7, 0.95, 1.0),
 	Color(1.0, 0.45, 0.15), Color(0.6, 1.0, 0.6), Color(1.0, 0.3, 0.4), Color(0.85, 0.35, 1.0), Color(1.0, 0.15, 0.15),
+	Color(0.75, 0.5, 1.0), Color(0.85, 0.5, 1.0), Color(0.8, 0.65, 1.0), Color(0.8, 0.35, 1.0),
+	Color(0.4, 0.7, 1.0), Color(0.7, 0.9, 0.2), Color(1.0, 0.97, 0.6), Color(1.0, 0.8, 0.25),
 ]
 const KIND_SIZE := [
 	Vector3(0.08, 0.08, 0.7), Vector3(0.09, 0.09, 0.55), Vector3(0.1, 0.1, 1.7),
 	Vector3(0.28, 0.28, 0.7), Vector3(0.08, 0.08, 0.4), Vector3(0.14, 0.14, 0.5), Vector3(0.32, 0.32, 0.6), Vector3(0.12, 0.12, 1.6),
+	Vector3(0.09, 0.09, 0.8), Vector3(0.1, 0.1, 0.6), Vector3(0.12, 0.12, 1.9), Vector3(0.3, 0.3, 0.8),
+	Vector3(0.09, 0.09, 0.45), Vector3(0.14, 0.14, 0.4), Vector3(0.16, 0.16, 0.3), Vector3(0.12, 0.12, 0.4),
 ]
 
 @export var capacity: int = 320
@@ -179,6 +192,11 @@ func _hit_soldiers(i: int, p0: Vector3, p1: Vector3) -> bool:
 			Game.fx.hit(Vector3(s.position.x, p1.y, s.position.z), KIND_COLOR[_kind[i]])
 			return true
 	return false
+
+
+## Area damage at `pos` (used by lobbed mortar shells, see LobShell).
+func blast(pos: Vector3, radius: float, dmg: float) -> void:
+	_explode(pos, radius, dmg)
 
 
 func _explode(pos: Vector3, radius: float, dmg: float) -> void:

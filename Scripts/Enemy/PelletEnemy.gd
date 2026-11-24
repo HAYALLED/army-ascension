@@ -21,8 +21,10 @@ func _attack(face: Vector3) -> void:
 		dir = target.position - from
 		dir.y = 0.0
 		dir = dir.normalized()
+	dir = miss_dir(dir, miss_roll())
+	var dmg := damage * dmg_mult()
 	for i in count:
 		var t := 0.5 if count < 2 else float(i) / float(count - 1)
 		var ang := lerpf(-arc, arc, t)
-		Game.enemy_bullets.fire(from, dir.rotated(Vector3.UP, ang), proj_speed, damage, attack_range + 3.0, 0, 0.0, proj_kind)
+		Game.enemy_bullets.fire(from, dir.rotated(Vector3.UP, ang), proj_speed, dmg, attack_range + 3.0, 0, 0.0, proj_kind)
 	AudioManager.play("shoot_enemy", 0.8)

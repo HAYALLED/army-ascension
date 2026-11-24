@@ -30,6 +30,12 @@ func _ready() -> void:
 		buy.emit(item_id))
 
 
+## Replaces the description text (hidden when empty).
+func set_description(text: String) -> void:
+	_desc.text = text
+	_desc.visible = text != ""
+
+
 ## Replaces the buy button text; a disabled button (OWNED, SOON) uses the gray style.
 func set_button(text: String, disabled: bool) -> void:
 	_button.text = text

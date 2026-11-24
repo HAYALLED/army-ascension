@@ -103,9 +103,9 @@ func explosion(pos: Vector3, radius: float) -> void:
 	_ring(pos + Vector3(0, 0.6, 0), radius, 0.35, true)
 
 
-## Expanding green ground ring (medic pulse).
-func pulse(pos: Vector3, radius: float) -> void:
-	_ring(pos + Vector3(0, 0.1, 0), radius, 0.5, false)
+## Expanding ground ring (medic pulse = green; Drummer / Weakener / Blinder pass their own color).
+func pulse(pos: Vector3, radius: float, tint: Color = Color(0.4, 1.0, 0.5, 0.45)) -> void:
+	_ring(pos + Vector3(0, 0.1, 0), radius, 0.5, false, tint)
 
 
 func heal_spark(pos: Vector3) -> void:
@@ -124,7 +124,7 @@ func popup(pos: Vector3, text: String, color: Color, size: float = 1.0) -> void:
 	_label_age[idx] = 0.0
 
 
-func _ring(pos: Vector3, radius: float, dur: float, sphere: bool) -> void:
+func _ring(pos: Vector3, radius: float, dur: float, sphere: bool, tint: Color = Color(0.4, 1.0, 0.5, 0.45)) -> void:
 	var idx := _ring_i
 	_ring_i = (_ring_i + 1) % RING_POOL
 	var mi: MeshInstance3D = _rings[idx]
@@ -133,7 +133,7 @@ func _ring(pos: Vector3, radius: float, dur: float, sphere: bool) -> void:
 		mi.material_override = Mats.unshaded(Color(1.0, 0.65, 0.25, 0.55))
 	else:
 		mi.mesh = Mats.cylinder(1.0, 1.0, 0.05, 24)
-		mi.material_override = Mats.unshaded(Color(0.4, 1.0, 0.5, 0.45))
+		mi.material_override = Mats.unshaded(tint)
 	mi.position = pos
 	mi.scale = Vector3.ONE * 0.2
 	mi.transparency = 0.0

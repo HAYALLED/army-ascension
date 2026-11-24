@@ -10,6 +10,12 @@ enum Tier { WOOD, SILVER, GOLD }
 
 ## Chest slots on the home page.
 const SLOTS := 4
+## Seconds a won chest stays locked, indexed by Tier: wooden 30 min, silver 1 h, gold 2 h.
+const UNLOCK_SECONDS := [1800, 3600, 7200]
+## One rewarded ad takes this much off a locked chest.
+const AD_SKIP_SECONDS := 900
+## Opening a locked chest early costs 1 gem per 360 s (a 2 hour gold chest = 20 gems).
+const SECONDS_PER_GEM := 360
 ## Gem price of the gold chest in the shop.
 const SHOP_GOLD_GEMS := 20
 
@@ -54,16 +60,29 @@ static func roll_tier(rng: RandomNumberGenerator) -> int:
 	return Tier.WOOD
 
 
+## Chance weight of a soldier class by its rank: higher ranks drop less often.
+const RANK_WEIGHT := {&"common": 10.0, &"rare": 5.0, &"super_rare": 2.5, &"legend": 1.0, &"unique": 0.5}
+
+
+## Random order of `types` without repeats where a heavier class tends to come first
+## (weighted sampling, Efraimidis-Spirakis: key = random ^ (1 / weight)).
+static func _weighted_order(types: Array, rng: RandomNumberGenerator) -> Array:
+	var keyed: Array = []
+	for t in types:
+		var w: float = float(RANK_WEIGHT.get(SoldierDB.DATA[t]["rank"], 1.0))
+		keyed.append([pow(maxf(rng.randf(), 0.000001), 1.0 / maxf(w, 0.01)), t])
+	keyed.sort_custom(func(a: Array, b: Array) -> bool: return a[0] > b[0])
+	var out: Array = []
+	for k in keyed:
+		out.append(k[1])
+	return out
+
+
 ## Rolls the contents of one chest. Classes are picked from ALL soldier classes (owned or not),
 ## each at most once per chest; a class the player does not own is a new unit.
 static func roll(tier: int, rng: RandomNumberGenerator) -> Dictionary:
 	var d: Dictionary = DATA[tier]
-	var types: Array = SoldierDB.DATA.keys()
-	for i in range(types.size() - 1, 0, -1):
-		var j := rng.randi_range(0, i)
-		var tmp = types[i]
-		types[i] = types[j]
-		types[j] = tmp
+	var types: Array = _weighted_order(SoldierDB.DATA.keys(), rng)
 	var units: Array = []
 	var shard_range: Vector2i = d["shards"]
 	for i in mini(int(d["units"]), types.size()):
@@ -75,6 +94,11 @@ static func roll(tier: int, rng: RandomNumberGenerator) -> Dictionary:
 		"gold": rng.randi_range(gold_range.x, gold_range.y),
 		"gems": 1 if rng.randf() < float(d["gem"]) else 0,
 	}
+
+
+## Gems needed to open a chest that still has `seconds_left` to wait (0 when it is ready).
+static func skip_gems(seconds_left: int) -> int:
+	return maxi(ceili(float(seconds_left) / float(SECONDS_PER_GEM)), 0)
 
 
 ## Chest -> RewardDB reward. "unlock" lists the classes the player does not own yet (they are
@@ -127,7 +151,10 @@ static func to_save(chest: Dictionary) -> Dictionary:
 	var units: Array = []
 	for u: Dictionary in chest["units"]:
 		units.append({"id": SoldierDB.id_of(int(u["type"])), "shards": int(u["shards"])})
-	return {"tier": String(DATA[int(chest["tier"])]["id"]), "units": units, "gold": int(chest["gold"]), "gems": int(chest["gems"])}
+	var out := {"tier": String(DATA[int(chest["tier"])]["id"]), "units": units, "gold": int(chest["gold"]), "gems": int(chest["gems"])}
+	if int(chest.get("ready_at", 0)) > 0:
+		out["ready_at"] = int(chest["ready_at"])
+	return out
 
 
 ## Chest from save data; {} when the data is not a valid chest. Every number is clamped.
@@ -155,12 +182,18 @@ static func from_save(v: Variant) -> Dictionary:
 	if units.is_empty() or units.size() > int(d["units"]):
 		return {}
 	var gold_range: Vector2i = d["gold"]
-	return {
+	var chest := {
 		"tier": tier,
 		"units": units,
 		"gold": _int(v.get("gold"), gold_range.x, gold_range.y, gold_range.x),
 		"gems": _int(v.get("gems"), 0, 1, 0),
 	}
+	# Capped at one full unlock time from now, so a bad value or a changed clock never locks a chest for long.
+	var latest := int(Time.get_unix_time_from_system()) + int(UNLOCK_SECONDS[tier])
+	var ready_at := _int(v.get("ready_at"), 0, latest, 0)
+	if ready_at > 0:
+		chest["ready_at"] = ready_at
+	return chest
 
 
 ## Number clamped to lo..hi; `fallback` when the value is not a finite number.

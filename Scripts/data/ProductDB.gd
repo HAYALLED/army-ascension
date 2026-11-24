@@ -13,7 +13,7 @@ const PRODUCTS := {
 	"gems_l": {"reward": {"gems": 500}},
 	"starter_bundle": {"reward": {"gold": 1000, "shards": 30, "chest": true}, "pick_unit": true, "once": true},
 	"remove_ads": {"reward": {}, "once": true,
-		"note": "No more ad after every 2 games! Reward ads now pay out instantly."},
+		"note": "NO RANDOM ADS active: battles pay 2X gold and no ad after every 2 games."},
 }
 
 

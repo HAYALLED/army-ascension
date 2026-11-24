@@ -230,6 +230,6 @@ theme_type_variation = &"PanelDark"
 script = ExtResource("5_qprct")
 item_id = "remove_ads"
 title = "NO RANDOM ADS"
-description = "No more ad after every 2 games! Reward ads pay instantly"
+description = "Every battle pays 2X gold and no more ad after every 2 games!"
 price_text = "$4.99"
 icon = ExtResource("16_kehqu")

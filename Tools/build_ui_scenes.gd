@@ -555,8 +555,6 @@ func _home_page() -> void:
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	var d := _btn(row, "DailyButton", "DAILY", "ButtonGold", Vector2(250, 90), true, "icon_calendar_gift.png")
 	d.add_theme_font_size_override("font_size", 32)
-	var c := _btn(row, "ChestButton", "FREE CHEST", "ButtonSecondary", Vector2(290, 90), true, "icon_ad_video.png")
-	c.add_theme_font_size_override("font_size", 30)
 	_spacer(v, false, Vector2(0, 8))
 	_save(root, "res://Scene/Menus/Pages/HomePage.tscn")
 
@@ -648,7 +646,7 @@ func _shop_page() -> void:
 	_item(sh, "Gem1", "gems_s", "SMALL", "x40", "$0.99", "icon_gem.png", "ButtonGold")
 	_item(sh, "Gem2", "gems_m", "MEDIUM", "x150", "$2.99", "icon_gem.png", "ButtonGold")
 	_item(sh, "Gem3", "gems_l", "LARGE", "x500", "$7.99", "icon_gem.png", "ButtonGold")
-	_offer(col, "NoAds", "remove_ads", "NO RANDOM ADS", "No more ad after every 2 games! Reward ads pay instantly", "$4.99", "shop_no_ads.png", "ButtonGold")
+	_offer(col, "NoAds", "remove_ads", "NO RANDOM ADS", "Every battle pays 2X gold and no more ad after every 2 games!", "$4.99", "shop_no_ads.png", "ButtonGold")
 	_save(root, "res://Scene/Menus/Pages/ShopPage.tscn")
 
 

@@ -1,20 +1,17 @@
 class_name HomePage
 extends Control
-## Main menu home: logo, level banner (tap to pick a beaten level), PLAY, daily reward,
-## the free chest (rewarded ad, 30 min cooldown) and the 4 chest slots (chests dropped by beaten levels:
-## tap one to see what is inside and open it).
+## Main menu home: logo, level banner (tap to pick a beaten level), PLAY, daily reward
+## and the 4 chest slots (chests dropped by beaten levels wait 30 min / 1 h / 2 h: tap one to see
+## what is inside, speed it up with an ad or gems, and open it). The free ad chest lives in the Shop.
 
 signal play_pressed()
 signal toast_requested(text: String)
 
 @onready var _play: Button = %PlayButton
 @onready var _daily: Button = %DailyButton
-@onready var _chest: Button = %ChestButton
 @onready var _level: Label = %LevelLabel
 @onready var _level_banner: Control = %LevelBanner
 @onready var _chest_slots: HBoxContainer = %ChestSlots
-
-var _chest_tick: float = 0.0
 
 
 func _ready() -> void:
@@ -32,9 +29,6 @@ func _ready() -> void:
 	_daily.pressed.connect(_claim_daily)
 	MissionManager.changed.connect(_refresh_daily)
 	_refresh_daily()
-	_chest.pressed.connect(_open_chest)
-	PlayerData.shop_changed.connect(_refresh_chest)
-	_refresh_chest()
 
 
 ## "LEVEL n - MINI BOSS" / "BOSS" for the level the next battle plays.
@@ -55,13 +49,6 @@ func _open_level_select() -> void:
 		_refresh_level()
 
 
-func _process(delta: float) -> void:
-	_chest_tick -= delta
-	if _chest_tick <= 0.0:
-		_chest_tick = 1.0
-		_refresh_chest()
-
-
 ## "DAILY !" while today's login reward is waiting.
 func _refresh_daily() -> void:
 	_daily.text = "DAILY !" if MissionManager.login_next_day() > 0 else "DAILY"
@@ -78,35 +65,6 @@ func _claim_daily() -> void:
 	await RewardPopup.show_reward(get_tree().current_scene, "DAILY LOGIN  -  DAY %d" % day, reward)
 
 
-## "FREE CHEST" when ready, otherwise the time left, disabled.
-func _refresh_chest() -> void:
-	var left := PlayerData.chest_seconds_left()
-	_chest.disabled = left > 0
-	_chest.text = "FREE CHEST" if left == 0 else "CHEST  %d:%02d" % [floori(left / 60.0), left % 60]
-
-
-## Watch one ad, then roll and grant the wooden chest.
-func _open_chest() -> void:
-	AudioManager.play("ui_click")
-	if PlayerData.chest_seconds_left() > 0:
-		return
-	if not AdService.is_available():
-		toast_requested.emit("No ad available right now")
-		return
-	_chest.disabled = true
-	var earned := await AdService.show_rewarded("chest")
-	if not earned:
-		_refresh_chest()
-		toast_requested.emit("Ad not completed, no chest")
-		return
-	var reward := RewardDB.roll_chest(RandomNumberGenerator.new())
-	PlayerData.grant(reward)
-	PlayerData.start_chest_cooldown()
-	SaveManager.save_now()
-	_refresh_chest()
-	await RewardPopup.show_reward(get_tree().current_scene, "WOODEN CHEST", reward, "", RewardDB.ICON_CHEST)
-
-
 ## Tap on a chest slot: show what is inside (unknown units as ???), then open it on request.
 func _on_slot_pressed(index: int) -> void:
 	AudioManager.play("ui_click")
@@ -115,7 +73,7 @@ func _on_slot_pressed(index: int) -> void:
 		toast_requested.emit("Empty slot. Beat a level to get a chest")
 		return
 	var host := get_tree().current_scene
-	if not await ChestPopup.ask(host, chest):
+	if not await ChestPopup.ask(host, index):
 		return
 	var reward := PlayerData.open_chest(index)
 	if reward.is_empty():

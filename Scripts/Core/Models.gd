@@ -50,6 +50,17 @@ static func prop(base: String) -> Dictionary:
 	return result
 
 
+## `prop` of every base name that exists, in order. Missing assets are skipped, so the
+## result is empty when none of them is imported (callers fall back to placeholders).
+static func prop_variants(bases: Array) -> Array:
+	var out: Array = []
+	for base in bases:
+		var p := prop(String(base))
+		if not p.is_empty():
+			out.append(p)
+	return out
+
+
 static func collect_meshes(root: Node) -> Array:
 	var out: Array = []
 	_collect(root, out)

@@ -59,6 +59,11 @@ func _spawn_start_army() -> void:
 		T.SNIPER, T.SNIPER, T.ROCKET, T.ROCKET, T.MEDIC]
 	for i in PlayerData.start_bonus_soldiers():
 		list.append(T.RIFLEMAN)
+	# Every extra unit the player owns joins with its own "start" count (SoldierDB.DATA).
+	for t in SoldierDB.DATA:
+		if PlayerData.owns(t):
+			for i in int(SoldierDB.DATA[t].get("start", 0)):
+				list.append(t)
 	for t in list:
 		if PlayerData.owns(t):
 			army.add_soldier(t, PlayerData.level_of(t))

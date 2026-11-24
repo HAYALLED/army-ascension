@@ -7,6 +7,7 @@ signal toast_requested(text: String)
 
 var _cards: Array[Control] = []
 var _wood_card: ShopOffer = null
+var _ads_card: ShopOffer = null
 var _tick := 0.0
 
 
@@ -19,6 +20,8 @@ func _ready() -> void:
 				node.set_button("%d GEMS" % ChestDB.SHOP_GOLD_GEMS, false)
 			elif node.item_id == "wood_chest":
 				_wood_card = node
+			elif node.item_id == "remove_ads":
+				_ads_card = node
 	PlayerData.shop_changed.connect(_refresh)
 	_refresh()
 
@@ -31,7 +34,7 @@ func _process(delta: float) -> void:
 			_refresh_wood_chest()
 
 
-## WATCH when the wooden chest is ready, otherwise the time left (same timer as the home FREE CHEST).
+## WATCH when the wooden chest is ready, otherwise the time left (its own 30 minute timer).
 func _refresh_wood_chest() -> void:
 	if _wood_card == null:
 		return
@@ -51,6 +54,18 @@ func _refresh() -> void:
 		elif ProductDB.has(id) and not ProductDB.is_available(id):
 			card.set_button("SOON", true)
 	_refresh_wood_chest()
+	if _ads_card != null:
+		_ads_card.set_description(_ads_text())
+
+
+## NO RANDOM ADS pitch; shows the free trial while it lasts.
+func _ads_text() -> String:
+	if PlayerData.has_purchase("remove_ads"):
+		return "Battles pay 2X gold, no random ads. Thank you!"
+	var text := "Every battle pays 2X gold and no more ad after every 2 games!"
+	if PlayerData.no_ads_trial_left > 0:
+		text += "\nFREE TRIAL: %d battles left" % PlayerData.no_ads_trial_left
+	return text
 
 
 func _on_buy(id: String) -> void:
@@ -97,7 +112,7 @@ func _watch_for_shards() -> void:
 	await RewardPopup.show_reward(_host(), "FREE SHARDS", reward)
 
 
-## Watch one ad, get a wooden chest that opens at once. Shares the 30 minute timer with the home FREE CHEST.
+## Watch one ad, get a wooden chest that opens at once. Has its own 30 minute timer (`PlayerData.chest_ready_at`); the Home screen has no free chest.
 func _watch_for_wood_chest() -> void:
 	if PlayerData.chest_seconds_left() > 0:
 		return

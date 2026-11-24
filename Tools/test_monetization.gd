@@ -45,6 +45,7 @@ func _run() -> void:
 	_test_save_fields()
 	await _test_ads()
 	await _test_double_gold()
+	await _test_no_ads_perk()
 	await _test_revive_flow()
 	await _test_purchases()
 
@@ -158,7 +159,7 @@ func _test_ads() -> void:
 	AdService.provider = null
 	_check("4d no provider -> unavailable, no reward", not AdService.is_available() and await AdService.show_rewarded("t") == false)
 	PlayerData.mark_purchased("remove_ads")
-	_check("4e remove_ads -> instant reward without a provider", AdService.is_available() and await AdService.show_rewarded("t") == true)
+	_check("4e remove_ads does not skip rewarded ads (still need a provider)", not AdService.is_available() and await AdService.show_rewarded("t") == false)
 	AdService.provider = saved
 
 
@@ -184,6 +185,70 @@ func _test_double_gold() -> void:
 	Game.state = Game.State.PLAYING
 	_check("5e not while playing", not Game.can_double_gold())
 	AdService.provider = null
+
+
+# 5x: NO RANDOM ADS perk (free trial + purchase): auto 2X gold, random ad after every 2 battles otherwise
+func _test_no_ads_perk() -> void:
+	_reset()
+	var saved := AdService.provider
+	var ads := FakeAds.new()
+	AdService.provider = ads
+	Game.battles_since_ad = 0
+	Game.interstitial_due = false
+	_check("5x1 new profile starts with a %d battle trial" % PlayerData.NO_ADS_TRIAL_BATTLES, PlayerData.no_ads_trial_left == 3 and PlayerData.has_no_ads())
+	Game.gold = 100
+	Game.state = Game.State.PLAYING
+	Game.end_battle(true)
+	_check("5x2 trial battle pays 2X gold on its own and uses one trial battle",
+		Game.auto_doubled and Game.credited_gold == 200 and PlayerData.no_ads_trial_left == 2 and not Game.can_double_gold())
+	for i in 2:
+		Game.reset_run()
+		Game.gold = 100
+		Game.state = Game.State.PLAYING
+		Game.end_battle(true)
+	_check("5x3 trial over after 3 battles, no random ad during it", PlayerData.no_ads_trial_left == 0 and not PlayerData.has_no_ads() and not Game.interstitial_due and ads.shown == 0)
+	Game.reset_run()
+	Game.gold = 100
+	Game.state = Game.State.PLAYING
+	Game.end_battle(true)
+	_check("5x4 after the trial: normal gold, no 2X, first battle plays no ad yet", not Game.auto_doubled and Game.credited_gold == 100 and not Game.interstitial_due)
+	await Game.play_due_interstitial()
+	_check("5x5 nothing due -> no ad", ads.shown == 0)
+	Game.reset_run()
+	Game.state = Game.State.PLAYING
+	Game.end_battle(false)
+	Game.revive_used = true
+	_check("5x6 revive offer is not an ad due", true)
+	Game.decline_revive()
+	_check("5x7 second battle makes a random ad due", Game.interstitial_due)
+	await Game.play_due_interstitial()
+	_check("5x8 random ad plays once and the counter restarts", ads.shown == 1 and not Game.interstitial_due and Game.battles_since_ad == 0)
+	PlayerData.mark_purchased("remove_ads")
+	for i in 3:
+		Game.reset_run()
+		Game.gold = 50
+		Game.state = Game.State.PLAYING
+		Game.end_battle(true)
+	await Game.play_due_interstitial()
+	_check("5x9 owner: always 2X, never a random ad", Game.auto_doubled and Game.credited_gold == 100 and not Game.interstitial_due and ads.shown == 1)
+	_check("5x10 owner still watches rewarded ads", await AdService.show_rewarded("t") == true and ads.shown == 2)
+	AdService.provider = null
+	_check("5x11 owner without ad provider gets no rewarded ad", not AdService.is_available() and await AdService.show_rewarded("t") == false)
+	Game.sim_mode = true
+	_reset()
+	Game.sim_mode = true
+	Game.gold = 100
+	Game.end_battle(true)
+	_check("5x12 --sim: no auto 2X and no trial use", not Game.auto_doubled and PlayerData.no_ads_trial_left == 3 and Game.credited_gold == 100)
+	Game.sim_mode = false
+	PlayerData.apply_save({"no_ads_trial_left": 99})
+	_check("5x13 save: trial counter is clamped, missing key means full trial", PlayerData.no_ads_trial_left == 3)
+	PlayerData.no_ads_trial_left = 1
+	var saved_data := JSON.parse_string(JSON.stringify(PlayerData.to_save())) as Dictionary
+	PlayerData.apply_save(saved_data)
+	_check("5x14 save: trial counter survives", PlayerData.no_ads_trial_left == 1)
+	AdService.provider = saved
+	_reset()
 
 
 # 6

@@ -30,6 +30,8 @@ signal revive_offered()
 enum State { LOADING, PLAYING, PAUSED, WON, LOST, REVIVE }
 
 const MAX_SOLDIERS := 60
+## A random ad plays after every this many finished battles (unless the NO RANDOM ADS perk is active).
+const BATTLES_PER_AD := 2
 
 var state: int = State.LOADING
 var level_index: int = 1
@@ -52,6 +54,11 @@ var credited_gold: int = 0
 var gold_doubled: bool = false
 ## True after this run used its one ad revive.
 var revive_used: bool = false
+## True when the NO RANDOM ADS perk doubled this battle's gold on its own.
+var auto_doubled: bool = false
+## Finished battles since the last random ad, and whether the next screen change must play one.
+var battles_since_ad: int = 0
+var interstitial_due: bool = false
 
 # Registries (filled by Battle and entities).
 var enemies: Array[Enemy] = []
@@ -76,6 +83,7 @@ func reset_run() -> void:
 	elapsed = 0.0
 	credited_gold = 0
 	gold_doubled = false
+	auto_doubled = false
 	revive_used = false
 	damage_buff = 1.0
 	rate_buff = 1.0
@@ -168,7 +176,14 @@ func double_gold() -> bool:
 func _finish_battle(won: bool) -> void:
 	get_tree().paused = false
 	Engine.time_scale = 1.0
-	_credit_rewards(won)
+	var perk := PlayerData.has_no_ads() and not sim_mode
+	_credit_rewards(won, perk)
+	if not sim_mode:
+		if perk:
+			PlayerData.use_trial_battle()
+		else:
+			battles_since_ad += 1
+			interstitial_due = battles_since_ad >= BATTLES_PER_AD
 	if won:
 		PlayerData.complete_level(level_index)
 		_drop_chest()
@@ -186,6 +201,7 @@ func _drop_chest() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.randomize()
 	dropped_chest = ChestDB.roll(ChestDB.roll_tier(rng), rng)
+	dropped_chest["ready_at"] = int(Time.get_unix_time_from_system()) + int(ChestDB.UNLOCK_SECONDS[int(dropped_chest["tier"])])
 	dropped_slot = PlayerData.add_chest(dropped_chest)
 
 
@@ -196,9 +212,20 @@ func final_gold(won: bool) -> int:
 	return int(round(float(base) * PlayerData.income_mult()))
 
 
-## Battle rewards go to the player's profile.
-func _credit_rewards(won: bool) -> void:
-	credited_gold = final_gold(won)
+## Plays the random ad if one is due (call before leaving the result screen).
+func play_due_interstitial() -> void:
+	if not interstitial_due:
+		return
+	interstitial_due = false
+	battles_since_ad = 0
+	await AdService.show_interstitial()
+
+
+## Battle rewards go to the player's profile. `perk` (NO RANDOM ADS) pays the gold twice.
+func _credit_rewards(won: bool, perk: bool = false) -> void:
+	auto_doubled = perk
+	gold_doubled = perk
+	credited_gold = final_gold(won) * (2 if perk else 1)
 	PlayerData.add_gold(credited_gold)
 	for t in run_shards:
 		PlayerData.add_shards(t, int(run_shards[t]))

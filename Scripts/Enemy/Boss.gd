@@ -175,6 +175,7 @@ static func config_of(p_kind: int) -> Dictionary:
 
 
 func _post_ready() -> void:
+	debuff_immune = true
 	cfg = config_of(kind)
 	_slam_total = float(cfg["slam_time"])
 	_muzzle = _model.find_child("Muzzle", true, false) as Node3D
