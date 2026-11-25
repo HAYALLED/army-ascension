@@ -94,6 +94,19 @@ horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
 
+[node name="PassivePanel" type="PanelContainer" parent="Center/Panel/Content"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+
+[node name="PassiveLabel" type="Label" parent="Center/Panel/Content/PassivePanel"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"LabelSmall"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+
 [node name="Stats" type="VBoxContainer" parent="Center/Panel/Content" unique_id=1985976250]
 unique_name_in_owner = true
 layout_mode = 2

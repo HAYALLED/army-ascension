@@ -32,6 +32,7 @@ func _ready() -> void:
 	PlayerData.level_progress_changed.connect(request_save)
 	PlayerData.settings_changed.connect(request_save)
 	PlayerData.shop_changed.connect(request_save)
+	PlayerData.equipped_changed.connect(request_save)
 	MissionManager.changed.connect(request_save)
 
 

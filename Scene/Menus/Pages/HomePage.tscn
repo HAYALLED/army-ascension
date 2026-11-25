@@ -6,6 +6,7 @@
 [ext_resource type="Texture2D" path="res://Assets/UI/panel_header.png" id="4_831b7"]
 [ext_resource type="Texture2D" path="res://Assets/UI/icon_play.png" id="5_4bq80"]
 [ext_resource type="Texture2D" path="res://Assets/UI/icon_calendar_gift.png" id="6_5w6pw"]
+[ext_resource type="Texture2D" path="res://Assets/UI/icon_army.png" id="7_army"]
 
 [node name="HomePage" type="Control" unique_id=806928833]
 layout_mode = 3
@@ -85,6 +86,18 @@ expand_icon = true
 layout_mode = 2
 theme_override_constants/separation = 16
 alignment = 1
+
+[node name="PrepareButton" type="Button" parent="Margin/Content/Extras"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 100)
+layout_mode = 2
+focus_mode = 0
+theme_type_variation = &"ButtonSecondary"
+theme_override_constants/icon_max_width = 64
+theme_override_font_sizes/font_size = 26
+text = "PREPARE\nYOUR ARMY"
+icon = ExtResource("7_army")
+expand_icon = true
 
 [node name="DailyButton" type="Button" parent="Margin/Content/Extras" unique_id=845028185]
 unique_name_in_owner = true

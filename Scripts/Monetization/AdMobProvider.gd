@@ -14,6 +14,7 @@ const INTERSTITIAL_PLACEMENT := "interstitial"
 const RETRY_SECONDS := 30.0
 
 var _host: Node
+var _on_ready: Callable
 var _rewarded_id: String
 var _interstitial_id: String
 var _rewarded: RewardedAd
@@ -27,17 +28,26 @@ var _content_callback: FullScreenContentCallback
 var _reward_listener: OnUserEarnedRewardListener
 
 
-func _init(host: Node) -> void:
+## `on_ready` (optional) is called once, on the main thread, when the SDK reports it is initialized.
+func _init(host: Node, on_ready: Callable = Callable()) -> void:
 	_host = host
+	_on_ready = on_ready
 	var debug := OS.is_debug_build()
 	_rewarded_id = TEST_REWARDED_ID if debug else REWARDED_ID
 	_interstitial_id = TEST_INTERSTITIAL_ID if debug else INTERSTITIAL_ID
 	# The SDK must finish initializing before any ad is requested.
 	_init_listener = OnInitializationCompleteListener.new()
+	# The SDK answers from its own thread: hop to the main thread before touching anything else.
 	_init_listener.on_initialization_complete = func(_status: InitializationStatus) -> void:
-		_load_rewarded()
-		_load_interstitial()
+		_on_initialized.call_deferred()
 	MobileAds.initialize(_init_listener)
+
+
+func _on_initialized() -> void:
+	if _on_ready.is_valid():
+		_on_ready.call()
+	_load_rewarded()
+	_load_interstitial()
 
 
 ## Rewarded readiness only: the interstitial is optional and show() answers false when it is missing.

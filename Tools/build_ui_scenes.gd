@@ -704,6 +704,10 @@ func _unit_detail_popup() -> void:
 	var d := _lbl(v, "DescLabel", "", "LabelSmall", true, HORIZONTAL_ALIGNMENT_CENTER)
 	d.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	d.custom_minimum_size = Vector2(0, 64)
+	var pb := _panel(v, "PassivePanel", "", Vector2.ZERO, true)
+	pb.visible = false
+	var pl := _lbl(pb, "PassiveLabel", "", "LabelSmall", true, HORIZONTAL_ALIGNMENT_CENTER)
+	pl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_box(true, v, "Stats", 6, true)
 	var cost := _box(false, v, "Cost", 10)
 	cost.alignment = BoxContainer.ALIGNMENT_CENTER

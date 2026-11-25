@@ -18,6 +18,8 @@ var type: int = SoldierDB.Type.RIFLEMAN
 @onready var _upgrade: Button = %UpgradeButton
 @onready var _close: Button = %CloseButton
 @onready var _desc: Label = %DescLabel
+@onready var _passive_box: PanelContainer = %PassivePanel
+@onready var _passive: Label = %PassiveLabel
 
 
 func setup(p_type: int) -> void:
@@ -50,7 +52,19 @@ func _refresh() -> void:
 	_rarity.add_theme_color_override("font_color", rank.glow_color)
 	_level.text = "Lv %d" % lv if PlayerData.owns(type) else "LOCKED"
 	var ability := SoldierDB.ability_text(type)
-	_desc.text = str(d.get("desc", "")) + ("\n" + ability if ability != "" else "")
+	_desc.text = str(d.get("desc", ""))
+	_passive_box.visible = ability != ""
+	_passive.text = "Passive: " + ability
+	var box := StyleBoxFlat.new()
+	box.bg_color = Color(0.05, 0.07, 0.12, 0.92)
+	box.border_color = rank.glow_color
+	box.set_border_width_all(3)
+	box.set_corner_radius_all(14)
+	box.content_margin_left = 16
+	box.content_margin_right = 16
+	box.content_margin_top = 10
+	box.content_margin_bottom = 10
+	_passive_box.add_theme_stylebox_override("panel", box)
 	for c in _stats.get_children():
 		c.queue_free()
 	var now := SoldierDB.stats(type, lv)

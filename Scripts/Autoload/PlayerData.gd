@@ -13,6 +13,8 @@ signal settings_changed()
 signal shop_changed()
 ## A chest slot was filled or emptied.
 signal chests_changed()
+## The equipped army (Prepare your army) changed.
+signal equipped_changed()
 ## Gold was spent on an upgrade (soldier or army). Missions count it.
 signal spent(gold: int)
 
@@ -28,6 +30,8 @@ const STARTER_TYPES := [
 	SoldierDB.Type.RIFLEMAN, SoldierDB.Type.MACHINE_GUNNER, SoldierDB.Type.SNIPER,
 	SoldierDB.Type.ROCKET, SoldierDB.Type.MEDIC,
 ]
+## Most unit classes the player can bring to a battle (the army always needs at least 1).
+const MAX_EQUIPPED := 5
 
 var gold: int = START_GOLD
 var gems: int = START_GEMS
@@ -50,6 +54,8 @@ var no_ads_trial_left: int = NO_ADS_TRIAL_BATTLES
 var unlocked: Dictionary = {}
 ## Chests waiting on the home page, ChestDB.SLOTS entries; {} = empty slot (see ChestDB for the format).
 var chest_slots: Array[Dictionary] = []
+## Soldier classes taken to battle, in slot order. 1..MAX_EQUIPPED owned classes, never duplicated.
+var equipped: Array[int] = []
 
 
 func _ready() -> void:
@@ -76,6 +82,7 @@ func reset_to_defaults() -> void:
 	unlocked.clear()
 	for t in STARTER_TYPES:
 		unlocked[t] = true
+	equipped.assign(STARTER_TYPES.slice(0, MAX_EQUIPPED))
 	chest_slots.clear()
 	for i in ChestDB.SLOTS:
 		chest_slots.append({})
@@ -95,6 +102,7 @@ func notify_all() -> void:
 	settings_changed.emit()
 	shop_changed.emit()
 	chests_changed.emit()
+	equipped_changed.emit()
 
 
 func set_setting(key: String, value: bool) -> void:
@@ -233,6 +241,30 @@ func start_bonus_soldiers() -> int:
 ## True when the player has this soldier class (STARTER_TYPES, or unlocked by a chest).
 func owns(type: int) -> bool:
 	return unlocked.has(type)
+
+
+func is_equipped(type: int) -> bool:
+	return equipped.has(type)
+
+
+## Adds an owned class to the army. Returns false (and changes nothing) when it is not owned,
+## already equipped, or all MAX_EQUIPPED slots are taken.
+func equip(type: int) -> bool:
+	if not owns(type) or equipped.has(type) or equipped.size() >= MAX_EQUIPPED:
+		return false
+	equipped.append(type)
+	equipped_changed.emit()
+	return true
+
+
+## Removes a class from the army. Returns false (and changes nothing) when it is not equipped or
+## it is the last one: an army needs at least 1 unit.
+func unequip(type: int) -> bool:
+	if equipped.size() <= 1 or not equipped.has(type):
+		return false
+	equipped.erase(type)
+	equipped_changed.emit()
+	return true
 
 
 ## Gives the player a soldier class. Returns false when it is unknown or already owned.
@@ -382,6 +414,7 @@ func to_save() -> Dictionary:
 		"timers": {"chest_ready_at": chest_ready_at},
 		"no_ads_trial_left": no_ads_trial_left,
 		"unlocked": _unlocked_ids(),
+		"equipped": equipped.map(func(t: int) -> String: return SoldierDB.id_of(t)),
 		"chests": chest_slots.map(func(c: Dictionary) -> Dictionary: return ChestDB.to_save(c)),
 		"missions": MissionManager.to_save(),
 		"settings": {
@@ -445,6 +478,17 @@ func apply_save(d: Dictionary) -> void:
 		for uid in saved_unlocked:
 			if uid is String and SoldierDB.type_of(uid) >= 0:
 				unlocked[SoldierDB.type_of(uid)] = true
+
+	# Needs `unlocked` loaded first. Anything invalid is dropped; an empty result keeps the default army.
+	var saved_equipped: Variant = d.get("equipped")
+	if saved_equipped is Array:
+		var team: Array[int] = []
+		for uid in saved_equipped:
+			var t := SoldierDB.type_of(uid) if uid is String else -1
+			if t >= 0 and owns(t) and not team.has(t) and team.size() < MAX_EQUIPPED:
+				team.append(t)
+		if not team.is_empty():
+			equipped = team
 
 	var saved_chests: Variant = d.get("chests")
 	if saved_chests is Array:

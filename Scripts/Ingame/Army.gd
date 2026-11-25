@@ -125,7 +125,7 @@ func add_soldier(type: int, level: int = 1, pop: bool = false) -> Soldier:
 
 func add_random_soldiers(count: int) -> void:
 	for i in count:
-		var t := SoldierDB.random_type()
+		var t: int = PlayerData.equipped.pick_random()
 		add_soldier(t, PlayerData.level_of(t), i == 0)
 	rebuild_formation()
 	emit_status()

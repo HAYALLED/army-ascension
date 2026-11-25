@@ -32,7 +32,8 @@ func _ready() -> void:
 
 
 func _test_data() -> void:
-	_check("20 soldier types", SoldierDB.DATA.size() == 20 and SoldierDB.IDS.size() == 20)
+	_check("40 soldier types", SoldierDB.DATA.size() == 40 and SoldierDB.IDS.size() == 40)
+	_check("passive soldiers have a passive text, plain shooters none", SoldierDB.ability_text(T.MEDIC_LEGEND) != "" and SoldierDB.ability_text(T.SHIELD_KNIGHT_SUPER_RARE) != "" and SoldierDB.ability_text(T.RIFLEMAN_LEGEND) == "")
 	var ids := {}
 	for t in SoldierDB.DATA:
 		var d: Dictionary = SoldierDB.DATA[t]

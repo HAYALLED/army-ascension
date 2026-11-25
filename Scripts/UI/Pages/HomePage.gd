@@ -1,14 +1,17 @@
 class_name HomePage
 extends Control
-## Main menu home: logo, level banner (tap to pick a beaten level), PLAY, daily reward
+## Main menu home: logo, level banner (tap to pick a beaten level), PLAY, PREPARE YOUR ARMY, daily reward
 ## and the 4 chest slots (chests dropped by beaten levels wait 30 min / 1 h / 2 h: tap one to see
 ## what is inside, speed it up with an ad or gems, and open it). The free ad chest lives in the Shop.
 
 signal play_pressed()
 signal toast_requested(text: String)
 
+const FORMATION_POPUP := preload("res://Scene/Menus/Popups/FormationPopup.tscn")
+
 @onready var _play: Button = %PlayButton
 @onready var _daily: Button = %DailyButton
+@onready var _prepare: Button = %PrepareButton
 @onready var _level: Label = %LevelLabel
 @onready var _level_banner: Control = %LevelBanner
 @onready var _chest_slots: HBoxContainer = %ChestSlots
@@ -26,6 +29,7 @@ func _ready() -> void:
 	_play.pressed.connect(func() -> void:
 		AudioManager.play("ui_click")
 		play_pressed.emit())
+	_prepare.pressed.connect(_open_formation)
 	_daily.pressed.connect(_claim_daily)
 	MissionManager.changed.connect(_refresh_daily)
 	_refresh_daily()
@@ -47,6 +51,12 @@ func _open_level_select() -> void:
 	var level := await LevelSelectPopup.pick(get_tree().current_scene, Game.level_index)
 	if level > 0 and Game.select_level(level):
 		_refresh_level()
+
+
+## Prepare your army: pick the (1..5) unit classes that go to battle.
+func _open_formation() -> void:
+	AudioManager.play("ui_click")
+	get_tree().current_scene.add_child(FORMATION_POPUP.instantiate())
 
 
 ## "DAILY !" while today's login reward is waiting.

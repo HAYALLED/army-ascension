@@ -7,6 +7,8 @@ extends Node3D
 
 const SEPARATION_CELL := 2.5
 const SEPARATION_STRENGTH := 5.0
+## Soldiers a battle starts with, before Reinforcements. Split evenly over the equipped classes.
+const START_ARMY_SIZE := 12
 
 @onready var level: Level = $Level
 @onready var units: Node3D = $Units
@@ -54,19 +56,10 @@ func _ready() -> void:
 
 
 func _spawn_start_army() -> void:
-	var T := SoldierDB.Type
-	var list := [T.RIFLEMAN, T.RIFLEMAN, T.RIFLEMAN, T.RIFLEMAN, T.MACHINE_GUNNER, T.MACHINE_GUNNER, T.MACHINE_GUNNER,
-		T.SNIPER, T.SNIPER, T.ROCKET, T.ROCKET, T.MEDIC]
-	for i in PlayerData.start_bonus_soldiers():
-		list.append(T.RIFLEMAN)
-	# Every extra unit the player owns joins with its own "start" count (SoldierDB.DATA).
-	for t in SoldierDB.DATA:
-		if PlayerData.owns(t):
-			for i in int(SoldierDB.DATA[t].get("start", 0)):
-				list.append(t)
-	for t in list:
-		if PlayerData.owns(t):
-			army.add_soldier(t, PlayerData.level_of(t))
+	var team := PlayerData.equipped
+	for i in START_ARMY_SIZE + PlayerData.start_bonus_soldiers():
+		var t: int = team[i % team.size()]
+		army.add_soldier(t, PlayerData.level_of(t))
 	army.rebuild_formation()
 	for s in Game.soldiers:
 		s.position = army.position + s.slot
