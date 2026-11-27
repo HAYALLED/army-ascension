@@ -103,7 +103,12 @@ func _test_debuffs(units: Node3D) -> void:
 	e.debuff_immune = true
 	e.apply_weaken(0.5, 1.0)
 	e.apply_blind(1.0, 1.0)
-	_check("immune enemies (bosses) ignore debuffs", is_equal_approx(e.dmg_mult(), 1.0) and not e.miss_roll())
+	_check("immune enemies ignore debuffs", is_equal_approx(e.dmg_mult(), 1.0) and not e.miss_roll())
+	e.debuff_immune = false
+	e.debuff_scale = Enemy.BOSS_DEBUFF_SCALE
+	e.apply_weaken(0.5, 10.0)
+	e.apply_blind(0.5, 10.0)
+	_check("boss debuffs: half effect (-25% dmg, 25% miss) and half duration (5 s)", is_equal_approx(e.dmg_mult(), 0.75) and is_equal_approx(e._weak_t, 5.0) and is_equal_approx(e._blind_chance, 0.25) and is_equal_approx(e._blind_t, 5.0))
 	e.queue_free()
 	await get_tree().process_frame
 

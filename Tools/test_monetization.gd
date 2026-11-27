@@ -24,6 +24,39 @@ class SilentBilling extends BillingProvider:
 	func purchase(_product_id: String) -> void:
 		pass
 
+## Scripted real-store stand-in: answers purchase() with `token` (or fails), counts calls and records, at the
+## moment of every confirm_delivery(), whether `disk_probe` finds the purchase already saved.
+class FakeStore extends BillingProvider:
+	var token := "tok-1"
+	var ok := true
+	var error := "Purchase canceled"
+	var hang := false
+	var bought := 0
+	var confirms: Array = []
+	var prices := {}
+	var disk_probe := Callable()
+	var _tokens := {}
+
+	func purchase(id: String) -> void:
+		bought += 1
+		if hang:
+			return
+		if ok:
+			_tokens[id] = token
+		finished.emit.call_deferred(id, ok, "" if ok else error)
+
+	func token_of(id: String) -> String:
+		return String(_tokens.get(id, ""))
+
+	func confirm_delivery(id: String, t: String) -> void:
+		confirms.append([id, t, bool(disk_probe.call(t)) if disk_probe.is_valid() else false])
+
+	func price_of(id: String) -> String:
+		return String(prices.get(id, ""))
+
+	func restore() -> void:
+		restore_finished.emit.call_deferred("")
+
 var _failed := 0
 
 
@@ -48,6 +81,10 @@ func _run() -> void:
 	await _test_no_ads_perk()
 	await _test_revive_flow()
 	await _test_purchases()
+	await _test_billing()
+	await _test_google_provider()
+	_test_guard()
+	await _test_shop_ui()
 
 
 func _check(name: String, ok: bool) -> void:
@@ -109,7 +146,7 @@ func _test_grant() -> void:
 	ok = ok and PlayerData.shards_of(T.SNIPER) == 5
 	ok = ok and not PlayerData.shards.has(999)
 	_check("2 grant adds gold, gems, owned shards; unowned class dropped", ok)
-	_check("2b owned_types lists every class", PlayerData.owned_types().size() == SoldierDB.DATA.size() and not PlayerData.owns(999))
+	_check("2b owned_types lists every class", PlayerData.owned_types().size() == SoldierDB.listed_types().size() and not PlayerData.owns(999))
 
 
 # 3
@@ -361,3 +398,384 @@ func _test_purchases() -> void:
 
 	pm.provider = saved
 	pm.timeout = 45.0
+
+
+# ---- 8: real-store pipeline (FakeStore) ---------------------------------------------------------
+
+func _on_disk(token: String) -> bool:
+	var r: Variant = SaveManager._read(TEST_PATH)
+	if r == null:
+		return false
+	var billing: Variant = (r["data"] as Dictionary).get("billing", {})
+	return billing is Dictionary and (billing.get("delivered", []) as Array).has(token.sha256_text())
+
+
+func _frames(n: int = 2) -> void:
+	for i in n:
+		await get_tree().process_frame
+
+
+func _fresh_store(token: String) -> FakeStore:
+	_reset()
+	SaveManager.read_only = false
+	PurchaseManager._live.clear()
+	var store := FakeStore.new()
+	store.token = token
+	store.disk_probe = _on_disk
+	PurchaseManager.provider = store
+	PurchaseManager.timeout = 120.0
+	return store
+
+
+func _test_billing() -> void:
+	var T := SoldierDB.Type
+	var pm := PurchaseManager
+	var saved := pm.provider
+	var notices: Array[String] = []
+	var on_notice := func(text: String) -> void: notices.append(text)
+	pm.notice.connect(on_notice)
+
+	# 8a success: reward granted, saved, confirm only AFTER the save is on disk
+	var store := _fresh_store("tok-a")
+	var gold := PlayerData.gold
+	var r: Dictionary = await pm.buy("gold_s")
+	_check("8a paid purchase: +500 gold, token hash on disk, confirm called once, after the save",
+		r["ok"] and PlayerData.gold == gold + 500 and store.confirms.size() == 1
+		and store.confirms[0][0] == "gold_s" and store.confirms[0][1] == "tok-a" and store.confirms[0][2] == true)
+	_check("8a2 delivered list holds the hash, not the token", PlayerData.delivered_tokens == [("tok-a").sha256_text()])
+
+	# 8b canceled / failed: nothing granted, UI unlocked, nothing confirmed
+	store = _fresh_store("tok-b")
+	store.ok = false
+	gold = PlayerData.gold
+	r = await pm.buy("gold_s")
+	_check("8b canceled payment: no reward, no confirm, UI unlocked",
+		not r["ok"] and r["message"] == "Purchase canceled" and PlayerData.gold == gold
+		and store.confirms.is_empty() and pm.state == PurchaseManager.State.IDLE and PlayerData.delivered_tokens.is_empty())
+
+	# 8d same token twice -> granted once; 8m both arrival paths at once
+	store = _fresh_store("tok-dup")
+	store.hang = true
+	gold = PlayerData.gold
+	var first := {}
+	var run_first := func() -> void: first["v"] = await pm.buy("gold_s")
+	run_first.call()
+	await _frames()
+	store.purchase_recovered.emit("gold_s", "tok-dup")  # the query path reports it while the payment is open
+	_check("8m query path is ignored while the payment of that product is open", PlayerData.gold == gold and store.confirms.is_empty())
+	store._tokens["gold_s"] = "tok-dup"
+	store.finished.emit("gold_s", true, "")
+	while not first.has("v"):
+		await _frames(1)
+	store.purchase_recovered.emit("gold_s", "tok-dup")
+	store.purchase_recovered.emit("gold_s", "tok-dup")
+	_check("8d same token reported again and again: granted once (+500), only re-confirmed",
+		first["v"]["ok"] and PlayerData.gold == gold + 500 and store.confirms.size() == 3)
+
+	# 8e recovered purchase: delivered once, then confirmed after the save
+	store = _fresh_store("x")
+	gold = PlayerData.gold
+	store.purchase_recovered.emit("gold_m", "tok-r1")
+	_check("8e recovered gold_m: +1500 once, confirmed after the save",
+		PlayerData.gold == gold + 1500 and store.confirms.size() == 1 and store.confirms[0][2] == true)
+	store.purchase_recovered.emit("gold_m", "tok-r1")
+	_check("8e2 the same recovered purchase never pays twice", PlayerData.gold == gold + 1500)
+
+	# 8f recovered starter_bundle: kept pending, not confirmed, until a soldier is picked
+	store = _fresh_store("x")
+	gold = PlayerData.gold
+	var shards := PlayerData.shards_of(T.MEDIC)
+	store.purchase_recovered.emit("starter_bundle", "tok-s1")
+	_check("8f recovered starter bundle waits for a soldier: nothing granted, nothing confirmed, queued",
+		PlayerData.gold == gold and store.confirms.is_empty() and PlayerData.pending_deliveries.size() == 1
+		and not PlayerData.has_purchase("starter_bundle"))
+	var pick := {}
+	var run_pick := func() -> void: pick["v"] = await pm.resolve_pending(self)
+	run_pick.call()
+	await _frames()
+	for child in get_children():
+		if child is UnitPickerPopup:
+			(child as UnitPickerPopup)._finish(T.MEDIC)
+	while not pick.has("v"):
+		await _frames(1)
+	var done: Dictionary = pick["v"]
+	_check("8f2 after the pick: bundle delivered (gold, shards, owned), queue empty, confirmed",
+		done["ok"] and PlayerData.gold >= gold + 1000 and PlayerData.shards_of(T.MEDIC) >= shards + 30
+		and PlayerData.has_purchase("starter_bundle") and PlayerData.pending_deliveries.is_empty()
+		and store.confirms.size() == 1 and store.confirms[0][1] == "tok-s1")
+	_check("8f3 pending queue survives save / load as hashes",
+		(func() -> bool:
+			store.purchase_recovered.emit("starter_bundle", "tok-s2")  # owned now: acknowledged, no reward
+			return PlayerData.pending_deliveries.is_empty()).call())
+
+	# 8g late answer after the timeout is delivered through recovery
+	store = _fresh_store("tok-late")
+	store.hang = true
+	pm.timeout = 0.2
+	gold = PlayerData.gold
+	r = await pm.buy("gold_s")
+	_check("8g payment sheet too slow: timed out, UI unlocked, nothing granted yet",
+		not r["ok"] and pm.state == PurchaseManager.State.IDLE and PlayerData.gold == gold)
+	store._tokens["gold_s"] = "tok-late"
+	store.finished.emit("gold_s", true, "")
+	_check("8g2 the late payment is delivered by recovery and confirmed", PlayerData.gold == gold + 500 and store.confirms.size() == 1)
+	pm.timeout = 120.0
+
+	# 8h one-time product restore: OWNED, no reward
+	store = _fresh_store("x")
+	gold = PlayerData.gold
+	store.ownership_restored.emit("remove_ads")
+	_check("8h restore marks remove_ads owned without a reward", PlayerData.has_purchase("remove_ads") and PlayerData.gold == gold)
+	store = _fresh_store("x")
+	store.purchase_recovered.emit("remove_ads", "tok-ra")
+	_check("8h2 unconfirmed remove_ads: owned, empty reward, acknowledged", PlayerData.has_purchase("remove_ads") and store.confirms.size() == 1 and PlayerData.gold == PlayerData.START_GOLD)
+	store.ownership_restored.emit("gold_s")
+	_check("8h3 a consumable is never 'restored'", not PlayerData.has_purchase("gold_s"))
+
+	# 8i no provider (release build): store not available, never a mock
+	pm.provider = null
+	r = await pm.buy("gold_s")
+	_check("8i no provider -> Store not available", not r["ok"] and r["message"] == "Store not available")
+	_check("8i2 provider_kind: release off Android has no store, mock only in debug off Android",
+		pm.provider_kind(false, false, false) == &"none" and pm.provider_kind(false, true, false) == &"mock"
+		and pm.provider_kind(false, false, true) == &"none" and pm.provider_kind(true, true, false) == &"none"
+		and pm.provider_kind(true, false, false) == &"none" and pm.provider_kind(true, false, true) == &"google"
+		and pm.provider_kind(true, true, true) == &"google")
+
+	# 8j old save without the new fields loads unchanged; hostile billing data is cleaned
+	_reset()
+	PlayerData.apply_save({"gold": 123, "purchases": ["remove_ads"]})
+	_check("8j old save (no billing key) loads, billing lists empty", PlayerData.gold == 123 and PlayerData.has_purchase("remove_ads")
+		and PlayerData.delivered_tokens.is_empty() and PlayerData.pending_deliveries.is_empty())
+	var good := ("tok-ok").sha256_text()
+	var many: Array = []
+	for i in 80:
+		many.append(("t%d" % i).sha256_text())
+	PlayerData.apply_save({"billing": {"delivered": ["nothex", 5] + many + [good, good, "A".repeat(64)],
+		"pending": [{"id": "gold_s", "hash": good}, {"id": "starter_bundle", "hash": "x"}, {"id": "bogus", "hash": good}, 7]}})
+	_check("8j2 hostile billing data: only valid hashes, no duplicates, capped at %d, bad pending dropped" % PlayerData.MAX_DELIVERED,
+		PlayerData.delivered_tokens.size() == PlayerData.MAX_DELIVERED and PlayerData.pending_deliveries.is_empty()
+		and not PlayerData.delivered_tokens.has("nothex"))
+	PlayerData.apply_save({"billing": "x"})
+	_check("8j3 billing of the wrong type is ignored", PlayerData.delivered_tokens.is_empty())
+
+	# 8k save fails / read-only: nothing confirmed, nothing granted, purchase stays undelivered, retried later
+	store = _fresh_store("tok-k")
+	gold = PlayerData.gold
+	SaveManager.read_only = true
+	r = await pm.buy("gold_s")
+	_check("8k read-only save: no confirm, grant rolled back, hash not stored, toast text",
+		not r["ok"] and r["message"] == "Could not save, will retry" and store.confirms.is_empty()
+		and PlayerData.gold == gold and not PlayerData.is_delivered(("tok-k").sha256_text()))
+	SaveManager.read_only = false
+	store.purchase_recovered.emit("gold_s", "tok-k")
+	_check("8k2 the same purchase is delivered once the save works again", PlayerData.gold == gold + 500 and store.confirms.size() == 1)
+	_check("8k3 persist_now: false when read-only, true when written",
+		(func() -> bool:
+			SaveManager.read_only = true
+			var a := SaveManager.persist_now()
+			SaveManager.read_only = false
+			return not a and SaveManager.persist_now()).call())
+
+	# 8l granted but not confirmed (crash after the save): next launch only confirms
+	store = _fresh_store("x")
+	store.purchase_recovered.emit("gold_l", "tok-crash")
+	var after := PlayerData.gold
+	store.confirms.clear()
+	PlayerData.reset_to_defaults()  # the app restarted: memory is gone, the save file stays
+	SaveManager.load_game()
+	store.purchase_recovered.emit("gold_l", "tok-crash")
+	_check("8l after a restart the saved purchase is only confirmed, never granted again",
+		PlayerData.gold == after and store.confirms.size() == 1 and store.confirms[0][1] == "tok-crash")
+
+	# 8n wallet near the cap: refused before payment; a paid recovery still pays
+	store = _fresh_store("tok-n")
+	PlayerData.gold = PlayerData.MAX_CURRENCY - 100
+	r = await pm.buy("gold_s")
+	_check("8n wallet would overflow: refused before the store is asked", not r["ok"] and r["message"] == "Wallet full" and store.bought == 0)
+	store.purchase_recovered.emit("gold_s", "tok-n2")
+	_check("8n2 already paid (recovery): granted anyway", PlayerData.gold == PlayerData.MAX_CURRENCY)
+
+	# 8o double tap on BUY
+	store = _fresh_store("tok-o")
+	store.hang = true
+	var run_o := func() -> void: await pm.buy("gold_m")
+	run_o.call()
+	await _frames()
+	var second: Dictionary = await pm.buy("gold_m")
+	_check("8o second BUY while paying is refused, the store is asked once", not second["ok"] and second["message"] == "Another purchase is in progress" and store.bought == 1)
+	store._tokens["gold_m"] = "tok-o"
+	store.finished.emit("gold_m", true, "")
+	await _frames()
+
+	# 8p stored tokens: hashes only, newest 50
+	store = _fresh_store("x")
+	for i in 55:
+		store.purchase_recovered.emit("gold_s", "tok-secret-%d" % i)
+	var text := FileAccess.get_file_as_string(TEST_PATH)
+	var hashes_only := true
+	for h in PlayerData.delivered_tokens:
+		hashes_only = hashes_only and h.length() == 64
+	_check("8p delivered list: 64-char hashes only, capped at 50, no raw token in the save file",
+		PlayerData.delivered_tokens.size() == 50 and hashes_only and not text.contains("tok-secret") and PlayerData.is_delivered(("tok-secret-54").sha256_text())
+		and not PlayerData.is_delivered(("tok-secret-0").sha256_text()))
+
+	# 8q restore button flow and prices
+	store = _fresh_store("x")
+	notices.clear()
+	store.prices["gold_s"] = "TRY 29.99"
+	pm.restore()
+	await _frames()
+	_check("8q restore with nothing owned says so; price_of reads the store", notices == ["Nothing to restore"] and pm.price_of("gold_s") == "TRY 29.99" and pm.price_of("gold_m") == "")
+
+	pm.notice.disconnect(on_notice)
+	pm.provider = saved
+	pm.timeout = 120.0
+	_reset()
+
+
+# ---- 9: the real provider fed with crafted purchase dictionaries (no Android needed) --------------
+
+func _purchase(id: String, state: int = 1, token: String = "tok-p", ack: bool = false, pkg: String = "com.test.app") -> Dictionary:
+	return {"order_id": "o-1", "purchase_token": token, "package_name": pkg, "purchase_state": state, "purchase_time": 0,
+		"original_json": "{}", "is_acknowledged": ack, "quantity": 1, "signature": "sig", "product_ids": [id]}
+
+
+func _test_google_provider() -> void:
+	var script := load("res://Scripts/Monetization/GooglePlayBillingProvider.gd") as GDScript
+	_check("9a provider script compiles with the plugin installed", script != null and script.can_instantiate())
+	var gp := script.new(self, Callable()) as BillingProvider
+	(gp.get("_verifier") as PurchaseVerifier).package_name = "com.test.app"
+	var fin: Array = []
+	var rec: Array = []
+	var own: Array = []
+	var prices_signals := [0]
+	gp.finished.connect(func(id: String, ok: bool, err: String) -> void: fin.append([id, ok, err]))
+	gp.purchase_recovered.connect(func(id: String, t: String) -> void: rec.append([id, t]))
+	gp.ownership_restored.connect(func(id: String) -> void: own.append(id))
+	gp.prices_updated.connect(func() -> void: prices_signals[0] += 1)
+
+	gp.set("_expecting", "gold_s")
+	gp.call("_on_updated", {"response_code": 0, "purchases": [_purchase("gold_s", 2)]})
+	await _frames()
+	_check("9b PENDING payment: no reward path, one error answer, nothing recovered",
+		fin.size() == 1 and fin[0][1] == false and String(fin[0][2]).begins_with("Payment pending") and rec.is_empty())
+
+	fin.clear()
+	gp.set("_expecting", "gold_s")
+	gp.call("_on_updated", {"response_code": 0, "purchases": [_purchase("gold_s")]})
+	await _frames()
+	_check("9c PURCHASED answer: finished ok exactly once, token handed over, not recovered",
+		fin.size() == 1 and fin[0][1] == true and gp.token_of("gold_s") == "tok-p" and rec.is_empty())
+
+	fin.clear()
+	gp.set("_expecting", "gold_s")
+	gp.call("_on_updated", {"response_code": 1, "purchases": []})
+	await _frames()
+	_check("9d user canceled: one error answer 'Purchase canceled'", fin.size() == 1 and fin[0][1] == false and fin[0][2] == "Purchase canceled")
+
+	fin.clear()
+	gp.call("_on_updated", {"response_code": 0, "purchases": [_purchase("gold_m", 1, "tok-late")]})
+	await _frames()
+	_check("9e answer nobody waits for (after the timeout) is reported as recovered", fin.is_empty() and rec == [["gold_m", "tok-late"]])
+
+	rec.clear()
+	gp.call("_on_owned", {"response_code": 0, "purchases": [_purchase("gold_l", 1, "tok-q"), _purchase("remove_ads", 1, "tok-ra", true),
+		_purchase("remove_ads", 2, "tok-pend"), _purchase("nope", 1, "tok-x")]})
+	await _frames()
+	_check("9f query: unacknowledged paid -> recovered; acknowledged one-time -> ownership; pending / unknown ignored",
+		rec == [["gold_l", "tok-q"]] and own == ["remove_ads"])
+
+	rec.clear()
+	fin.clear()
+	var bad_pkg := _purchase("gold_s", 1, "tok-bp", false, "com.evil.app")
+	var no_sig := _purchase("gold_s", 1, "tok-ns")
+	no_sig.erase("signature")
+	var wrong_id := _purchase("gold_s", 1, "tok-wi")
+	wrong_id["product_ids"] = ["gold_l"]
+	gp.call("_on_owned", {"response_code": 0, "purchases": [bad_pkg, no_sig]})
+	gp.set("_expecting", "gold_s")
+	gp.call("_on_updated", {"response_code": 0, "purchases": [wrong_id]})
+	await _frames()
+	_check("9g wrong package / missing signature are rejected; a purchase of another product is not paid as this one",
+		not rec.has(["gold_s", "tok-bp"]) and not rec.has(["gold_s", "tok-ns"]) and not fin.any(func(f: Array) -> bool: return f[1] == true))
+
+	gp.call("_on_details", {"response_code": 0, "product_details": [{"product_id": "gold_s", "one_time_purchase_offer_details_list": [{"formatted_price": "TRY 29,99"}]}], "unfetched_products": []})
+	var first_count: int = prices_signals[0]
+	gp.call("_on_details", {"response_code": 0, "product_details": [{"product_id": "gold_s", "one_time_purchase_offer_details_list": [{"formatted_price": "TRY 29,99"}]}], "unfetched_products": []})
+	_check("9h localized price cached and signalled once; unchanged answer does not signal again",
+		gp.price_of("gold_s") == "TRY 29,99" and first_count == 1 and prices_signals[0] == 1 and gp.price_of("gold_m") == "")
+
+	var codes_ok: bool = script.error_text(1) == "Purchase canceled" and script.error_text(2) == "No connection to Google Play" \
+		and script.error_text(3) == "Google Play billing is unavailable" and script.error_text(4) == "Product not found in the store" \
+		and script.error_text(5) == "Store setup error" and script.error_text(7) == "Already owned, restoring"
+	_check("9i response codes map to short player texts", codes_ok)
+
+	fin.clear()
+	gp.call("purchase", "gold_s")  # off Android the plugin is absent: the client is never ready
+	await _frames()
+	_check("9j store not connected: one clear error, no crash", fin.size() == 1 and fin[0][1] == false and String(fin[0][2]).contains("not connected"))
+	(gp.get("_client") as Node).free()  # drops the signal lambdas that point back at the provider
+
+
+# ---- 10: crash-loop guard of the store (its own file, ads unaffected) ---------------------------------
+
+func _test_guard() -> void:
+	var pm := PurchaseManager
+	var path := "user://test_billing_guard.cfg"
+	if FileAccess.file_exists(path):
+		DirAccess.remove_absolute(path)
+	var saved_path := pm.guard_path
+	pm.guard_path = path
+	var ads_file_before := FileAccess.file_exists(AdService.GUARD_PATH)
+	var l1 := pm._guard_blocked()
+	var l2 := pm._guard_blocked()
+	var l3 := pm._guard_blocked()
+	_check("10a store start never confirmed on 2 launches in a row: billing paused on the 3rd", not l1 and not l2 and l3)
+	_check("10b still paused afterwards", pm._guard_blocked())
+	_check("10c ads are not affected: fresh ad guard state is not blocked, ads guard file untouched",
+		not AdService.guard_step({}, int(Time.get_unix_time_from_system()))["blocked"] and FileAccess.file_exists(AdService.GUARD_PATH) == ads_file_before)
+	pm._on_store_started()
+	_check("10d a confirmed start clears the guard", not pm._guard_blocked())
+	pm._guard_blocked()
+	pm._on_store_started()
+	var g1 := pm._guard_blocked()
+	var g2 := pm._guard_blocked()
+	pm._on_store_started()
+	var g3 := pm._guard_blocked()
+	pm._on_store_started()
+	var g4 := pm._guard_blocked()
+	_check("10e a confirmed start in between resets the count: never paused", not g1 and not g2 and not g3 and not g4)
+	DirAccess.remove_absolute(path)
+	pm.guard_path = saved_path
+
+
+# ---- 11: shop page (prices, restore button, owned state) -------------------------------------------
+
+func _test_shop_ui() -> void:
+	var pm := PurchaseManager
+	var saved := pm.provider
+	var store := _fresh_store("x")
+	var page := (load("res://Scene/Menus/Pages/ShopPage.tscn") as PackedScene).instantiate()
+	add_child(page)
+	await _frames()
+	var list := page.get_node("Content/Scroll/Margin/List")
+	var restore := list.get_child(list.get_child_count() - 1) as Button
+	var gold_card := page.get_node("Content/Scroll/Margin/List/GoldRow/Gold1")
+	var gold_button := gold_card.get_node("%BuyButton") as Button
+	var default_text := gold_button.text
+	_check("11a restore button is the last row of the shop", restore != null and restore.text == "RESTORE PURCHASES")
+	store.prices["gold_s"] = "TRY 29,99"
+	store.prices_updated.emit()
+	_check("11b a store price replaces the card text; products without a price keep theirs", gold_button.text == "TRY 29,99" and default_text != "TRY 29,99")
+	PlayerData.mark_purchased("remove_ads")
+	var ads_button := page.get_node("Content/Scroll/Margin/List/NoAds").get_node("%BuyButton") as Button
+	_check("11c an owned product shows OWNED, not a price", ads_button.text == "OWNED" and ads_button.disabled)
+	var toasts: Array[String] = []
+	page.toast_requested.connect(func(t: String) -> void: toasts.append(t))
+	restore.pressed.emit()
+	await _frames()
+	_check("11d RESTORE PURCHASES reaches the store and the answer is shown as a toast", toasts == ["Nothing to restore"])
+	page.queue_free()
+	pm.provider = saved
+	_reset()

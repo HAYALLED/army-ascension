@@ -106,7 +106,7 @@ func _run() -> void:
 	var page: Control = (load("res://Scene/Menus/Pages/SoldiersPage.tscn") as PackedScene).instantiate()
 	holder.add_child(page)
 	await get_tree().process_frame
-	check(page.get_node("%Grid").get_child_count() == SoldierDB.DATA.size(), "soldiers page has one card per soldier")
+	check(page.get_node("%Grid").get_child_count() == SoldierDB.listed_types().size(), "soldiers page has one card per listed soldier")
 	var prev: Control = (load("res://Scene/Dev/RankPreview.tscn") as PackedScene).instantiate()
 	holder.add_child(prev)
 	await get_tree().process_frame

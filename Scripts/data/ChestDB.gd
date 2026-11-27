@@ -82,7 +82,7 @@ static func _weighted_order(types: Array, rng: RandomNumberGenerator) -> Array:
 ## each at most once per chest; a class the player does not own is a new unit.
 static func roll(tier: int, rng: RandomNumberGenerator) -> Dictionary:
 	var d: Dictionary = DATA[tier]
-	var types: Array = _weighted_order(SoldierDB.DATA.keys(), rng)
+	var types: Array = _weighted_order(SoldierDB.listed_types(), rng)
 	var units: Array = []
 	var shard_range: Vector2i = d["shards"]
 	for i in mini(int(d["units"]), types.size()):
@@ -110,6 +110,8 @@ static func to_reward(chest: Dictionary) -> Dictionary:
 	var unlock: Array = []
 	for u: Dictionary in chest.get("units", []):
 		var t := int(u["type"])
+		if not SoldierDB.is_listed(t):
+			continue
 		r["shards"][t] = int(r["shards"].get(t, 0)) + int(u["shards"])
 		if not PlayerData.owns(t):
 			unlock.append(t)
@@ -123,6 +125,8 @@ static func preview_lines(chest: Dictionary) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	for u: Dictionary in chest.get("units", []):
 		var t := int(u["type"])
+		if not SoldierDB.is_listed(t):
+			continue
 		if PlayerData.owns(t):
 			out.append({"icon": String(SoldierDB.DATA[t]["icon"]), "text": "%s  +%d shards" % [SoldierDB.DATA[t]["name"], int(u["shards"])]})
 		else:

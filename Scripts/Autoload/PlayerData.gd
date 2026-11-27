@@ -23,6 +23,10 @@ const START_GOLD := 600
 const START_SHARDS := 12
 const START_GEMS := 0
 const MAX_CURRENCY := 999_999_999
+## Paid purchases remembered by token hash (newest last) so a store purchase is never granted twice.
+const MAX_DELIVERED := 50
+## Paid purchases that wait for the player's choice at the same time.
+const MAX_PENDING := 8
 ## Battles a new player gets the NO RANDOM ADS perk for free (auto 2X gold, no random ads).
 const NO_ADS_TRIAL_BATTLES := 3
 ## Soldier classes owned from the start. Every other class is unlocked by a chest.
@@ -46,6 +50,10 @@ var highest_level: int = 0
 var settings: Dictionary = {}
 ## One-time shop products the player owns: ProductDB id -> true.
 var purchases: Dictionary = {}
+## SHA-256 of the store token of every paid purchase already granted (never the raw token), newest last, MAX_DELIVERED entries.
+var delivered_tokens: Array[String] = []
+## Paid purchases not delivered yet because the player must pick a soldier first: {"id": product id, "hash": token hash}.
+var pending_deliveries: Array[Dictionary] = []
 ## Unix time when the next free chest is ready (0 = ready now).
 var chest_ready_at: int = 0
 ## Free-trial battles left of the NO RANDOM ADS perk (counts down once per battle until the product is bought).
@@ -56,6 +64,12 @@ var unlocked: Dictionary = {}
 var chest_slots: Array[Dictionary] = []
 ## Soldier classes taken to battle, in slot order. 1..MAX_EQUIPPED owned classes, never duplicated.
 var equipped: Array[int] = []
+## Time of day of the next battle: 0 morning, 1 evening, 2 night. Steps once after every finished
+## battle (win or loss) while the "day_cycle" setting is on. See battle_day_phase().
+const DAY_PHASES := 3
+var day_phase: int = 0
+## True once the beginner tutorial was finished or skipped. Saved as a top-level boolean (no schema bump).
+var tutorial_done: bool = false
 
 
 func _ready() -> void:
@@ -77,6 +91,8 @@ func reset_to_defaults() -> void:
 	shards[SoldierDB.Type.RIFLEMAN] = START_SHARDS
 	highest_level = 0
 	purchases.clear()
+	delivered_tokens.clear()
+	pending_deliveries.clear()
 	chest_ready_at = 0
 	no_ads_trial_left = NO_ADS_TRIAL_BATTLES
 	unlocked.clear()
@@ -87,7 +103,9 @@ func reset_to_defaults() -> void:
 	for i in ChestDB.SLOTS:
 		chest_slots.append({})
 	MissionManager.reset()
-	settings = {"vibration": true, "graphics_high": true, "sfx": true, "music": true}
+	day_phase = 0
+	tutorial_done = false
+	settings = {"vibration": true, "graphics_high": true, "sfx": true, "music": true, "day_cycle": true}
 	_push_audio_settings()
 
 
@@ -103,6 +121,17 @@ func notify_all() -> void:
 	shop_changed.emit()
 	chests_changed.emit()
 	equipped_changed.emit()
+
+
+## Time of day the next battle uses; always morning while the day cycle setting is off.
+func battle_day_phase() -> int:
+	return day_phase if bool(settings.get("day_cycle", true)) else 0
+
+
+## Called when a battle ends for good (win or loss). Does nothing while the day cycle is off.
+func advance_day_phase() -> void:
+	if bool(settings.get("day_cycle", true)):
+		day_phase = (day_phase + 1) % DAY_PHASES
 
 
 func set_setting(key: String, value: bool) -> void:
@@ -130,7 +159,7 @@ func total_shards() -> int:
 func add_gold(amount: int) -> void:
 	if amount <= 0:
 		return
-	gold += amount
+	gold = mini(gold + amount, MAX_CURRENCY)
 	wallet_changed.emit()
 
 
@@ -240,7 +269,7 @@ func start_bonus_soldiers() -> int:
 
 ## True when the player has this soldier class (STARTER_TYPES, or unlocked by a chest).
 func owns(type: int) -> bool:
-	return unlocked.has(type)
+	return unlocked.has(type) and SoldierDB.is_listed(type)
 
 
 func is_equipped(type: int) -> bool:
@@ -269,7 +298,7 @@ func unequip(type: int) -> bool:
 
 ## Gives the player a soldier class. Returns false when it is unknown or already owned.
 func unlock(type: int) -> bool:
-	if not SoldierDB.DATA.has(type) or unlocked.has(type):
+	if not SoldierDB.DATA.has(type) or not SoldierDB.is_listed(type) or unlocked.has(type):
 		return false
 	unlocked[type] = true
 	soldier_changed.emit(type)
@@ -305,6 +334,40 @@ func mark_purchased(id: String) -> void:
 	if ProductDB.is_once(id) and not purchases.has(id):
 		purchases[id] = true
 		shop_changed.emit()
+
+
+## ---- Paid purchase bookkeeping (see PurchaseManager) -------------------------------
+
+func is_delivered(token_hash: String) -> bool:
+	return delivered_tokens.has(token_hash)
+
+
+## Remembers a granted purchase (and drops its pending entry). Keeps the newest MAX_DELIVERED hashes.
+func record_delivery(token_hash: String) -> void:
+	if not delivered_tokens.has(token_hash):
+		delivered_tokens.append(token_hash)
+		while delivered_tokens.size() > MAX_DELIVERED:
+			delivered_tokens.remove_at(0)
+	for i in range(pending_deliveries.size() - 1, -1, -1):
+		if pending_deliveries[i]["hash"] == token_hash:
+			pending_deliveries.remove_at(i)
+	shop_changed.emit()
+
+
+func has_pending(token_hash: String) -> bool:
+	for e in pending_deliveries:
+		if e["hash"] == token_hash:
+			return true
+	return false
+
+
+## Queues a paid purchase that needs a soldier pick. False when it is already queued or the queue is full.
+func add_pending(id: String, token_hash: String) -> bool:
+	if has_pending(token_hash) or pending_deliveries.size() >= MAX_PENDING:
+		return false
+	pending_deliveries.append({"id": id, "hash": token_hash})
+	shop_changed.emit()
+	return true
 
 
 ## ---- Chest slots (chests dropped by beaten levels) ----------------------------
@@ -381,6 +444,28 @@ func start_chest_cooldown() -> void:
 ## ---- Level progress --------------------------------------------------------
 
 ## Level the player plays next (highest completed + 1, capped at the last level).
+## A fresh profile gets the tutorial automatically; a player who already won a level never is forced into it.
+func should_start_tutorial() -> bool:
+	return not tutorial_done and highest_level == 0
+
+
+## Marks the tutorial finished (or skipped). With `reward` the first completion pays TutorialDB.REWARD_GOLD and
+## puts one already-unlocked wooden chest into the first free slot. Returns {"gold": int, "slot": int}
+## when the reward was paid (slot -1 = no free slot), {} otherwise. The reward is paid at most once.
+func finish_tutorial(reward: bool) -> Dictionary:
+	if tutorial_done:
+		return {}
+	tutorial_done = true
+	if not reward:
+		return {}
+	add_gold(TutorialDB.REWARD_GOLD)
+	var rng := RandomNumberGenerator.new()
+	rng.randomize()
+	var chest := ChestDB.roll(ChestDB.Tier.WOOD, rng)
+	chest["ready_at"] = 0
+	return {"gold": TutorialDB.REWARD_GOLD, "slot": add_chest(chest)}
+
+
 func unlocked_level() -> int:
 	return mini(highest_level + 1, LevelDB.TOTAL_LEVELS)
 
@@ -411,8 +496,11 @@ func to_save() -> Dictionary:
 		"upgrades": global_upgrades,
 		"progress": {"highest_level": highest_level},
 		"purchases": purchases.keys(),
+		"billing": {"delivered": delivered_tokens.duplicate(), "pending": pending_deliveries.duplicate(true)},
 		"timers": {"chest_ready_at": chest_ready_at},
 		"no_ads_trial_left": no_ads_trial_left,
+		"day_phase": day_phase,
+		"tutorial_done": tutorial_done,
 		"unlocked": _unlocked_ids(),
 		"equipped": equipped.map(func(t: int) -> String: return SoldierDB.id_of(t)),
 		"chests": chest_slots.map(func(c: Dictionary) -> Dictionary: return ChestDB.to_save(c)),
@@ -420,6 +508,7 @@ func to_save() -> Dictionary:
 		"settings": {
 			"vibration": bool(settings.get("vibration", true)),
 			"graphics_high": bool(settings.get("graphics_high", true)),
+			"day_cycle": bool(settings.get("day_cycle", true)),
 			"sfx": AudioManager.sfx_enabled,
 			"music": AudioManager.music_enabled,
 		},
@@ -465,6 +554,23 @@ func apply_save(d: Dictionary) -> void:
 			if pid is String and ProductDB.is_once(pid):
 				purchases[pid] = true
 
+	var billing: Variant = d.get("billing")
+	if billing is Dictionary:
+		var done: Variant = billing.get("delivered")
+		if done is Array:
+			for h in done:
+				if _is_hash(h) and not delivered_tokens.has(h):
+					delivered_tokens.append(h)
+			while delivered_tokens.size() > MAX_DELIVERED:
+				delivered_tokens.remove_at(0)
+		var waiting: Variant = billing.get("pending")
+		if waiting is Array:
+			for e in waiting:
+				if pending_deliveries.size() < MAX_PENDING and e is Dictionary and e.get("id") is String \
+						and ProductDB.has(e["id"]) and _is_hash(e.get("hash")) \
+						and not delivered_tokens.has(e["hash"]) and not has_pending(e["hash"]):
+					pending_deliveries.append({"id": e["id"], "hash": e["hash"]})
+
 	var timers: Variant = d.get("timers")
 	if timers is Dictionary:
 		# Capped at one cooldown from now, so a bad value or a changed clock never locks the chest for long.
@@ -495,6 +601,9 @@ func apply_save(d: Dictionary) -> void:
 		for i in mini(saved_chests.size(), chest_slots.size()):
 			chest_slots[i] = ChestDB.from_save(saved_chests[i])
 
+	day_phase = _read_int(d.get("day_phase"), 0, DAY_PHASES - 1, 0)
+	if d.get("tutorial_done") is bool:
+		tutorial_done = d["tutorial_done"]
 	MissionManager.apply_save(d.get("missions"))
 
 	var saved_settings: Variant = d.get("settings")
@@ -512,6 +621,11 @@ func _unlocked_ids() -> Array:
 		if unlocked.has(t):
 			ids.append(SoldierDB.id_of(t))
 	return ids
+
+
+## True for a SHA-256 hex string (64 hex digits).
+func _is_hash(v: Variant) -> bool:
+	return v is String and (v as String).length() == 64 and (v as String).is_valid_hex_number()
 
 
 ## Number validated and clamped to lo..hi; `fallback` when the value is not a finite number.

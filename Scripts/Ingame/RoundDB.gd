@@ -6,14 +6,14 @@ extends RefCounted
 ##                          Weakener from 4 (see R1_NEW).
 ##   Round 2  levels 6-10   ALL round 2 enemies on every level (roster_for(2), _r2 models).
 ##   Round 3  levels 11-15  ALL round 3 enemies on every level (roster_for(3), _r3 models).
+##   Rounds 4-16  levels 16-80  same as round 2 / 3 with the _r4 ... _r16 models (5 levels per round).
 ## The WaveTrigger counts in the level scene are the "template": round 1 keeps them as they are
-## (plus the new enemies), rounds 2 and 3 keep the same enemy total per wave but spread it
+## (plus the new enemies), rounds 2 to 16 keep the same enemy total per wave but spread it
 ## over the whole roster by weight, every kind at least once per wave.
 
-## Round 2 / 3 roster candidates: kind -> weight (share of every wave). A kind only takes part
-## in a round when its model for that round exists (Assets/Enemy/<model>_r2.glb / _r3.glb), see
-## roster_for(). The 5 original kinds (grunt, scout, brute, gunner, warlord) join automatically
-## the moment their _r2 / _r3 files are added to the project.
+## Round 2-16 roster candidates: kind -> weight (share of every wave). A kind only takes part
+## in a round when its model for that round exists (Assets/Enemy/<model>_r<round>.glb), see
+## roster_for(). A kind joins a round automatically the moment its _r<round> file is added to the project.
 const R23_ROSTER := {
 	EnemyDB.Kind.BREACHER: 24,
 	EnemyDB.Kind.SHOTGUNNER: 20,

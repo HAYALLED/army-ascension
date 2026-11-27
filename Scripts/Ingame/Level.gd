@@ -35,6 +35,10 @@ func _ready() -> void:
 	mini_arena.visible = false
 	boss_spawn = $Markers/BossSpawn
 	arena_stop = $Markers/ArenaStop
+	if not Game.sim_mode:
+		# Fresh semi-random scenery every battle (chapters with env art only, see EnvTheme).
+		var last_z := minf(boss_spawn.position.z, ($Markers/MiniBossSpawn as Marker3D).position.z)
+		Scenery.build(self, Game.level_index, maxf(last_z - 25.0, -400.0))
 
 
 ## Picks the arena for this level. `use_mini` = mini boss level. Call once, before the battle starts.

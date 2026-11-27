@@ -1,0 +1,10 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://Scene/Enemy/Boss.tscn" id="1_base"]
+[ext_resource type="PackedScene" path="res://Assets/Enemy/Bosses/r14_boss_spectral_admiral.glb" id="2_model"]
+
+[node name="BossSpectralAdmiral" instance=ExtResource("1_base")]
+kind = 82
+
+[node name="Model" parent="Body/ModelSlot" index="0" instance=ExtResource("2_model")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0)

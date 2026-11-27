@@ -7,6 +7,7 @@ const BG_HOME := preload("res://Assets/UI/bg_main_menu.png")
 const BG_PAGE := preload("res://Assets/UI/bg_menu_generic.png")
 const SETTINGS_POPUP := preload("res://Scene/Menus/Popups/SettingsPopup.tscn")
 const DETAIL_POPUP := preload("res://Scene/Menus/Popups/UnitDetailPopup.tscn")
+const COACH_SCENE := preload("res://Scene/UI/TutorialCoach.tscn")
 
 @onready var _bg: TextureRect = %Background
 @onready var _popups: Control = %Popups
@@ -36,6 +37,9 @@ func _ready() -> void:
 	_toast.modulate.a = 0.0
 	show_page(&"home")
 	AudioManager.play_music()
+	if Game.coach_pending:
+		Game.coach_pending = false
+		start_coach.call_deferred()
 
 
 func _safe_top() -> int:
@@ -52,6 +56,14 @@ func show_page(page: StringName) -> void:
 		(_pages[key] as Control).visible = key == page
 	_bg.texture = BG_HOME if page == &"home" else BG_PAGE
 	AudioManager.play("ui_click")
+
+
+## Dims the screen and walks the player through the home screen (after the first tutorial, or from HOW TO PLAY).
+func start_coach() -> void:
+	show_page(&"home")
+	var coach := COACH_SCENE.instantiate() as TutorialCoach
+	add_child(coach)
+	coach.start(self)
 
 
 func _open_settings() -> void:

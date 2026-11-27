@@ -9,6 +9,9 @@ const SEPARATION_CELL := 2.5
 const SEPARATION_STRENGTH := 5.0
 ## Soldiers a battle starts with, before Reinforcements. Split evenly over the equipped classes.
 const START_ARMY_SIZE := 12
+const TUTORIAL_LEVEL := preload("res://Scene/Ingame/Levels/LevelTutorial.tscn")
+const TUTORIAL_GUIDE := preload("res://Scene/Units/TutorialGuide.tscn")
+const TUTORIAL_OVERLAY := preload("res://Scene/UI/TutorialOverlay.tscn")
 
 @onready var level: Level = $Level
 @onready var units: Node3D = $Units
@@ -25,6 +28,8 @@ var _progress_t: float = 0.0
 func _enter_tree() -> void:
 	# Before children register their gates / traps in their own _ready.
 	Game.reset_run()
+	if Game.tutorial:
+		_swap_in_tutorial_level()
 
 
 func _ready() -> void:
@@ -43,6 +48,8 @@ func _ready() -> void:
 	boss = EnemyDB.scene(LevelDB.boss_kind(Game.level_index)).instantiate() as Boss
 	boss.position = level.boss_spawn.position
 	units.add_child(boss)
+	if Game.tutorial:
+		_soften_boss()
 	_waves = level.sorted_waves()
 
 	if Game.sim_mode:
@@ -52,7 +59,43 @@ func _ready() -> void:
 	AudioManager.play_music()
 	Game.start_battle()
 	army.emit_status()
-	Game.banner_requested.emit("DRAG TO MOVE", Color(1, 1, 1))
+	if Game.tutorial:
+		_start_tutorial()
+	else:
+		Game.banner_requested.emit("DRAG TO MOVE", Color(1, 1, 1))
+
+
+## Tutorial: the hand-made LevelTutorial replaces Level01 under the name "Level" (before any child is ready).
+func _swap_in_tutorial_level() -> void:
+	Game.level_index = 1
+	var old := get_node("Level")
+	var fresh := TUTORIAL_LEVEL.instantiate()
+	fresh.name = "Level"
+	var at := old.get_index()
+	remove_child(old)
+	old.free()
+	add_child(fresh)
+	move_child(fresh, at)
+
+
+## Tutorial boss: a third of the health, slower and gentler attacks.
+func _soften_boss() -> void:
+	boss.max_hp *= TutorialDB.BOSS_HP_FACTOR
+	boss.hp = boss.max_hp
+	for key in TutorialDB.BOSS_CFG:
+		boss.cfg[key] = TutorialDB.BOSS_CFG[key]
+
+
+## Tutorial: guide, overlay and director (see Scripts/Ingame/TutorialDirector.gd).
+func _start_tutorial() -> void:
+	var guide := TUTORIAL_GUIDE.instantiate() as TutorialGuide
+	add_child(guide)
+	var overlay := TUTORIAL_OVERLAY.instantiate() as TutorialOverlay
+	add_child(overlay)
+	var director := TutorialDirector.new()
+	director.name = "TutorialDirector"
+	add_child(director)
+	director.setup(guide, overlay, $HUD as HUD, level)
 
 
 func _spawn_start_army() -> void:

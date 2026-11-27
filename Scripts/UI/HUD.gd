@@ -125,7 +125,22 @@ func _toggle_pause() -> void:
 
 func _on_won() -> void:
 	AudioManager.play("victory")
+	if Game.tutorial:
+		# Let the guide plant his flag first, then show the training result.
+		await get_tree().create_timer(TutorialDB.FINISH_DELAY).timeout
+		_open(Mode.WIN, TutorialDB.TITLE_DONE, Color(1.0, 0.85, 0.2), _tutorial_result_text(), TutorialDB.BUTTON_BASE, "", "")
+		return
 	_open(Mode.WIN, "VICTORY!", Color(1.0, 0.85, 0.2), _result_text(true), "CONTINUE", "PLAY AGAIN", "")
+
+
+func _tutorial_result_text() -> String:
+	var reward := Game.tutorial_reward
+	if reward.is_empty():
+		return TutorialDB.RESULT_REPLAY
+	var text := TutorialDB.RESULT_REWARD % int(reward["gold"])
+	if int(reward["slot"]) >= 0:
+		text += TutorialDB.RESULT_CHEST
+	return text
 
 
 ## Army wiped and an ad revive is available (Game state REVIVE, tree paused): offer it.
@@ -219,6 +234,9 @@ func _on_primary() -> void:
 			_close()
 			Game.set_paused(false)
 		Mode.WIN:
+			if Game.tutorial:
+				Game.goto_menu()
+				return
 			await _leave(func() -> void:
 				Game.next_level()
 				Game.goto_menu())

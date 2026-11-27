@@ -26,12 +26,18 @@ signal battle_won()
 signal battle_lost()
 ## The army is wiped and an ad revive is on offer (state REVIVE, tree paused).
 signal revive_offered()
+## Tutorial: the army was refilled after it dropped too low (the guide says a line).
+@warning_ignore("unused_signal")
+signal tutorial_rescued()
 
 enum State { LOADING, PLAYING, PAUSED, WON, LOST, REVIVE }
 
-const MAX_SOLDIERS := 60
 ## A random ad plays after every this many finished battles (unless the NO RANDOM ADS perk is active).
 const BATTLES_PER_AD := 2
+## Difficulty curve: +DIFFICULTY_STEP per level up to DIFFICULTY_BREAK_LEVEL, then +DIFFICULTY_LATE_STEP per level.
+const DIFFICULTY_STEP := 0.2
+const DIFFICULTY_LATE_STEP := 0.1
+const DIFFICULTY_BREAK_LEVEL := 15
 
 var state: int = State.LOADING
 var level_index: int = 1
@@ -56,9 +62,19 @@ var gold_doubled: bool = false
 var revive_used: bool = false
 ## True when the NO RANDOM ADS perk doubled this battle's gold on its own.
 var auto_doubled: bool = false
+## True while the beginner tutorial level runs. Set by goto_battle / start_tutorial, cleared by goto_menu
+## (not by reset_run: Battle calls reset_run again after the scene change).
+var tutorial: bool = false
+## True when this tutorial run pays no reward (replay from Settings, or the tutorial was done before).
+var tutorial_replay: bool = false
+## What the finished tutorial run paid ({} = nothing), read by the victory popup.
+var tutorial_reward: Dictionary = {}
+## Set after the first tutorial: the home screen shows the coach marks once.
+var coach_pending: bool = false
 ## Finished battles since the last random ad, and whether the next screen change must play one.
 var battles_since_ad: int = 0
 var interstitial_due: bool = false
+var _level_before_tutorial: int = 1
 
 # Registries (filled by Battle and entities).
 var enemies: Array[Enemy] = []
@@ -79,6 +95,7 @@ func reset_run() -> void:
 	kills = 0
 	dropped_chest = {}
 	dropped_slot = -1
+	tutorial_reward = {}
 	peak_soldiers = 0
 	elapsed = 0.0
 	credited_gold = 0
@@ -101,8 +118,11 @@ func reset_run() -> void:
 	state = State.LOADING
 
 
+## Enemy health / damage multiplier. +0.2 per level up to level 15 (x3.8), then +0.1 per level (level 80 = x10.3).
 func difficulty_scale() -> float:
-	return 1.0 + 0.2 * float(level_index - 1)
+	var early := mini(level_index, DIFFICULTY_BREAK_LEVEL) - 1
+	var late := maxi(level_index - DIFFICULTY_BREAK_LEVEL, 0)
+	return 1.0 + DIFFICULTY_STEP * float(early) + DIFFICULTY_LATE_STEP * float(late)
 
 
 func start_battle() -> void:
@@ -121,6 +141,10 @@ func set_paused(paused: bool) -> void:
 func end_battle(won: bool) -> void:
 	if state == State.WON or state == State.LOST or state == State.REVIVE:
 		return
+	if tutorial and not won:
+		# The tutorial can not be lost: refill the army and keep going.
+		rescue_tutorial_army()
+		return
 	if not won and can_revive():
 		get_tree().paused = true
 		_set_state(State.REVIVE)
@@ -136,7 +160,7 @@ func can_revive() -> bool:
 
 ## Soldiers an ad revive brings back: the biggest army of this run, never fewer than REVIVE_SOLDIERS.
 func revive_count() -> int:
-	return clampi(maxi(peak_soldiers, RewardDB.REVIVE_SOLDIERS), 1, MAX_SOLDIERS)
+	return maxi(maxi(peak_soldiers, RewardDB.REVIVE_SOLDIERS), 1)
 
 
 ## Ad watched: brings soldiers back, clears the enemies around the army and resumes the battle.
@@ -174,6 +198,9 @@ func double_gold() -> bool:
 
 
 func _finish_battle(won: bool) -> void:
+	if tutorial:
+		_finish_tutorial()
+		return
 	get_tree().paused = false
 	Engine.time_scale = 1.0
 	var perk := PlayerData.has_no_ads() and not sim_mode
@@ -184,6 +211,8 @@ func _finish_battle(won: bool) -> void:
 		else:
 			battles_since_ad += 1
 			interstitial_due = battles_since_ad >= BATTLES_PER_AD
+	if not sim_mode:
+		PlayerData.advance_day_phase()
 	if won:
 		PlayerData.complete_level(level_index)
 		_drop_chest()
@@ -194,6 +223,38 @@ func _finish_battle(won: bool) -> void:
 		battle_won.emit()
 	else:
 		battle_lost.emit()
+
+
+## The tutorial never touches progress: no level record, chest drop, random ad, day phase, mission or
+## achievement stats, battle gold or shards. Only the first completion pays TutorialDB.REWARD_GOLD + a ready wooden chest.
+func _finish_tutorial() -> void:
+	get_tree().paused = false
+	Engine.time_scale = 1.0
+	credited_gold = 0
+	tutorial_reward = PlayerData.finish_tutorial(not tutorial_replay)
+	coach_pending = not tutorial_reward.is_empty()
+	SaveManager.request_save()
+	SaveManager.save_now()
+	_set_state(State.WON)
+	battle_won.emit()
+
+
+## SKIP button: marks the tutorial done without a reward and goes home.
+func skip_tutorial() -> void:
+	PlayerData.finish_tutorial(false)
+	SaveManager.request_save()
+	SaveManager.save_now()
+	goto_menu()
+
+
+## Refills the army to TutorialDB.MIN_ARMY and lets the guide say a line. No-op while the army is big enough.
+func rescue_tutorial_army() -> void:
+	if not tutorial or army == null or state != State.PLAYING:
+		return
+	var missing := TutorialDB.MIN_ARMY - soldiers.size()
+	if missing > 0:
+		army.add_random_soldiers(missing)
+		tutorial_rescued.emit()
 
 
 ## Every won level drops one chest (60% wood, 30% silver, 10% gold) into a free home slot.
@@ -246,13 +307,38 @@ func next_level() -> void:
 
 
 func goto_menu() -> void:
+	if tutorial:
+		tutorial = false
+		level_index = clampi(_level_before_tutorial, 1, PlayerData.unlocked_level())
+	tutorial_replay = false
 	reset_run()
 	get_tree().change_scene_to_file("res://Scene/Menus/MainMenu.tscn")
 
 
+## PLAY. A fresh profile gets the tutorial level first; everybody else plays the selected level.
 func goto_battle() -> void:
+	if PlayerData.should_start_tutorial():
+		_begin_tutorial(false)
+	else:
+		tutorial = false
+		tutorial_replay = false
 	reset_run()
 	get_tree().change_scene_to_file("res://Scene/Menus/Loading.tscn")
+
+
+## Settings > REPLAY TUTORIAL. A replay (or a tutorial that was done before) pays nothing.
+func start_tutorial(replay: bool = true) -> void:
+	_begin_tutorial(replay)
+	reset_run()
+	get_tree().change_scene_to_file("res://Scene/Menus/Loading.tscn")
+
+
+func _begin_tutorial(replay: bool) -> void:
+	if not tutorial:
+		_level_before_tutorial = level_index
+	tutorial = true
+	tutorial_replay = replay or PlayerData.tutorial_done
+	level_index = 1
 
 
 func restart() -> void:

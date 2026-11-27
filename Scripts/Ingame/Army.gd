@@ -110,8 +110,6 @@ func emit_status() -> void:
 
 
 func add_soldier(type: int, level: int = 1, pop: bool = false) -> Soldier:
-	if Game.soldiers.size() >= Game.MAX_SOLDIERS:
-		return null
 	var s := SoldierDB.scene(type).instantiate() as Soldier
 	s.setup(level)
 	s.position = position + Vector3(randf_range(-1.0, 1.0), 0.0, randf_range(0.0, 2.0))
@@ -133,7 +131,7 @@ func add_random_soldiers(count: int) -> void:
 
 func multiply_soldiers(factor: float) -> void:
 	var current: Array = Game.soldiers.duplicate()
-	var extra := mini(int(round(current.size() * (factor - 1.0))), Game.MAX_SOLDIERS - current.size())
+	var extra := maxi(int(round(current.size() * (factor - 1.0))), 0)
 	for i in extra:
 		var src: Soldier = current[i % current.size()]
 		add_soldier(src.type, src.level, i == 0)

@@ -1,7 +1,7 @@
 class_name ShopPage
 extends Control
 ## Shop page: the free-shards ad, the wooden chest (video), the gold chest (gems) and the store products. Purchases run through PurchaseManager
-## (mock payment in debug builds only, never in a release build).
+## (real Google Play on Android; a mock store in debug builds off Android only, never in a release build).
 
 signal toast_requested(text: String)
 
@@ -9,6 +9,7 @@ var _cards: Array[Control] = []
 var _wood_card: ShopOffer = null
 var _ads_card: ShopOffer = null
 var _tick := 0.0
+var _resolving := false
 
 
 func _ready() -> void:
@@ -23,6 +24,11 @@ func _ready() -> void:
 			elif node.item_id == "remove_ads":
 				_ads_card = node
 	PlayerData.shop_changed.connect(_refresh)
+	PurchaseManager.prices_updated.connect(_refresh)
+	PurchaseManager.pending_changed.connect(_check_pending)
+	PurchaseManager.notice.connect(toast_requested.emit)
+	visibility_changed.connect(_check_pending)
+	_add_restore_button()
 	_refresh()
 
 
@@ -45,7 +51,8 @@ func _refresh_wood_chest() -> void:
 		_wood_card.set_button("WATCH", false)
 
 
-## OWNED for one-time products the player has, SOON for products that are not ready.
+## OWNED for one-time products the player has, SOON for products that are not ready, otherwise the
+## localized store price (the card keeps its default text until the store has answered).
 func _refresh() -> void:
 	for card in _cards:
 		var id: String = card.item_id
@@ -53,9 +60,44 @@ func _refresh() -> void:
 			card.set_button("OWNED", true)
 		elif ProductDB.has(id) and not ProductDB.is_available(id):
 			card.set_button("SOON", true)
+		elif ProductDB.has(id):
+			var price := PurchaseManager.price_of(id)
+			if price != "":
+				card.set_button(price, false)
 	_refresh_wood_chest()
 	if _ads_card != null:
 		_ads_card.set_description(_ads_text())
+
+
+## RESTORE PURCHASES under the last card (reinstall, new phone): asks the store for what the player owns.
+func _add_restore_button() -> void:
+	var b := Button.new()
+	b.theme = preload("res://Resources/UI/ui_theme.tres")
+	b.theme_type_variation = &"ButtonSecondary"
+	b.text = "RESTORE PURCHASES"
+	b.custom_minimum_size = Vector2(0, 84)
+	b.focus_mode = Control.FOCUS_NONE
+	b.add_theme_font_size_override("font_size", 30)
+	b.pressed.connect(func() -> void:
+		AudioManager.play("ui_click")
+		PurchaseManager.restore())
+	get_node("Content/Scroll/Margin/List").add_child(b)
+
+
+## A paid starter bundle found after a restart or reinstall has no soldier to give the shards to: ask now.
+func _check_pending() -> void:
+	if _resolving or not is_visible_in_tree():
+		return
+	_resolving = true
+	while not PlayerData.pending_deliveries.is_empty():
+		var result := await PurchaseManager.resolve_pending(_host())
+		if result.is_empty():
+			break
+		if not bool(result["ok"]):
+			toast_requested.emit(String(result["message"]))
+			break
+		await RewardPopup.show_reward(_host(), "PURCHASE COMPLETE", result["reward"])
+	_resolving = false
 
 
 ## NO RANDOM ADS pitch; shows the free trial while it lasts.

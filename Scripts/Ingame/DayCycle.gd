@@ -1,14 +1,16 @@
 class_name DayCycle
 extends Node3D
-## Gameplay day cycle. Builds sky, WorldEnvironment, sun light and the mountain backdrop,
-## then follows Game.progress_changed (0 = morning, 0.4 = afternoon, 0.72 = sunset, 1 = night).
-## Tune the look in KEYS; every value is blended between neighbouring keys.
+## Gameplay day cycle. Builds sky, WorldEnvironment, sun light and the mountain backdrop.
+## The time of day is fixed for the whole battle: PlayerData.battle_day_phase() picks morning,
+## evening or night (PHASE_P) and the look comes from KEYS (p: 0 = morning, 0.4 = afternoon,
+## 0.72 = sunset, 1 = night). Every value is blended between neighbouring keys.
 
 const SKY_SHADER := preload("res://Assets/Ingame/Env/sky_daycycle.gdshader")
 const BACKDROP_SCENE := preload("res://Assets/Ingame/Env/backdrop_day.glb")
 const BACKDROP_Z := -150.0 ## backdrop distance in front of the camera
 const CAMERA_FAR := 230.0 ## backdrop sits 150-170 m out
 const MOON_COLOR := Color(1.0, 0.96, 0.82)
+const PHASE_P := [0.0, 0.72, 1.0] ## KEYS position of morning, evening, night (PlayerData.day_phase)
 
 const KEYS := [
  {"p": 0.0, "top": "#4F7FE0", "mid": "#C4B8E8", "horizon": "#FFB88C", "ground": "#8A6A7A", "glow": "#FFB070", "sun": "#FFF1C2",
@@ -39,8 +41,6 @@ var _tint := StandardMaterial3D.new()
 var _env := Environment.new()
 var _light := DirectionalLight3D.new()
 var _backdrop: Node3D
-var _target := 0.0
-var _shown := -1.0
 
 
 func _ready() -> void:
@@ -73,7 +73,8 @@ func _ready() -> void:
 	add_child(_light)
 
 	_tint.roughness = 1.0
-	_backdrop = BACKDROP_SCENE.instantiate() as Node3D
+	var backdrop_scene := Models.find(EnvTheme.backdrop_path(Game.level_index).trim_suffix(".glb")) as PackedScene
+	_backdrop = (backdrop_scene if backdrop_scene != null else BACKDROP_SCENE).instantiate() as Node3D
 	add_child(_backdrop)
 	for mi: MeshInstance3D in _backdrop.find_children("*", "MeshInstance3D", true, false):
 		for s in mi.mesh.get_surface_count():
@@ -81,17 +82,10 @@ func _ready() -> void:
 			if m and m.resource_name == "Tint":
 				mi.set_surface_override_material(s, _tint)
 
-	Game.progress_changed.connect(_on_progress)
-	apply(0.0)
+	apply(PHASE_P[PlayerData.battle_day_phase()])
 
 
-func _on_progress(t: float) -> void:
-	_target = t
-
-
-func _process(delta: float) -> void:
-	_shown = move_toward(_shown, _target, delta * 0.5) if _shown >= 0.0 else _target
-	apply(_shown)
+func _process(_delta: float) -> void:
 	var cam := get_viewport().get_camera_3d()
 	if cam:
 		_backdrop.position = Vector3(0.0, 0.0, cam.global_position.z + BACKDROP_Z)

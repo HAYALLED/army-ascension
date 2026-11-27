@@ -61,6 +61,21 @@ func save_now() -> void:
 		_dirty = false
 
 
+## Writes now and returns true only when the data is really on disk. Used before a paid purchase is
+## confirmed to the store. False when the save is read-only or the write failed. With saving disabled
+## (--sim / --no-save) it is true in test runs and false on a device, where nothing may be confirmed unsaved.
+func persist_now() -> bool:
+	if read_only:
+		return false
+	if not enabled:
+		return not OS.has_feature("android")
+	_dirty = true
+	if not _write():
+		return false
+	_dirty = false
+	return true
+
+
 ## Dev helper: deletes every save file and resets the profile.
 func wipe() -> void:
 	if not enabled:

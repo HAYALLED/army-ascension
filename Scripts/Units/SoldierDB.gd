@@ -93,7 +93,6 @@ const SPAWN_WEIGHTS := {
 	Type.SNIPER_LEGEND: 1,
 	Type.ROCKET_SUPER_RARE: 2,
 	Type.ROCKET_LEGEND: 1,
-	Type.MEDIC_COMMON: 1,
 	Type.MEDIC_LEGEND: 1,
 	Type.MORTAR_SUPER_RARE: 2,
 	Type.MORTAR_LEGEND: 1,
@@ -106,6 +105,24 @@ const SPAWN_WEIGHTS := {
 	Type.SHIELD_KNIGHT_SUPER_RARE: 2,
 	Type.SHIELD_KNIGHT_LEGEND: 1,
 }
+
+## Classes kept in DATA (scenes, saves and tests still resolve them) but hidden from the game: never
+## shown in the collection, never dropped by chests or gates, never owned or unlocked.
+const DELISTED := [Type.MEDIC_COMMON]
+
+
+static func is_listed(type: int) -> bool:
+	return not DELISTED.has(type)
+
+
+## Every class the player can ever see or obtain.
+static func listed_types() -> Array:
+	var out: Array = []
+	for t in DATA:
+		if is_listed(t):
+			out.append(t)
+	return out
+
 
 const DATA := {
 	Type.RIFLEMAN: {
@@ -608,9 +625,9 @@ static func ability_text(type: int) -> String:
 	if d.has("buff_dmg"):
 		parts.append("Allies within %dm: +%d%% damage, +%d%% fire rate" % [int(d["aura_range"]), roundi(float(d["buff_dmg"]) * 100.0), roundi(float(d["buff_rate"]) * 100.0)])
 	if d.has("weaken"):
-		parts.append("Enemies within %dm deal %d%% less damage (not bosses)" % [int(d["aura_range"]), roundi(float(d["weaken"]) * 100.0)])
+		parts.append("Enemies within %dm deal %d%% less damage (bosses: half effect and duration)" % [int(d["aura_range"]), roundi(float(d["weaken"]) * 100.0)])
 	if d.has("blind"):
-		parts.append("Enemies within %dm miss %d%% of their attacks (not bosses)" % [int(d["aura_range"]), roundi(float(d["blind"]) * 100.0)])
+		parts.append("Enemies within %dm miss %d%% of their attacks (bosses: half effect and duration)" % [int(d["aura_range"]), roundi(float(d["blind"]) * 100.0)])
 	if d.has("melee"):
 		parts.append("Melee only, takes %d%% less damage" % roundi(float(d.get("armor", 0.0)) * 100.0))
 	if d.has("taunt"):

@@ -8,6 +8,8 @@ const STAGES := [["Connecting to store...", 0.7], ["Processing payment...", 1.3]
 var fail_next := false
 
 var _tree: SceneTree
+var _count := 0
+var _tokens := {}
 
 
 func _init(tree: SceneTree) -> void:
@@ -28,4 +30,10 @@ func purchase(product_id: String) -> void:
 		finished.emit(product_id, false, "Payment declined")
 		return
 	progress.emit("Done", 1.0)
+	_count += 1
+	_tokens[product_id] = "mock-%d-%d" % [Time.get_ticks_usec(), _count]
 	finished.emit(product_id, true, "")
+
+
+func token_of(product_id: String) -> String:
+	return String(_tokens.get(product_id, ""))

@@ -1,7 +1,7 @@
 class_name Boss
 extends Enemy
-## Boss brain shared by the three full bosses (Iron Colossus, Yeti King, Magma Drake: levels 5, 10, 15)
-## and the twelve mini bosses (every other level, four per round). Sleeps until the army gets close, then cycles its pattern
+## Boss brain shared by the sixteen full bosses (one per round: levels 5, 10, 15 ... 80)
+## and the sixty-four mini bosses (every other level, four per round). Sleeps until the army gets close, then cycles its pattern
 ## sequence from CONFIGS: FAN (projectile spread), SLAM (telegraphed ground smash),
 ## BOMBS (several small telegraphed blasts on random soldiers) and SUMMON
 ## (reinforcement wave of random enemies). Below 50% health it enrages: faster
@@ -145,6 +145,383 @@ const CONFIGS := {
 		"sequence": [Pattern.SUMMON, Pattern.FAN, Pattern.SUMMON, Pattern.SLAM],
 		"fan_damage": 9.0, "slam_damage": 38.0, "summon_min": 12, "summon_max": 20,
 	},
+	## ---- Round 4 (graveyard) ----
+	EnemyDB.Kind.MINI_GRAVEDIGGER: {
+		"banner": "MINI BOSS: GRAVEDIGGER", "hold": 11.0,
+		"sequence": [Pattern.SLAM, Pattern.SLAM, Pattern.SUMMON, Pattern.SLAM],
+		"slam_radius": 4.0, "slam_damage": 43.0, "slam_time": 1.1, "summon_min": 8, "summon_max": 12,
+	},
+	EnemyDB.Kind.MINI_COFFIN_CANNON: {
+		"banner": "MINI BOSS: COFFIN CANNON",
+		"sequence": [Pattern.FAN, Pattern.FAN, Pattern.SUMMON, Pattern.FAN],
+		"fan_shots": 8, "fan_shots_enraged": 13, "fan_arc": 0.55, "fan_damage": 8.0, "fan_volleys": 3,
+	},
+	EnemyDB.Kind.MINI_PUMPKIN_BOMBER: {
+		"banner": "MINI BOSS: PUMPKIN BOMBER",
+		"sequence": [Pattern.BOMBS, Pattern.SUMMON, Pattern.BOMBS, Pattern.BOMBS, Pattern.SUMMON],
+		"bomb_count": 5, "bomb_count_enraged": 8, "bomb_radius": 2.6, "bomb_damage": 37.0, "summon_min": 12, "summon_max": 20,
+	},
+	EnemyDB.Kind.MINI_LICH_COMMANDER: {
+		"banner": "MINI BOSS: LICH COMMANDER",
+		"sequence": [Pattern.SUMMON, Pattern.FAN, Pattern.SUMMON, Pattern.SLAM],
+		"fan_damage": 9.0, "slam_damage": 39.0, "summon_min": 12, "summon_max": 20,
+	},
+	EnemyDB.Kind.BOSS_BONE_REAPER: {
+		"banner": "BOSS: BONE REAPER", "wake": 55.0, "hold": 14.0, "death_blasts": 9,
+		"sequence": [Pattern.SLAM, Pattern.FAN, Pattern.SUMMON, Pattern.SLAM, Pattern.FAN, Pattern.SUMMON],
+		"fan_shots": 11, "fan_shots_enraged": 15, "fan_arc": 0.8, "fan_damage": 10.0, "fan_volleys": 3,
+		"slam_radius": 4.0, "slam_damage": 52.0, "slam_time": 1.3,
+		"bomb_count": 6, "bomb_count_enraged": 9, "bomb_radius": 2.5, "bomb_damage": 39.0, "bomb_time": 1.1,
+		"summon_min": 12, "summon_max": 20, "recover": 1.87, "recover_enraged": 1.19,
+	},
+	## ---- Round 5 (desert) ----
+	EnemyDB.Kind.MINI_SARCOPHAGUS_SMASHER: {
+		"banner": "MINI BOSS: SARCOPHAGUS SMASHER", "hold": 11.0,
+		"sequence": [Pattern.SLAM, Pattern.SLAM, Pattern.SUMMON, Pattern.SLAM],
+		"slam_radius": 4.0, "slam_damage": 45.0, "slam_time": 1.1, "summon_min": 8, "summon_max": 12,
+	},
+	EnemyDB.Kind.MINI_ANUBIS_GUNNER: {
+		"banner": "MINI BOSS: ANUBIS GUNNER",
+		"sequence": [Pattern.FAN, Pattern.FAN, Pattern.SUMMON, Pattern.FAN],
+		"fan_shots": 8, "fan_shots_enraged": 13, "fan_arc": 0.55, "fan_damage": 8.0, "fan_volleys": 3,
+	},
+	EnemyDB.Kind.MINI_SCARAB_BOMBER: {
+		"banner": "MINI BOSS: SCARAB BOMBER",
+		"sequence": [Pattern.BOMBS, Pattern.SUMMON, Pattern.BOMBS, Pattern.BOMBS, Pattern.SUMMON],
+		"bomb_count": 5, "bomb_count_enraged": 8, "bomb_radius": 2.6, "bomb_damage": 38.0, "summon_min": 12, "summon_max": 20,
+	},
+	EnemyDB.Kind.MINI_PHARAOH_COMMANDER: {
+		"banner": "MINI BOSS: PHARAOH COMMANDER",
+		"sequence": [Pattern.SUMMON, Pattern.FAN, Pattern.SUMMON, Pattern.SLAM],
+		"fan_damage": 10.0, "slam_damage": 40.0, "summon_min": 12, "summon_max": 20,
+	},
+	EnemyDB.Kind.BOSS_GOLDEN_SPHINX: {
+		"banner": "BOSS: GOLDEN SPHINX", "wake": 55.0, "hold": 14.0, "death_blasts": 9,
+		"sequence": [Pattern.BOMBS, Pattern.FAN, Pattern.SUMMON, Pattern.BOMBS, Pattern.SLAM, Pattern.FAN],
+		"fan_shots": 11, "fan_shots_enraged": 15, "fan_arc": 0.75, "fan_damage": 11.0, "fan_volleys": 3,
+		"slam_radius": 3.8, "slam_damage": 53.0, "slam_time": 1.3,
+		"bomb_count": 6, "bomb_count_enraged": 9, "bomb_radius": 2.7, "bomb_damage": 40.0, "bomb_time": 1.1,
+		"summon_min": 12, "summon_max": 20, "recover": 1.84, "recover_enraged": 1.18,
+	},
+	## ---- Round 6 (swamp) ----
+	EnemyDB.Kind.MINI_BOG_BRUTE: {
+		"banner": "MINI BOSS: BOG BRUTE", "hold": 11.0,
+		"sequence": [Pattern.SLAM, Pattern.SLAM, Pattern.SUMMON, Pattern.SLAM],
+		"slam_radius": 4.0, "slam_damage": 46.0, "slam_time": 1.1, "summon_min": 8, "summon_max": 12,
+	},
+	EnemyDB.Kind.MINI_CAULDRON_WITCH: {
+		"banner": "MINI BOSS: CAULDRON WITCH",
+		"sequence": [Pattern.FAN, Pattern.FAN, Pattern.SUMMON, Pattern.FAN],
+		"fan_shots": 8, "fan_shots_enraged": 13, "fan_arc": 0.55, "fan_damage": 9.0, "fan_volleys": 3,
+	},
+	EnemyDB.Kind.MINI_TOADSTOOL_BOMBER: {
+		"banner": "MINI BOSS: TOADSTOOL BOMBER",
+		"sequence": [Pattern.BOMBS, Pattern.SUMMON, Pattern.BOMBS, Pattern.BOMBS, Pattern.SUMMON],
+		"bomb_count": 5, "bomb_count_enraged": 8, "bomb_radius": 2.6, "bomb_damage": 39.0, "summon_min": 12, "summon_max": 20,
+	},
+	EnemyDB.Kind.MINI_HAG_COMMANDER: {
+		"banner": "MINI BOSS: HAG COMMANDER",
+		"sequence": [Pattern.SUMMON, Pattern.FAN, Pattern.SUMMON, Pattern.SLAM],
+		"fan_damage": 10.0, "slam_damage": 41.0, "summon_min": 12, "summon_max": 20,
+	},
+	EnemyDB.Kind.BOSS_BOG_HYDRA: {
+		"banner": "BOSS: BOG HYDRA", "wake": 55.0, "hold": 14.0, "death_blasts": 9,
+		"sequence": [Pattern.FAN, Pattern.FAN, Pattern.SUMMON, Pattern.BOMBS, Pattern.FAN, Pattern.SLAM],
+		"fan_shots": 12, "fan_shots_enraged": 16, "fan_arc": 0.85, "fan_damage": 11.0, "fan_volleys": 4,
+		"slam_radius": 3.8, "slam_damage": 55.0, "slam_time": 1.3,
+		"bomb_count": 6, "bomb_count_enraged": 9, "bomb_radius": 2.5, "bomb_damage": 41.0, "bomb_time": 1.1,
+		"summon_min": 12, "summon_max": 20, "recover": 1.81, "recover_enraged": 1.17,
+	},
+	## ---- Round 7 (junkyard) ----
+	EnemyDB.Kind.MINI_WRECKER: {
+		"banner": "MINI BOSS: WRECKER", "hold": 11.0,
+		"sequence": [Pattern.SLAM, Pattern.SLAM, Pattern.SUMMON, Pattern.SLAM],
+		"slam_radius": 4.0, "slam_damage": 47.0, "slam_time": 1.1, "summon_min": 8, "summon_max": 12,
+	},
+	EnemyDB.Kind.MINI_TURBINE_GUNNER: {
+		"banner": "MINI BOSS: TURBINE GUNNER",
+		"sequence": [Pattern.FAN, Pattern.FAN, Pattern.SUMMON, Pattern.FAN],
+		"fan_shots": 8, "fan_shots_enraged": 13, "fan_arc": 0.55, "fan_damage": 9.0, "fan_volleys": 3,
+	},
+	EnemyDB.Kind.MINI_DUMPSTER_BOMBER: {
+		"banner": "MINI BOSS: DUMPSTER BOMBER",
+		"sequence": [Pattern.BOMBS, Pattern.SUMMON, Pattern.BOMBS, Pattern.BOMBS, Pattern.SUMMON],
+		"bomb_count": 5, "bomb_count_enraged": 8, "bomb_radius": 2.6, "bomb_damage": 40.0, "summon_min": 12, "summon_max": 20,
+	},
+	EnemyDB.Kind.MINI_FOREMAN_COMMANDER: {
+		"banner": "MINI BOSS: FOREMAN COMMANDER",
+		"sequence": [Pattern.SUMMON, Pattern.FAN, Pattern.SUMMON, Pattern.SLAM],
+		"fan_damage": 10.0, "slam_damage": 43.0, "summon_min": 12, "summon_max": 20,
+	},
+	EnemyDB.Kind.BOSS_SCRAP_TITAN: {
+		"banner": "BOSS: SCRAP TITAN", "wake": 55.0, "hold": 14.0, "death_blasts": 9,
+		"sequence": [Pattern.SLAM, Pattern.SLAM, Pattern.SUMMON, Pattern.FAN, Pattern.SLAM, Pattern.BOMBS],
+		"fan_shots": 12, "fan_shots_enraged": 16, "fan_arc": 0.75, "fan_damage": 11.0, "fan_volleys": 3,
+		"slam_radius": 4.2, "slam_damage": 56.0, "slam_time": 1.3,
+		"bomb_count": 7, "bomb_count_enraged": 10, "bomb_radius": 2.5, "bomb_damage": 43.0, "bomb_time": 1.1,
+		"summon_min": 12, "summon_max": 20, "recover": 1.78, "recover_enraged": 1.16,
+	},
+	## ---- Round 8 (neon city) ----
+	EnemyDB.Kind.MINI_NEON_ENFORCER: {
+		"banner": "MINI BOSS: NEON ENFORCER", "hold": 11.0,
+		"sequence": [Pattern.SLAM, Pattern.SLAM, Pattern.SUMMON, Pattern.SLAM],
+		"slam_radius": 4.0, "slam_damage": 48.0, "slam_time": 1.1, "summon_min": 8, "summon_max": 12,
+	},
+	EnemyDB.Kind.MINI_LASER_DJ: {
+		"banner": "MINI BOSS: LASER DJ",
+		"sequence": [Pattern.FAN, Pattern.FAN, Pattern.SUMMON, Pattern.FAN],
+		"fan_shots": 8, "fan_shots_enraged": 13, "fan_arc": 0.55, "fan_damage": 9.0, "fan_volleys": 3,
+	},
+	EnemyDB.Kind.MINI_DRONE_CARRIER: {
+		"banner": "MINI BOSS: DRONE CARRIER",
+		"sequence": [Pattern.BOMBS, Pattern.SUMMON, Pattern.BOMBS, Pattern.BOMBS, Pattern.SUMMON],
+		"bomb_count": 5, "bomb_count_enraged": 8, "bomb_radius": 2.6, "bomb_damage": 41.0, "summon_min": 12, "summon_max": 20,
+	},
+	EnemyDB.Kind.MINI_NEON_OVERLORD: {
+		"banner": "MINI BOSS: NEON OVERLORD",
+		"sequence": [Pattern.SUMMON, Pattern.FAN, Pattern.SUMMON, Pattern.SLAM],
+		"fan_damage": 10.0, "slam_damage": 44.0, "summon_min": 12, "summon_max": 20,
+	},
+	EnemyDB.Kind.BOSS_NEON_SHOGUN: {
+		"banner": "BOSS: NEON SHOGUN", "wake": 55.0, "hold": 14.0, "death_blasts": 9,
+		"sequence": [Pattern.FAN, Pattern.SLAM, Pattern.FAN, Pattern.SUMMON, Pattern.BOMBS, Pattern.FAN],
+		"fan_shots": 12, "fan_shots_enraged": 16, "fan_arc": 0.8, "fan_damage": 12.0, "fan_volleys": 3,
+		"slam_radius": 3.8, "slam_damage": 57.0, "slam_time": 1.3,
+		"bomb_count": 7, "bomb_count_enraged": 10, "bomb_radius": 2.5, "bomb_damage": 44.0, "bomb_time": 1.1,
+		"summon_min": 12, "summon_max": 20, "recover": 1.75, "recover_enraged": 1.15,
+	},
+	## ---- Round 9 (space station) ----
+	EnemyDB.Kind.MINI_AIRLOCK_CRUSHER: {
+		"banner": "MINI BOSS: AIRLOCK CRUSHER", "hold": 11.0,
+		"sequence": [Pattern.SLAM, Pattern.SLAM, Pattern.SUMMON, Pattern.SLAM],
+		"slam_radius": 4.0, "slam_damage": 50.0, "slam_time": 1.1, "summon_min": 8, "summon_max": 12,
+	},
+	EnemyDB.Kind.MINI_SATELLITE_GUNNER: {
+		"banner": "MINI BOSS: SATELLITE GUNNER",
+		"sequence": [Pattern.FAN, Pattern.FAN, Pattern.SUMMON, Pattern.FAN],
+		"fan_shots": 8, "fan_shots_enraged": 13, "fan_arc": 0.55, "fan_damage": 9.0, "fan_volleys": 3,
+	},
+	EnemyDB.Kind.MINI_MINE_BOMBER: {
+		"banner": "MINI BOSS: MINE BOMBER",
+		"sequence": [Pattern.BOMBS, Pattern.SUMMON, Pattern.BOMBS, Pattern.BOMBS, Pattern.SUMMON],
+		"bomb_count": 5, "bomb_count_enraged": 8, "bomb_radius": 2.6, "bomb_damage": 42.0, "summon_min": 12, "summon_max": 20,
+	},
+	EnemyDB.Kind.MINI_STATION_COMMANDER: {
+		"banner": "MINI BOSS: STATION COMMANDER",
+		"sequence": [Pattern.SUMMON, Pattern.FAN, Pattern.SUMMON, Pattern.SLAM],
+		"fan_damage": 11.0, "slam_damage": 45.0, "summon_min": 12, "summon_max": 20,
+	},
+	EnemyDB.Kind.BOSS_ORBITAL_GUARDIAN: {
+		"banner": "BOSS: ORBITAL GUARDIAN", "wake": 55.0, "hold": 14.0, "death_blasts": 9,
+		"sequence": [Pattern.BOMBS, Pattern.FAN, Pattern.BOMBS, Pattern.SUMMON, Pattern.SLAM, Pattern.BOMBS],
+		"fan_shots": 13, "fan_shots_enraged": 17, "fan_arc": 0.75, "fan_damage": 12.0, "fan_volleys": 3,
+		"slam_radius": 3.8, "slam_damage": 59.0, "slam_time": 1.3,
+		"bomb_count": 7, "bomb_count_enraged": 10, "bomb_radius": 2.7, "bomb_damage": 45.0, "bomb_time": 1.1,
+		"summon_min": 12, "summon_max": 20, "recover": 1.72, "recover_enraged": 1.14,
+	},
+	## ---- Round 10 (insect hive) ----
+	EnemyDB.Kind.MINI_MANDIBLE_CRUSHER: {
+		"banner": "MINI BOSS: MANDIBLE CRUSHER", "hold": 11.0,
+		"sequence": [Pattern.SLAM, Pattern.SLAM, Pattern.SUMMON, Pattern.SLAM],
+		"slam_radius": 4.0, "slam_damage": 51.0, "slam_time": 1.1, "summon_min": 8, "summon_max": 12,
+	},
+	EnemyDB.Kind.MINI_WASP_GUNNER: {
+		"banner": "MINI BOSS: WASP GUNNER",
+		"sequence": [Pattern.FAN, Pattern.FAN, Pattern.SUMMON, Pattern.FAN],
+		"fan_shots": 8, "fan_shots_enraged": 13, "fan_arc": 0.55, "fan_damage": 10.0, "fan_volleys": 3,
+	},
+	EnemyDB.Kind.MINI_LADYBUG_BOMBER: {
+		"banner": "MINI BOSS: LADYBUG BOMBER",
+		"sequence": [Pattern.BOMBS, Pattern.SUMMON, Pattern.BOMBS, Pattern.BOMBS, Pattern.SUMMON],
+		"bomb_count": 5, "bomb_count_enraged": 8, "bomb_radius": 2.6, "bomb_damage": 44.0, "summon_min": 12, "summon_max": 20,
+	},
+	EnemyDB.Kind.MINI_MANTIS_COMMANDER: {
+		"banner": "MINI BOSS: MANTIS COMMANDER",
+		"sequence": [Pattern.SUMMON, Pattern.FAN, Pattern.SUMMON, Pattern.SLAM],
+		"fan_damage": 11.0, "slam_damage": 46.0, "summon_min": 12, "summon_max": 20,
+	},
+	EnemyDB.Kind.BOSS_HIVE_QUEEN: {
+		"banner": "BOSS: HIVE QUEEN", "wake": 55.0, "hold": 14.0, "death_blasts": 9,
+		"sequence": [Pattern.SUMMON, Pattern.FAN, Pattern.SUMMON, Pattern.BOMBS, Pattern.SUMMON, Pattern.SLAM],
+		"fan_shots": 13, "fan_shots_enraged": 17, "fan_arc": 0.75, "fan_damage": 12.0, "fan_volleys": 3,
+		"slam_radius": 3.8, "slam_damage": 60.0, "slam_time": 1.3,
+		"bomb_count": 7, "bomb_count_enraged": 10, "bomb_radius": 2.5, "bomb_damage": 46.0, "bomb_time": 1.1,
+		"summon_min": 14, "summon_max": 20, "recover": 1.69, "recover_enraged": 1.13,
+	},
+	## ---- Round 11 (toxic waste) ----
+	EnemyDB.Kind.MINI_SLUDGE_SMASHER: {
+		"banner": "MINI BOSS: SLUDGE SMASHER", "hold": 11.0,
+		"sequence": [Pattern.SLAM, Pattern.SLAM, Pattern.SUMMON, Pattern.SLAM],
+		"slam_radius": 4.0, "slam_damage": 52.0, "slam_time": 1.1, "summon_min": 8, "summon_max": 12,
+	},
+	EnemyDB.Kind.MINI_HAZMAT_GUNNER: {
+		"banner": "MINI BOSS: HAZMAT GUNNER",
+		"sequence": [Pattern.FAN, Pattern.FAN, Pattern.SUMMON, Pattern.FAN],
+		"fan_shots": 8, "fan_shots_enraged": 13, "fan_arc": 0.55, "fan_damage": 10.0, "fan_volleys": 3,
+	},
+	EnemyDB.Kind.MINI_BARREL_BOMBER: {
+		"banner": "MINI BOSS: BARREL BOMBER",
+		"sequence": [Pattern.BOMBS, Pattern.SUMMON, Pattern.BOMBS, Pattern.BOMBS, Pattern.SUMMON],
+		"bomb_count": 5, "bomb_count_enraged": 8, "bomb_radius": 2.6, "bomb_damage": 45.0, "summon_min": 12, "summon_max": 20,
+	},
+	EnemyDB.Kind.MINI_MUTANT_COMMANDER: {
+		"banner": "MINI BOSS: MUTANT COMMANDER",
+		"sequence": [Pattern.SUMMON, Pattern.FAN, Pattern.SUMMON, Pattern.SLAM],
+		"fan_damage": 11.0, "slam_damage": 47.0, "summon_min": 12, "summon_max": 20,
+	},
+	EnemyDB.Kind.BOSS_MUTANT_BEHEMOTH: {
+		"banner": "BOSS: MUTANT BEHEMOTH", "wake": 55.0, "hold": 14.0, "death_blasts": 9,
+		"sequence": [Pattern.SLAM, Pattern.BOMBS, Pattern.SLAM, Pattern.SUMMON, Pattern.SLAM, Pattern.FAN],
+		"fan_shots": 13, "fan_shots_enraged": 17, "fan_arc": 0.75, "fan_damage": 12.0, "fan_volleys": 3,
+		"slam_radius": 4.3, "slam_damage": 62.0, "slam_time": 1.3,
+		"bomb_count": 8, "bomb_count_enraged": 11, "bomb_radius": 2.5, "bomb_damage": 47.0, "bomb_time": 1.1,
+		"summon_min": 12, "summon_max": 20, "recover": 1.66, "recover_enraged": 1.12,
+	},
+	## ---- Round 12 (crystal cave) ----
+	EnemyDB.Kind.MINI_GEODE_CRUSHER: {
+		"banner": "MINI BOSS: GEODE CRUSHER", "hold": 11.0,
+		"sequence": [Pattern.SLAM, Pattern.SLAM, Pattern.SUMMON, Pattern.SLAM],
+		"slam_radius": 4.0, "slam_damage": 53.0, "slam_time": 1.1, "summon_min": 8, "summon_max": 12,
+	},
+	EnemyDB.Kind.MINI_PRISM_GUNNER: {
+		"banner": "MINI BOSS: PRISM GUNNER",
+		"sequence": [Pattern.FAN, Pattern.FAN, Pattern.SUMMON, Pattern.FAN],
+		"fan_shots": 8, "fan_shots_enraged": 13, "fan_arc": 0.55, "fan_damage": 10.0, "fan_volleys": 3,
+	},
+	EnemyDB.Kind.MINI_BAT_BOMBER: {
+		"banner": "MINI BOSS: BAT BOMBER",
+		"sequence": [Pattern.BOMBS, Pattern.SUMMON, Pattern.BOMBS, Pattern.BOMBS, Pattern.SUMMON],
+		"bomb_count": 5, "bomb_count_enraged": 8, "bomb_radius": 2.6, "bomb_damage": 46.0, "summon_min": 12, "summon_max": 20,
+	},
+	EnemyDB.Kind.MINI_GEM_COMMANDER: {
+		"banner": "MINI BOSS: GEM COMMANDER",
+		"sequence": [Pattern.SUMMON, Pattern.FAN, Pattern.SUMMON, Pattern.SLAM],
+		"fan_damage": 11.0, "slam_damage": 48.0, "summon_min": 12, "summon_max": 20,
+	},
+	EnemyDB.Kind.BOSS_PRISM_GUARDIAN: {
+		"banner": "BOSS: PRISM GUARDIAN", "wake": 55.0, "hold": 14.0, "death_blasts": 9,
+		"sequence": [Pattern.FAN, Pattern.BOMBS, Pattern.FAN, Pattern.SLAM, Pattern.SUMMON, Pattern.FAN],
+		"fan_shots": 14, "fan_shots_enraged": 18, "fan_arc": 0.9, "fan_damage": 13.0, "fan_volleys": 3,
+		"slam_radius": 3.8, "slam_damage": 64.0, "slam_time": 1.3,
+		"bomb_count": 8, "bomb_count_enraged": 11, "bomb_radius": 2.5, "bomb_damage": 48.0, "bomb_time": 1.1,
+		"summon_min": 12, "summon_max": 20, "recover": 1.63, "recover_enraged": 1.11,
+	},
+	## ---- Round 13 (pirate) ----
+	EnemyDB.Kind.MINI_ANCHOR_SMASHER: {
+		"banner": "MINI BOSS: ANCHOR SMASHER", "hold": 11.0,
+		"sequence": [Pattern.SLAM, Pattern.SLAM, Pattern.SUMMON, Pattern.SLAM],
+		"slam_radius": 4.0, "slam_damage": 55.0, "slam_time": 1.1, "summon_min": 8, "summon_max": 12,
+	},
+	EnemyDB.Kind.MINI_BROADSIDE_GUNNER: {
+		"banner": "MINI BOSS: BROADSIDE GUNNER",
+		"sequence": [Pattern.FAN, Pattern.FAN, Pattern.SUMMON, Pattern.FAN],
+		"fan_shots": 8, "fan_shots_enraged": 13, "fan_arc": 0.55, "fan_damage": 10.0, "fan_volleys": 3,
+	},
+	EnemyDB.Kind.MINI_POWDER_KEG_BOMBER: {
+		"banner": "MINI BOSS: POWDER KEG BOMBER",
+		"sequence": [Pattern.BOMBS, Pattern.SUMMON, Pattern.BOMBS, Pattern.BOMBS, Pattern.SUMMON],
+		"bomb_count": 5, "bomb_count_enraged": 8, "bomb_radius": 2.6, "bomb_damage": 47.0, "summon_min": 12, "summon_max": 20,
+	},
+	EnemyDB.Kind.MINI_FIRST_MATE: {
+		"banner": "MINI BOSS: FIRST MATE",
+		"sequence": [Pattern.SUMMON, Pattern.FAN, Pattern.SUMMON, Pattern.SLAM],
+		"fan_damage": 12.0, "slam_damage": 49.0, "summon_min": 12, "summon_max": 20,
+	},
+	EnemyDB.Kind.BOSS_IRON_GALLEON: {
+		"banner": "BOSS: IRON GALLEON", "wake": 55.0, "hold": 14.0, "death_blasts": 9,
+		"sequence": [Pattern.FAN, Pattern.BOMBS, Pattern.SLAM, Pattern.FAN, Pattern.SUMMON, Pattern.BOMBS],
+		"fan_shots": 14, "fan_shots_enraged": 18, "fan_arc": 0.75, "fan_damage": 13.0, "fan_volleys": 3,
+		"slam_radius": 3.8, "slam_damage": 65.0, "slam_time": 1.3,
+		"bomb_count": 8, "bomb_count_enraged": 11, "bomb_radius": 2.8, "bomb_damage": 49.0, "bomb_time": 1.1,
+		"summon_min": 12, "summon_max": 20, "recover": 1.6, "recover_enraged": 1.1,
+	},
+	## ---- Round 14 (ghost ship) ----
+	EnemyDB.Kind.MINI_BARNACLE_CRUSHER: {
+		"banner": "MINI BOSS: BARNACLE CRUSHER", "hold": 11.0,
+		"sequence": [Pattern.SLAM, Pattern.SLAM, Pattern.SUMMON, Pattern.SLAM],
+		"slam_radius": 4.0, "slam_damage": 56.0, "slam_time": 1.1, "summon_min": 8, "summon_max": 12,
+	},
+	EnemyDB.Kind.MINI_GHOST_GUNNER: {
+		"banner": "MINI BOSS: GHOST GUNNER",
+		"sequence": [Pattern.FAN, Pattern.FAN, Pattern.SUMMON, Pattern.FAN],
+		"fan_shots": 8, "fan_shots_enraged": 13, "fan_arc": 0.55, "fan_damage": 11.0, "fan_volleys": 3,
+	},
+	EnemyDB.Kind.MINI_BUOY_BOMBER: {
+		"banner": "MINI BOSS: BUOY BOMBER",
+		"sequence": [Pattern.BOMBS, Pattern.SUMMON, Pattern.BOMBS, Pattern.BOMBS, Pattern.SUMMON],
+		"bomb_count": 5, "bomb_count_enraged": 8, "bomb_radius": 2.6, "bomb_damage": 48.0, "summon_min": 12, "summon_max": 20,
+	},
+	EnemyDB.Kind.MINI_PHANTOM_ADMIRAL: {
+		"banner": "MINI BOSS: PHANTOM ADMIRAL",
+		"sequence": [Pattern.SUMMON, Pattern.FAN, Pattern.SUMMON, Pattern.SLAM],
+		"fan_damage": 12.0, "slam_damage": 51.0, "summon_min": 12, "summon_max": 20,
+	},
+	EnemyDB.Kind.BOSS_SPECTRAL_ADMIRAL: {
+		"banner": "BOSS: SPECTRAL ADMIRAL", "wake": 55.0, "hold": 14.0, "death_blasts": 9,
+		"sequence": [Pattern.SUMMON, Pattern.FAN, Pattern.BOMBS, Pattern.SUMMON, Pattern.SLAM, Pattern.FAN],
+		"fan_shots": 14, "fan_shots_enraged": 18, "fan_arc": 0.75, "fan_damage": 13.0, "fan_volleys": 3,
+		"slam_radius": 3.8, "slam_damage": 66.0, "slam_time": 1.3,
+		"bomb_count": 8, "bomb_count_enraged": 11, "bomb_radius": 2.5, "bomb_damage": 51.0, "bomb_time": 1.1,
+		"summon_min": 14, "summon_max": 20, "recover": 1.57, "recover_enraged": 1.09,
+	},
+	## ---- Round 15 (deep sea) ----
+	EnemyDB.Kind.MINI_CRAB_CRUSHER: {
+		"banner": "MINI BOSS: CRAB CRUSHER", "hold": 11.0,
+		"sequence": [Pattern.SLAM, Pattern.SLAM, Pattern.SUMMON, Pattern.SLAM],
+		"slam_radius": 4.0, "slam_damage": 57.0, "slam_time": 1.1, "summon_min": 8, "summon_max": 12,
+	},
+	EnemyDB.Kind.MINI_ANGLER_GUNNER: {
+		"banner": "MINI BOSS: ANGLER GUNNER",
+		"sequence": [Pattern.FAN, Pattern.FAN, Pattern.SUMMON, Pattern.FAN],
+		"fan_shots": 8, "fan_shots_enraged": 13, "fan_arc": 0.55, "fan_damage": 11.0, "fan_volleys": 3,
+	},
+	EnemyDB.Kind.MINI_PUFFER_BOMBER: {
+		"banner": "MINI BOSS: PUFFER BOMBER",
+		"sequence": [Pattern.BOMBS, Pattern.SUMMON, Pattern.BOMBS, Pattern.BOMBS, Pattern.SUMMON],
+		"bomb_count": 5, "bomb_count_enraged": 8, "bomb_radius": 2.6, "bomb_damage": 49.0, "summon_min": 12, "summon_max": 20,
+	},
+	EnemyDB.Kind.MINI_TRITON_COMMANDER: {
+		"banner": "MINI BOSS: TRITON COMMANDER",
+		"sequence": [Pattern.SUMMON, Pattern.FAN, Pattern.SUMMON, Pattern.SLAM],
+		"fan_damage": 12.0, "slam_damage": 52.0, "summon_min": 12, "summon_max": 20,
+	},
+	EnemyDB.Kind.BOSS_KRAKEN: {
+		"banner": "BOSS: KRAKEN", "wake": 55.0, "hold": 14.0, "death_blasts": 9,
+		"sequence": [Pattern.SLAM, Pattern.BOMBS, Pattern.SUMMON, Pattern.SLAM, Pattern.BOMBS, Pattern.FAN],
+		"fan_shots": 15, "fan_shots_enraged": 19, "fan_arc": 0.75, "fan_damage": 14.0, "fan_volleys": 3,
+		"slam_radius": 4.4, "slam_damage": 68.0, "slam_time": 1.3,
+		"bomb_count": 9, "bomb_count_enraged": 12, "bomb_radius": 2.8, "bomb_damage": 52.0, "bomb_time": 1.1,
+		"summon_min": 12, "summon_max": 20, "recover": 1.54, "recover_enraged": 1.08,
+	},
+	## ---- Round 16 (void) ----
+	EnemyDB.Kind.MINI_OBSIDIAN_CRUSHER: {
+		"banner": "MINI BOSS: OBSIDIAN CRUSHER", "hold": 11.0,
+		"sequence": [Pattern.SLAM, Pattern.SLAM, Pattern.SUMMON, Pattern.SLAM],
+		"slam_radius": 4.0, "slam_damage": 58.0, "slam_time": 1.1, "summon_min": 8, "summon_max": 12,
+	},
+	EnemyDB.Kind.MINI_ECLIPSE_GUNNER: {
+		"banner": "MINI BOSS: ECLIPSE GUNNER",
+		"sequence": [Pattern.FAN, Pattern.FAN, Pattern.SUMMON, Pattern.FAN],
+		"fan_shots": 8, "fan_shots_enraged": 13, "fan_arc": 0.55, "fan_damage": 11.0, "fan_volleys": 3,
+	},
+	EnemyDB.Kind.MINI_METEOR_BOMBER: {
+		"banner": "MINI BOSS: METEOR BOMBER",
+		"sequence": [Pattern.BOMBS, Pattern.SUMMON, Pattern.BOMBS, Pattern.BOMBS, Pattern.SUMMON],
+		"bomb_count": 5, "bomb_count_enraged": 8, "bomb_radius": 2.6, "bomb_damage": 50.0, "summon_min": 12, "summon_max": 20,
+	},
+	EnemyDB.Kind.MINI_VOID_HERALD: {
+		"banner": "MINI BOSS: VOID HERALD",
+		"sequence": [Pattern.SUMMON, Pattern.FAN, Pattern.SUMMON, Pattern.SLAM],
+		"fan_damage": 13.0, "slam_damage": 53.0, "summon_min": 12, "summon_max": 20,
+	},
+	EnemyDB.Kind.BOSS_VOID_EMPEROR: {
+		"banner": "BOSS: VOID EMPEROR", "wake": 55.0, "hold": 14.0, "death_blasts": 14,
+		"sequence": [Pattern.FAN, Pattern.SLAM, Pattern.BOMBS, Pattern.SUMMON, Pattern.FAN, Pattern.SLAM, Pattern.BOMBS, Pattern.SUMMON],
+		"fan_shots": 15, "fan_shots_enraged": 19, "fan_arc": 0.9, "fan_damage": 14.0, "fan_volleys": 3,
+		"slam_radius": 4.5, "slam_damage": 70.0, "slam_time": 1.1,
+		"bomb_count": 9, "bomb_count_enraged": 12, "bomb_radius": 2.9, "bomb_damage": 53.0, "bomb_time": 1.1,
+		"summon_min": 14, "summon_max": 20, "recover": 1.51, "recover_enraged": 1.07,
+	},
 }
 
 var cfg: Dictionary = DEFAULTS.merged(CONFIGS[EnemyDB.Kind.BOSS], true)
@@ -175,7 +552,7 @@ static func config_of(p_kind: int) -> Dictionary:
 
 
 func _post_ready() -> void:
-	debuff_immune = true
+	debuff_scale = BOSS_DEBUFF_SCALE
 	cfg = config_of(kind)
 	_slam_total = float(cfg["slam_time"])
 	_muzzle = _model.find_child("Muzzle", true, false) as Node3D

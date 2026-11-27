@@ -29,8 +29,11 @@ var hit_color: Color = Color.RED
 var model_scale: float = 1.0
 ## Separation push written each frame by Battle (see Battle._separate_enemies).
 var push: Vector3 = Vector3.ZERO
-## Bosses ignore the Weakener / Blinder soldiers.
+## Full immunity to the Weakener / Blinder soldiers (nothing sets it in the game any more).
 var debuff_immune: bool = false
+## Scales the strength AND duration of Weakener / Blinder effects. Bosses use BOSS_DEBUFF_SCALE.
+const BOSS_DEBUFF_SCALE := 0.5
+var debuff_scale: float = 1.0
 
 var target: Soldier = null
 var _retarget_t: float = 0.0
@@ -240,6 +243,8 @@ func _find_target() -> void:
 func apply_weaken(frac: float, seconds: float) -> void:
 	if dead or debuff_immune:
 		return
+	frac *= debuff_scale
+	seconds *= debuff_scale
 	if _weak_t <= 0.0:
 		_weak_frac = frac
 	else:
@@ -251,6 +256,8 @@ func apply_weaken(frac: float, seconds: float) -> void:
 func apply_blind(chance: float, seconds: float) -> void:
 	if dead or debuff_immune:
 		return
+	chance *= debuff_scale
+	seconds *= debuff_scale
 	if _blind_t <= 0.0:
 		_blind_chance = chance
 	else:

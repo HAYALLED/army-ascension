@@ -731,7 +731,7 @@ func _settings_popup() -> void:
 	var t := _lbl(top, "Title", "SETTINGS", "LabelBig")
 	t.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_btn(top, "CloseButton", "", "ButtonRound", Vector2(84, 84), true, "icon_close.png")
-	for r in [["Sound", "icon_sound_on.png", "SoundToggle"], ["Music", "icon_music_on.png", "MusicToggle"], ["Vibration", "icon_vibration_on.png", "VibrationToggle"]]:
+	for r in [["Sound", "icon_sound_on.png", "SoundToggle"], ["Music", "icon_music_on.png", "MusicToggle"], ["Vibration", "icon_vibration_on.png", "VibrationToggle"], ["Day cycle", "icon_star.png", "DayCycleToggle"]]:
 		var row := _box(false, v, r[0] + "Row", 12)
 		_tex(row, "Icon", r[1], Vector2(56, 56))
 		var l := _lbl(row, "Label", str(r[0]).to_upper(), "LabelBig")
@@ -748,6 +748,9 @@ func _settings_popup() -> void:
 		b.toggle_mode = true
 		b.button_group = group
 		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		b.add_theme_font_size_override("font_size", 34)
+	for q in [["HowToButton", "HOW TO PLAY"], ["ReplayButton", "REPLAY TUTORIAL"]]:
+		var b := _btn(v, q[0], q[1], "ButtonSecondary", Vector2(0, 80), true)
 		b.add_theme_font_size_override("font_size", 34)
 	_save(root, "res://Scene/Menus/Popups/SettingsPopup.tscn")
 

@@ -10,7 +10,7 @@ const CARD := preload("res://Scene/UI/Components/SoldierCard.tscn")
 
 
 func _ready() -> void:
-	var types: Array = SoldierDB.DATA.keys()
+	var types: Array = SoldierDB.listed_types()
 	types.sort_custom(_before)
 	for type in types:
 		var card := CARD.instantiate() as SoldierCard
