@@ -108,7 +108,7 @@ func _rebuild_actions() -> void:
 		timer.text = "OPENS IN  %s" % ChestSlot.clock(left)
 		timer.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		_actions.add_child(timer)
-		var ad := _button("WATCH AD  (-%d MIN)" % (ChestDB.AD_SKIP_SECONDS / 60), &"ButtonPrimary")
+		var ad := _button("WATCH AD  (-%d MIN)" % (int(ChestDB.AD_SKIP_SECONDS / 60.0)), &"ButtonPrimary")
 		ad.pressed.connect(_watch_ad)
 		_actions.add_child(ad)
 		var cost := ChestDB.skip_gems(left)

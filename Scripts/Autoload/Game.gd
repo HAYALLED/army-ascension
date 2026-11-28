@@ -51,6 +51,8 @@ var dropped_slot: int = -1
 ## Most soldiers the army had at one time this run (an ad revive brings back this many).
 var peak_soldiers: int = 0
 var elapsed: float = 0.0
+## Negative gates can push a buff down; the floor keeps fire rate (1 / rate) and damage above zero.
+const MIN_BUFF := 0.25
 var damage_buff: float = 1.0
 var rate_buff: float = 1.0
 var sim_mode: bool = false
@@ -274,12 +276,13 @@ func final_gold(won: bool) -> int:
 
 
 ## Plays the random ad if one is due (call before leaving the result screen).
+## Stays due until an ad was really shown, so a not-yet-loaded ad is retried at the next exit.
 func play_due_interstitial() -> void:
 	if not interstitial_due:
 		return
-	interstitial_due = false
-	battles_since_ad = 0
-	await AdService.show_interstitial()
+	if await AdService.show_interstitial():
+		interstitial_due = false
+		battles_since_ad = 0
 
 
 ## Battle rewards go to the player's profile. `perk` (NO RANDOM ADS) pays the gold twice.
@@ -370,12 +373,12 @@ func add_kill() -> void:
 
 
 func add_damage_buff(amount: float) -> void:
-	damage_buff += amount
+	damage_buff = maxf(damage_buff + amount, MIN_BUFF)
 	buffs_changed.emit(damage_buff, rate_buff)
 
 
 func add_rate_buff(amount: float) -> void:
-	rate_buff += amount
+	rate_buff = maxf(rate_buff + amount, MIN_BUFF)
 	buffs_changed.emit(damage_buff, rate_buff)
 
 

@@ -14,6 +14,7 @@ extends Node
 
 enum State { IDLE, PROCESSING }
 
+const AdGuard := preload("res://Scripts/Autoload/AdService.gd")
 const GOOGLE_SCRIPT := "res://Scripts/Monetization/GooglePlayBillingProvider.gd"
 const PLUGIN_SINGLETON := "GodotGooglePlayBilling"
 ## The store starts this long after boot, so the engine and the first menu frame are already up.
@@ -100,7 +101,7 @@ func _on_store_started() -> void:
 
 ## One launch of the crash-loop guard. True when billing must stay off this launch.
 func _guard_blocked() -> bool:
-	var step := AdService.guard_step(_guard_load(), int(Time.get_unix_time_from_system()))
+	var step := AdGuard.guard_step(_guard_load(), int(Time.get_unix_time_from_system()))
 	_guard_save(step)
 	return bool(step["blocked"])
 
@@ -233,23 +234,23 @@ func _check(id: String, unit: int) -> String:
 func _deliver(id: String, token: String, unit: int) -> Dictionary:
 	if token.is_empty() or not ProductDB.has(id):
 		return _result(false, "Unknown purchase")
-	var hash := token.sha256_text()
-	if PlayerData.is_delivered(hash):
+	var token_hash := token.sha256_text()
+	if PlayerData.is_delivered(token_hash):
 		_confirm(id, token)  # granted earlier, maybe never confirmed (crash): confirm only
 		return _result(false, "Already delivered")
 	# A one-time product the player already owns (reinstall, second device) gets no second reward.
 	var owned := ProductDB.is_once(id) and PlayerData.has_purchase(id)
 	if not owned and bool(ProductDB.get_product(id).get("pick_unit", false)) and not PlayerData.owns(unit):
-		return _hold(id, hash, token)
+		return _hold(id, token_hash, token)
 	var snapshot := PlayerData.to_save().duplicate(true)
 	var reward := RewardDB.empty() if owned else ProductDB.reward_of(id, unit, RandomNumberGenerator.new())
 	PlayerData.grant(reward)
 	PlayerData.mark_purchased(id)
-	PlayerData.record_delivery(hash)
+	PlayerData.record_delivery(token_hash)
 	if not SaveManager.persist_now():
 		PlayerData.apply_save(snapshot)
 		return _result(false, "Could not save, will retry")
-	_live.erase(hash)
+	_live.erase(token_hash)
 	_confirm(id, token)
 	var out := _result(true, "Purchase complete")
 	out["reward"] = reward
@@ -258,12 +259,12 @@ func _deliver(id: String, token: String, unit: int) -> Dictionary:
 
 ## Paid purchase without a soldier to give the shards to (found by a restore): not delivered, not confirmed,
 ## remembered until the player picks one.
-func _hold(id: String, hash: String, token: String) -> Dictionary:
-	PlayerData.add_pending(id, hash)
-	if not PlayerData.has_pending(hash):
+func _hold(id: String, token_hash: String, token: String) -> Dictionary:
+	PlayerData.add_pending(id, token_hash)
+	if not PlayerData.has_pending(token_hash):
 		return _result(false, "Too many unfinished purchases")
-	var fresh := not _live.has(hash)
-	_live[hash] = token
+	var fresh := not _live.has(token_hash)
+	_live[token_hash] = token
 	if fresh:
 		pending_changed.emit()
 	var out := _result(false, "Choose a soldier to finish your purchase")

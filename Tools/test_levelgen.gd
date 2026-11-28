@@ -91,6 +91,20 @@ func _test_plans() -> void:
 	_check("spike blocks stay inside the road", inside_ok)
 	_check("events >= MIN_CLEAR apart in z", clear_ok)
 	_check("gate sides are different effects", choice_ok)
+	var negatives := 0
+	var neg_ok := true
+	var pairs := 0
+	for s in 4000:
+		var rng := RandomNumberGenerator.new()
+		rng.seed = s + 1
+		for g: Dictionary in LevelRandomizer.plan(3, rng, waves)["gates"]:
+			pairs += 1
+			var bad := int(GatePair.is_negative(GatePair.make_def(g["left"]["effect"], g["left"]["value"]))) \
+				+ int(GatePair.is_negative(GatePair.make_def(g["right"]["effect"], g["right"]["value"])))
+			neg_ok = neg_ok and bad <= 1
+			negatives += bad
+	var rate := float(negatives) / float(pairs)
+	_check("negative gates: at most 1 per pair, ~5%% of pairs (%.1f%%)" % (rate * 100.0), neg_ok and rate > 0.035 and rate < 0.065)
 	_check("x-soldiers gates capped", multiply_ok)
 	_check("corridor shift between rows is doable", shift_ok)
 	_check("layouts differ between seeds (%d / %d unique)" % [signatures.size(), SEEDS], signatures.size() > SEEDS * 0.95)

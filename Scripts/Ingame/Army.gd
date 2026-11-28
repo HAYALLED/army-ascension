@@ -10,6 +10,12 @@ const SPACING_Z := 0.85
 const SLOW_FAR := 22.0
 const SLOW_NEAR := 8.0
 const MIN_SPEED := 0.25
+## Out of combat (no enemy within SLOW_FAR ahead) the advance is this many times forward_speed (6 -> 12).
+## In combat the speed is untouched: forward_speed * engage_factor.
+const OUT_OF_COMBAT_MULT := 2.0
+## Extra speed factor gained per second when combat ends / lost per second when an enemy comes in range.
+const BOOST_UP_RATE := 2.0
+const BOOST_DOWN_RATE := 4.0
 ## Strafe "crowd" effect: sideways speed (units/s) that gives the full squeeze.
 const SQUEEZE_SPEED := 6.0
 ## Ad revive: regular enemies this close (in z) to the army are wiped.
@@ -25,6 +31,8 @@ var min_z: float = -100000.0
 var target_x: float = 0.0
 var half_width: float = 2.0
 var engage_factor: float = 1.0
+## True while no enemy is within SLOW_FAR ahead.
+var out_of_combat: bool = true
 ## 0..1, how hard the army is strafing right now (smoothed).
 var squeeze: float = 0.0
 ## Minimum formation width factor at full squeeze (formation gets narrower).
@@ -35,6 +43,8 @@ var z_scale: float = 1.0
 var lean: float = 0.0
 
 var _lateral: float = 0.0
+## Smoothed extra speed factor on top of engage_factor: 0 in combat, OUT_OF_COMBAT_MULT - 1 out of combat.
+var _boost: float = 0.0
 
 var _engage_t: float = 0.0
 var _emit_t: float = 0.0
@@ -68,7 +78,10 @@ func _process(delta: float) -> void:
 		_engage_t = 0.1
 		_update_engage()
 
-	position.z = maxf(position.z - forward_speed * engage_factor * delta, min_z)
+	# No boost in the tutorial (its pacing stays as it was).
+	var boost_goal := (OUT_OF_COMBAT_MULT - 1.0) if out_of_combat and not Game.tutorial else 0.0
+	_boost = move_toward(_boost, boost_goal, (BOOST_UP_RATE if boost_goal > _boost else BOOST_DOWN_RATE) * delta)
+	position.z = maxf(position.z - forward_speed * (engage_factor + _boost) * delta, min_z)
 	var old_x := position.x
 	position.x = lerpf(position.x, target_x, 1.0 - exp(-follow_rate * delta))
 	_update_squeeze((position.x - old_x) / maxf(delta, 0.0001), delta)
@@ -98,6 +111,7 @@ func _update_engage() -> void:
 			nearest = dz
 	var k := clampf((nearest - SLOW_NEAR) / (SLOW_FAR - SLOW_NEAR), 0.0, 1.0)
 	engage_factor = lerpf(MIN_SPEED, 1.0, k)
+	out_of_combat = k >= 1.0
 
 
 func emit_status() -> void:

@@ -750,7 +750,7 @@ func _test_guard() -> void:
 	pm.guard_path = saved_path
 
 
-# ---- 11: shop page (prices, restore button, owned state) -------------------------------------------
+# ---- 11: shop page (prices, no restore button, owned state) -------------------------------------------
 
 func _test_shop_ui() -> void:
 	var pm := PurchaseManager
@@ -760,22 +760,16 @@ func _test_shop_ui() -> void:
 	add_child(page)
 	await _frames()
 	var list := page.get_node("Content/Scroll/Margin/List")
-	var restore := list.get_child(list.get_child_count() - 1) as Button
 	var gold_card := page.get_node("Content/Scroll/Margin/List/GoldRow/Gold1")
 	var gold_button := gold_card.get_node("%BuyButton") as Button
 	var default_text := gold_button.text
-	_check("11a restore button is the last row of the shop", restore != null and restore.text == "RESTORE PURCHASES")
+	_check("11a the shop has no restore button", list.find_children("*", "Button", true, false).filter(func(b: Node) -> bool: return (b as Button).text == "RESTORE PURCHASES").is_empty())
 	store.prices["gold_s"] = "TRY 29,99"
 	store.prices_updated.emit()
 	_check("11b a store price replaces the card text; products without a price keep theirs", gold_button.text == "TRY 29,99" and default_text != "TRY 29,99")
 	PlayerData.mark_purchased("remove_ads")
 	var ads_button := page.get_node("Content/Scroll/Margin/List/NoAds").get_node("%BuyButton") as Button
 	_check("11c an owned product shows OWNED, not a price", ads_button.text == "OWNED" and ads_button.disabled)
-	var toasts: Array[String] = []
-	page.toast_requested.connect(func(t: String) -> void: toasts.append(t))
-	restore.pressed.emit()
-	await _frames()
-	_check("11d RESTORE PURCHASES reaches the store and the answer is shown as a toast", toasts == ["Nothing to restore"])
 	page.queue_free()
 	pm.provider = saved
 	_reset()

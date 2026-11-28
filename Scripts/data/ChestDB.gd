@@ -18,6 +18,10 @@ const AD_SKIP_SECONDS := 900
 const SECONDS_PER_GEM := 360
 ## Gem price of the gold chest in the shop.
 const SHOP_GOLD_GEMS := 20
+## Rewarded ads that unlock the shop's ad gold chest (same contents as the gem gold chest).
+const SHOP_GOLD_ADS := 5
+## Seconds before the ad gold chest can be earned again after it was opened (1 week).
+const SHOP_GOLD_COOLDOWN := 604800
 
 const ICON_LOCK := "res://Assets/UI/icon_lock.png"
 

@@ -126,6 +126,20 @@ title = "GOLD CHEST"
 price_text = "20 GEMS"
 icon = ExtResource("19_chestg")
 
+[node name="GoldChestAds" type="PanelContainer" parent="Content/Scroll/Margin/List" instance=ExtResource("4_kfarw")]
+custom_minimum_size = Vector2(0, 170)
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("1_cdcyf")
+theme_type_variation = &"PanelDark"
+script = ExtResource("5_qprct")
+item_id = "gold_chest_ads"
+title = "GOLD CHEST"
+description = "Watch 5 videos to get a gold chest."
+price_text = "WATCH"
+icon = ExtResource("19_chestg")
+button_style = "ButtonPrimary"
+
 [node name="GoldTitle" type="Label" parent="Content/Scroll/Margin/List" unique_id=833212303]
 layout_mode = 2
 theme_type_variation = &"LabelBig"

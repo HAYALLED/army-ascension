@@ -44,6 +44,7 @@ func _init(host: Node, on_ready: Callable = Callable()) -> void:
 
 
 func _on_initialized() -> void:
+	print("AdMob: SDK initialized (test ids: %s)" % OS.is_debug_build())
 	if _on_ready.is_valid():
 		_on_ready.call()
 	_load_rewarded()
@@ -78,7 +79,8 @@ func _show_rewarded() -> void:
 		ad.destroy()
 		_load_rewarded()
 		_finish(_earned)
-	_content_callback.on_ad_failed_to_show_full_screen_content = func(_error: AdError) -> void:
+	_content_callback.on_ad_failed_to_show_full_screen_content = func(error: AdError) -> void:
+		print("AdMob: show failed: %s" % error.message)
 		ad.destroy()
 		_load_rewarded()
 		_finish(false)
@@ -99,8 +101,9 @@ func _show_interstitial() -> void:
 	_content_callback.on_ad_dismissed_full_screen_content = func() -> void:
 		ad.destroy()
 		_load_interstitial()
-		_finish(false)
-	_content_callback.on_ad_failed_to_show_full_screen_content = func(_error: AdError) -> void:
+		_finish(true)  # interstitial: true means "was shown", there is no reward
+	_content_callback.on_ad_failed_to_show_full_screen_content = func(error: AdError) -> void:
+		print("AdMob: show failed: %s" % error.message)
 		ad.destroy()
 		_load_interstitial()
 		_finish(false)
@@ -122,9 +125,11 @@ func _load_rewarded() -> void:
 	_rewarded_loading = true
 	var callback := RewardedAdLoadCallback.new()
 	callback.on_ad_loaded = func(ad: RewardedAd) -> void:
+		print("AdMob: rewarded loaded")
 		_rewarded_loading = false
 		_rewarded = ad
-	callback.on_ad_failed_to_load = func(_error: LoadAdError) -> void:
+	callback.on_ad_failed_to_load = func(error: LoadAdError) -> void:
+		print("AdMob: rewarded load failed, code %d: %s" % [error.code, error.message])
 		_rewarded_loading = false
 		_retry(_load_rewarded)
 	RewardedAdLoader.new().load(_rewarded_id, AdRequest.new(), callback)
@@ -136,9 +141,11 @@ func _load_interstitial() -> void:
 	_interstitial_loading = true
 	var callback := InterstitialAdLoadCallback.new()
 	callback.on_ad_loaded = func(ad: InterstitialAd) -> void:
+		print("AdMob: interstitial loaded")
 		_interstitial_loading = false
 		_interstitial = ad
-	callback.on_ad_failed_to_load = func(_error: LoadAdError) -> void:
+	callback.on_ad_failed_to_load = func(error: LoadAdError) -> void:
+		print("AdMob: interstitial load failed, code %d: %s" % [error.code, error.message])
 		_interstitial_loading = false
 		_retry(_load_interstitial)
 	InterstitialAdLoader.new().load(_interstitial_id, AdRequest.new(), callback)

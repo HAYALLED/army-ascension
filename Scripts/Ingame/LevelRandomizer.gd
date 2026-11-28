@@ -36,6 +36,10 @@ const E := GatePair.Effect
 const KIND_WEIGHTS := [[E.ADD, 4], [E.MULTIPLY, 2], [E.DAMAGE, 3], [E.RATE, 3]]
 const DAMAGE_VALUES := [0.15, 0.2, 0.25, 0.3]
 const RATE_VALUES := [0.15, 0.2, 0.25]
+## Chance that a gate pair has one negative door (never both). The other door stays a normal buff.
+const NEGATIVE_CHANCE := 0.05
+const NEGATIVE_KINDS := [E.SUBTRACT, E.DAMAGE, E.RATE]
+const NEGATIVE_PCT_VALUES := [0.1, 0.15]
 
 
 ## Replaces the Gates / Traps children of `level` with a fresh random layout.
@@ -158,6 +162,9 @@ static func _gate(z: float, rng: RandomNumberGenerator, allow_multiply: bool) ->
 	var first := _pick_kind(rng, -1, allow_multiply)
 	var second := _pick_kind(rng, first, allow_multiply and first != E.MULTIPLY)
 	var sides := [_side(first, rng), _side(second, rng)]
+	if rng.randf() < NEGATIVE_CHANCE:
+		var bad := rng.randi_range(0, 1)
+		sides[bad] = _negative_side(int(sides[1 - bad]["effect"]), rng)
 	_shuffle(sides, rng)
 	return {"z": z, "left": sides[0], "right": sides[1]}
 
@@ -185,6 +192,15 @@ static func _pick_kind(rng: RandomNumberGenerator, exclude: int, allow_multiply:
 		if roll <= 0:
 			return k[0]
 	return E.ADD
+
+
+## A harmful door of a kind different from `other_effect` (so the two doors stay a real choice).
+static func _negative_side(other_effect: int, rng: RandomNumberGenerator) -> Dictionary:
+	var kinds: Array = NEGATIVE_KINDS.filter(func(k: int) -> bool: return k != other_effect)
+	var kind: int = kinds[rng.randi() % kinds.size()]
+	if kind == E.SUBTRACT:
+		return {"effect": kind, "value": float(rng.randi_range(2, 4)), "risky": false}
+	return {"effect": kind, "value": -float(NEGATIVE_PCT_VALUES[rng.randi() % NEGATIVE_PCT_VALUES.size()]), "risky": false}
 
 
 static func _side(effect: int, rng: RandomNumberGenerator) -> Dictionary:

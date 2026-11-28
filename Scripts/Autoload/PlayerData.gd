@@ -27,8 +27,8 @@ const MAX_CURRENCY := 999_999_999
 const MAX_DELIVERED := 50
 ## Paid purchases that wait for the player's choice at the same time.
 const MAX_PENDING := 8
-## Battles a new player gets the NO RANDOM ADS perk for free (auto 2X gold, no random ads).
-const NO_ADS_TRIAL_BATTLES := 3
+## Battles a new player gets the NO RANDOM ADS perk for free (auto 2X gold, no random ads). 0 = no trial.
+const NO_ADS_TRIAL_BATTLES := 0
 ## Soldier classes owned from the start. Every other class is unlocked by a chest.
 const STARTER_TYPES := [
 	SoldierDB.Type.RIFLEMAN, SoldierDB.Type.MACHINE_GUNNER, SoldierDB.Type.SNIPER,
@@ -56,6 +56,9 @@ var delivered_tokens: Array[String] = []
 var pending_deliveries: Array[Dictionary] = []
 ## Unix time when the next free chest is ready (0 = ready now).
 var chest_ready_at: int = 0
+## Shop ad gold chest: ads watched so far (0 .. ChestDB.SHOP_GOLD_ADS - 1) and the unix time it can be earned again (0 = ready).
+var gold_ads_watched: int = 0
+var gold_ads_ready_at: int = 0
 ## Free-trial battles left of the NO RANDOM ADS perk (counts down once per battle until the product is bought).
 var no_ads_trial_left: int = NO_ADS_TRIAL_BATTLES
 ## Soldier classes the player owns: SoldierDB.Type -> true.
@@ -94,6 +97,8 @@ func reset_to_defaults() -> void:
 	delivered_tokens.clear()
 	pending_deliveries.clear()
 	chest_ready_at = 0
+	gold_ads_watched = 0
+	gold_ads_ready_at = 0
 	no_ads_trial_left = NO_ADS_TRIAL_BATTLES
 	unlocked.clear()
 	for t in STARTER_TYPES:
@@ -441,6 +446,26 @@ func start_chest_cooldown() -> void:
 	shop_changed.emit()
 
 
+## Seconds until the shop ad gold chest can be earned again (0 = ready).
+func gold_ads_seconds_left() -> int:
+	return maxi(gold_ads_ready_at - int(Time.get_unix_time_from_system()), 0)
+
+
+## One rewarded ad watched for the shop ad gold chest. Returns true when this was the last ad: the chest is
+## due now, the progress is reset and the 1 week cooldown has started. False while ads are still missing
+## or the cooldown runs (nothing is counted then).
+func register_gold_ad() -> bool:
+	if gold_ads_seconds_left() > 0:
+		return false
+	gold_ads_watched += 1
+	var done := gold_ads_watched >= ChestDB.SHOP_GOLD_ADS
+	if done:
+		gold_ads_watched = 0
+		gold_ads_ready_at = int(Time.get_unix_time_from_system()) + ChestDB.SHOP_GOLD_COOLDOWN
+	shop_changed.emit()
+	return done
+
+
 ## ---- Level progress --------------------------------------------------------
 
 ## Level the player plays next (highest completed + 1, capped at the last level).
@@ -497,7 +522,8 @@ func to_save() -> Dictionary:
 		"progress": {"highest_level": highest_level},
 		"purchases": purchases.keys(),
 		"billing": {"delivered": delivered_tokens.duplicate(), "pending": pending_deliveries.duplicate(true)},
-		"timers": {"chest_ready_at": chest_ready_at},
+		"timers": {"chest_ready_at": chest_ready_at, "gold_ads_ready_at": gold_ads_ready_at},
+		"gold_ads_watched": gold_ads_watched,
 		"no_ads_trial_left": no_ads_trial_left,
 		"day_phase": day_phase,
 		"tutorial_done": tutorial_done,
@@ -576,7 +602,9 @@ func apply_save(d: Dictionary) -> void:
 		# Capped at one cooldown from now, so a bad value or a changed clock never locks the chest for long.
 		var now := int(Time.get_unix_time_from_system())
 		chest_ready_at = _read_int(timers.get("chest_ready_at"), 0, now + RewardDB.CHEST_COOLDOWN, 0)
+		gold_ads_ready_at = _read_int(timers.get("gold_ads_ready_at"), 0, now + ChestDB.SHOP_GOLD_COOLDOWN, 0)
 
+	gold_ads_watched = _read_int(d.get("gold_ads_watched"), 0, ChestDB.SHOP_GOLD_ADS - 1, 0)
 	no_ads_trial_left = _read_int(d.get("no_ads_trial_left"), 0, NO_ADS_TRIAL_BATTLES, NO_ADS_TRIAL_BATTLES)
 
 	var saved_unlocked: Variant = d.get("unlocked")

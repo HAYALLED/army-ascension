@@ -33,21 +33,29 @@ static func make_def(effect: int, value: float, risky: bool = false) -> Dictiona
 			d["sub"] = "SOLDIERS"
 			d["color"] = Color(0.15, 0.8, 0.95)
 		Effect.DAMAGE:
-			d["label"] = "+%d%%" % int(round(value * 100.0))
+			d["label"] = "%s%d%%" % ["-" if value < 0.0 else "+", int(round(absf(value) * 100.0))]
 			d["sub"] = "DAMAGE"
 			d["color"] = Color(1.0, 0.5, 0.15)
 		Effect.RATE:
-			d["label"] = "+%d%%" % int(round(value * 100.0))
+			d["label"] = "%s%d%%" % ["-" if value < 0.0 else "+", int(round(absf(value) * 100.0))]
 			d["sub"] = "FIRE RATE"
 			d["color"] = Color(1.0, 0.85, 0.2)
 		Effect.SUBTRACT:
 			d["label"] = "-%d" % int(value)
 			d["sub"] = "SOLDIERS"
 			d["color"] = Color(0.9, 0.2, 0.2)
-	if risky:
+	if is_negative(d):
+		d["color"] = Color(0.9, 0.2, 0.2)
+	elif risky:
 		d["sub"] = str(d["sub"]) + "  RISKY"
 		d["color"] = Color(1.0, 0.7, 0.1)
 	return d
+
+
+## A gate that hurts: fewer soldiers, or a damage / fire rate buff below zero.
+static func is_negative(def: Dictionary) -> bool:
+	var effect := int(def["effect"])
+	return effect == Effect.SUBTRACT or ((effect == Effect.DAMAGE or effect == Effect.RATE) and float(def["value"]) < 0.0)
 
 
 ## Rough value in "soldier equivalents" (used by the dev autopilot).
@@ -116,8 +124,7 @@ func _apply(def: Dictionary, node: Node3D) -> void:
 			Game.add_rate_buff(value)
 		Effect.SUBTRACT:
 			army.remove_soldiers(int(value))
-	var bad := int(def["effect"]) == Effect.SUBTRACT
-	AudioManager.play("gate_bad" if bad else "gate_good")
+	AudioManager.play("gate_bad" if is_negative(def) else "gate_good")
 	Game.banner_requested.emit("%s %s" % [def["label"], str(def["sub"]).strip_edges()], def["color"])
 	var tw := create_tween()
 	tw.tween_property(node, "scale", Vector3(1.06, 1.1, 1.0), 0.12)

@@ -8,9 +8,9 @@ extends RefCounted
 ## every full tier the bar color changes (tier_color) and starts filling again.
 ## Every number is a starting balance value and can be tuned freely.
 
-## Levels per tier (one full bar), cost growth after level 10, and the biggest level a save file may hold.
+## Levels per tier (one full bar), price multiplier of every new tier, and the biggest level a save file may hold.
 const TIER_SIZE := 10
-const LATE_GROWTH := 1.18
+const TIER_MULT := 1.75
 const MAX_SAVED_LEVEL := 9999
 
 ## Bar color of each tier, in order; repeats after the last one.
@@ -24,7 +24,8 @@ enum Id { INCOME, DAMAGE, HEALTH, FIRE_RATE, SHARD_LUCK, REINFORCEMENTS }
 
 ## "per_level": effect gained per level (0.10 = +10%; for kind "count" a flat number).
 ## "cap": highest level that still does something (0 = no cap).
-## Cost to buy level N+1 = base_cost * growth^min(N, 10) * LATE_GROWTH^max(N - 10, 0), rounded to 10.
+## Cost to buy level N+1 = base_cost * growth^(N mod 10) * TIER_MULT^(N / 10), rounded to 10.
+## Every new tier restarts at the cheap level-1 price, but TIER_MULT times higher than the tier before.
 const DATA := {
 	Id.INCOME: {
 		"id": "income", "name": "Battle Income", "kind": "pct", "per_level": 0.10, "cap": 0,
@@ -89,8 +90,7 @@ static func value(id: int, level: int) -> float:
 static func cost(id: int, level: int) -> int:
 	var d: Dictionary = DATA[id]
 	var lv := maxi(level, 0)
-	var raw := float(d["base_cost"]) * pow(float(d["growth"]), float(mini(lv, 10)))
-	raw *= pow(LATE_GROWTH, float(maxi(lv - 10, 0)))
+	var raw := float(d["base_cost"]) * pow(float(d["growth"]), float(lv % TIER_SIZE)) * pow(TIER_MULT, float(tier_of(lv)))
 	return mini(int(round(minf(raw, float(PlayerData.MAX_CURRENCY)) / 10.0)) * 10, PlayerData.MAX_CURRENCY)
 
 

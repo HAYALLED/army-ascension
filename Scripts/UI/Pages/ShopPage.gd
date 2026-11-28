@@ -1,6 +1,6 @@
 class_name ShopPage
 extends Control
-## Shop page: the free-shards ad, the wooden chest (video), the gold chest (gems) and the store products. Purchases run through PurchaseManager
+## Shop page: the free-shards ad, the wooden chest (video), the gold chest (gems), the gold chest (5 videos, 1 week cooldown) and the store products. Purchases run through PurchaseManager
 ## (real Google Play on Android; a mock store in debug builds off Android only, never in a release build).
 
 signal toast_requested(text: String)
@@ -8,6 +8,7 @@ signal toast_requested(text: String)
 var _cards: Array[Control] = []
 var _wood_card: ShopOffer = null
 var _ads_card: ShopOffer = null
+var _gold_ads_card: ShopOffer = null
 var _tick := 0.0
 var _resolving := false
 
@@ -21,6 +22,8 @@ func _ready() -> void:
 				node.set_button("%d GEMS" % ChestDB.SHOP_GOLD_GEMS, false)
 			elif node.item_id == "wood_chest":
 				_wood_card = node
+			elif node.item_id == "gold_chest_ads":
+				_gold_ads_card = node
 			elif node.item_id == "remove_ads":
 				_ads_card = node
 	PlayerData.shop_changed.connect(_refresh)
@@ -28,7 +31,6 @@ func _ready() -> void:
 	PurchaseManager.pending_changed.connect(_check_pending)
 	PurchaseManager.notice.connect(toast_requested.emit)
 	visibility_changed.connect(_check_pending)
-	_add_restore_button()
 	_refresh()
 
 
@@ -38,6 +40,7 @@ func _process(delta: float) -> void:
 		_tick = 1.0
 		if is_visible_in_tree():
 			_refresh_wood_chest()
+			_refresh_gold_ads_chest()
 
 
 ## WATCH when the wooden chest is ready, otherwise the time left (its own 30 minute timer).
@@ -49,6 +52,28 @@ func _refresh_wood_chest() -> void:
 		_wood_card.set_button("%d:%02d" % [floori(left / 60.0), left % 60], true)
 	else:
 		_wood_card.set_button("WATCH", false)
+
+
+## WATCH while the ad gold chest can be earned (the card text shows the ads watched), otherwise the time left of its 1 week cooldown.
+func _refresh_gold_ads_chest() -> void:
+	if _gold_ads_card == null:
+		return
+	var left := PlayerData.gold_ads_seconds_left()
+	if left > 0:
+		_gold_ads_card.set_description("Watch %d videos to get a gold chest.\nCome back after the cooldown." % ChestDB.SHOP_GOLD_ADS)
+		_gold_ads_card.set_button(_format_wait(left), true)
+	else:
+		_gold_ads_card.set_description("Watch %d videos to get a gold chest.\nWatched: %d / %d" % [ChestDB.SHOP_GOLD_ADS, PlayerData.gold_ads_watched, ChestDB.SHOP_GOLD_ADS])
+		_gold_ads_card.set_button("WATCH", false)
+
+
+## 6d 23h, 5h 03m or 12:05 depending on how long is left.
+func _format_wait(seconds: int) -> String:
+	if seconds >= 86400:
+		return "%dd %dh" % [floori(seconds / 86400.0), floori((seconds % 86400) / 3600.0)]
+	if seconds >= 3600:
+		return "%dh %02dm" % [floori(seconds / 3600.0), floori((seconds % 3600) / 60.0)]
+	return "%d:%02d" % [floori(seconds / 60.0), seconds % 60]
 
 
 ## OWNED for one-time products the player has, SOON for products that are not ready, otherwise the
@@ -65,23 +90,9 @@ func _refresh() -> void:
 			if price != "":
 				card.set_button(price, false)
 	_refresh_wood_chest()
+	_refresh_gold_ads_chest()
 	if _ads_card != null:
 		_ads_card.set_description(_ads_text())
-
-
-## RESTORE PURCHASES under the last card (reinstall, new phone): asks the store for what the player owns.
-func _add_restore_button() -> void:
-	var b := Button.new()
-	b.theme = preload("res://Resources/UI/ui_theme.tres")
-	b.theme_type_variation = &"ButtonSecondary"
-	b.text = "RESTORE PURCHASES"
-	b.custom_minimum_size = Vector2(0, 84)
-	b.focus_mode = Control.FOCUS_NONE
-	b.add_theme_font_size_override("font_size", 30)
-	b.pressed.connect(func() -> void:
-		AudioManager.play("ui_click")
-		PurchaseManager.restore())
-	get_node("Content/Scroll/Margin/List").add_child(b)
 
 
 ## A paid starter bundle found after a restart or reinstall has no soldier to give the shards to: ask now.
@@ -116,6 +127,9 @@ func _on_buy(id: String) -> void:
 		return
 	if id == "gold_chest":
 		await _buy_gold_chest()
+		return
+	if id == "gold_chest_ads":
+		await _watch_for_gold_chest()
 		return
 	if id == "wood_chest":
 		await _watch_for_wood_chest()
@@ -175,6 +189,29 @@ func _watch_for_wood_chest() -> void:
 func _buy_gold_chest() -> void:
 	if not PlayerData.spend_gems(ChestDB.SHOP_GOLD_GEMS):
 		toast_requested.emit("Not enough gems")
+		return
+	var rng := RandomNumberGenerator.new()
+	rng.randomize()
+	var reward := ChestDB.to_reward(ChestDB.roll(ChestDB.Tier.GOLD, rng))
+	PlayerData.grant(reward)
+	SaveManager.save_now()
+	await RewardPopup.show_reward(_host(), "GOLD CHEST", reward, "", ChestDB.icon_of(ChestDB.Tier.GOLD))
+
+
+## Gold chest for videos: every completed ad counts and is saved at once; the last one opens the chest
+## (same contents as the gem gold chest) and starts the 1 week cooldown.
+func _watch_for_gold_chest() -> void:
+	if PlayerData.gold_ads_seconds_left() > 0:
+		return
+	if not AdService.is_available():
+		toast_requested.emit("No ad available right now")
+		return
+	if not await AdService.show_rewarded("gold_chest"):
+		toast_requested.emit("Ad not completed, not counted")
+		return
+	if not PlayerData.register_gold_ad():
+		SaveManager.save_now()
+		toast_requested.emit("%d / %d videos watched" % [PlayerData.gold_ads_watched, ChestDB.SHOP_GOLD_ADS])
 		return
 	var rng := RandomNumberGenerator.new()
 	rng.randomize()

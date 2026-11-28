@@ -86,7 +86,7 @@ func _on_army_changed(count: int, hp: float, max_hp: float) -> void:
 
 
 func _on_buffs_changed(dmg: float, rate: float) -> void:
-	_buffs.text = "DMG +%d%%   RATE +%d%%" % [int(round((dmg - 1.0) * 100.0)), int(round((rate - 1.0) * 100.0))]
+	_buffs.text = "DMG %+d%%   RATE %+d%%" % [int(round((dmg - 1.0) * 100.0)), int(round((rate - 1.0) * 100.0))]
 
 
 func _on_boss_spawned(boss_name: String, max_hp: float) -> void:

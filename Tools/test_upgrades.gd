@@ -27,14 +27,21 @@ func _ready() -> void:
 
 
 func _test_costs() -> void:
-	var ok := true
+	var rises := true
+	var resets := true
 	for id in GlobalUpgradeDB.DATA:
-		var prev := 0
 		for lv in 60:
 			var c := GlobalUpgradeDB.cost(id, lv)
-			ok = ok and (c > prev if lv < 45 else c >= prev)
-			prev = c
-	_check("global costs rise with every level (0-44, also after level 10) and never shrink after", ok)
+			if lv % GlobalUpgradeDB.TIER_SIZE != 0:
+				rises = rises and c > GlobalUpgradeDB.cost(id, lv - 1)
+			else:
+				# a new tier restarts at the level-1 price times TIER_MULT^tier (only the 10-rounding differs)
+				var want := float(GlobalUpgradeDB.cost(id, 0)) * pow(GlobalUpgradeDB.TIER_MULT, float(GlobalUpgradeDB.tier_of(lv)))
+				resets = resets and absf(float(c) - want) <= 10.0 and (lv == 0 or c < GlobalUpgradeDB.cost(id, lv - 1))
+	_check("global costs rise inside a tier", rises)
+	_check("every 10th level the price restarts at the level-1 price x1.75 per tier", resets)
+	_check("tier 2 total costs 1.75x tier 1 total",
+		absf(_tier_total(U.INCOME, 1) / _tier_total(U.INCOME, 0) - GlobalUpgradeDB.TIER_MULT) < 0.02)
 	_check("costs stay inside the currency limit", GlobalUpgradeDB.cost(U.FIRE_RATE, 5000) <= PlayerData.MAX_CURRENCY and GlobalUpgradeDB.cost(U.FIRE_RATE, 5000) > 0)
 	_check("tier helpers", GlobalUpgradeDB.tier_of(9.0) == 0 and GlobalUpgradeDB.tier_of(10.0) == 1 and GlobalUpgradeDB.tier_of(37.0) == 3
 		and is_equal_approx(GlobalUpgradeDB.tier_progress(23.0), 0.3) and is_equal_approx(GlobalUpgradeDB.tier_progress(20.0), 0.0))
@@ -43,6 +50,13 @@ func _test_costs() -> void:
 		and GlobalUpgradeDB.tier_color(GlobalUpgradeDB.TIER_COLORS.size()) == GlobalUpgradeDB.tier_color(0))
 	_check("effect text", GlobalUpgradeDB.effect_text(U.INCOME, 3) == "+30%" and GlobalUpgradeDB.effect_text(U.REINFORCEMENTS, 2) == "+2")
 	_check("ids round trip", GlobalUpgradeDB.from_id(GlobalUpgradeDB.id_of(U.HEALTH)) == U.HEALTH and GlobalUpgradeDB.from_id("nope") == -1)
+
+
+func _tier_total(id: int, tier: int) -> float:
+	var sum := 0.0
+	for lv in range(tier * GlobalUpgradeDB.TIER_SIZE, (tier + 1) * GlobalUpgradeDB.TIER_SIZE):
+		sum += GlobalUpgradeDB.cost(id, lv)
+	return sum
 
 
 func _test_buy() -> void:

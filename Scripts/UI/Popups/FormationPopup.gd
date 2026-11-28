@@ -18,6 +18,7 @@ const TILE := preload("res://Scene/UI/Components/FormationTile.tscn")
 @onready var _done: Button = %DoneButton
 
 var _default_hint := ""
+var _tiles: Dictionary = {}
 
 
 func _ready() -> void:
@@ -27,7 +28,16 @@ func _ready() -> void:
 	var owned := PlayerData.owned_types()
 	owned.sort_custom(_before)
 	for t in owned:
-		_grid.add_child(_make_tile(t, true))
+		var tile := _make_tile(t, true)
+		_tiles[t] = tile
+		_grid.add_child(tile)
+	var filter := UnitFilterBar.new()
+	filter.changed.connect(func() -> void:
+		for t: int in _tiles:
+			(_tiles[t] as FormationTile).visible = filter.matches(t))
+	var scroll := _grid.get_parent()
+	scroll.get_parent().add_child(filter)
+	scroll.get_parent().move_child(filter, scroll.get_index())
 	PlayerData.equipped_changed.connect(_refresh_slots)
 	_refresh_slots()
 

@@ -1,8 +1,8 @@
 extends Node
 ## Rewarded ads (autoload "AdService"). Callers do `if await AdService.show_rewarded("chest"): grant`.
-## The backend is an AdProvider. Android with the AdMob plugin installed gets AdMobProvider (real ads;
-## test ad units in debug builds), created START_DELAY seconds after boot. Otherwise debug builds get
-## MockAdProvider; a release build without the plugin has no provider, so ads are simply unavailable there.
+## The backend is an AdProvider. Android and the editor get AdMobProvider (real ads; test ad units in debug
+## builds), created START_DELAY seconds after boot. On PC the plugin shows its own fake ad. A build without
+## the plugin has no provider, so ads are simply unavailable there.
 ## NO RANDOM ADS (perk of the "remove_ads" product and of its free trial) only removes the random
 ## interstitial after battles; every rewarded ad (chests, shards, revive) is still watched.
 
@@ -24,10 +24,8 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	if provider != null:
 		return
-	if OS.get_name() == "Android":
+	if OS.get_name() == "Android" or OS.has_feature("editor"):
 		_start_admob()
-	elif OS.is_debug_build():
-		provider = MockAdProvider.new(self)
 
 
 ## Waits START_DELAY, then starts AdMob. Ads count as unavailable until the SDK has loaded one.
@@ -42,8 +40,6 @@ func _start_admob() -> void:
 			push_warning("AdService: ads paused, the SDK did not start on recent launches")
 			return
 	provider = _make_admob()
-	if provider == null and OS.is_debug_build():
-		provider = MockAdProvider.new(self)
 
 
 ## Loaded by path, never referenced by name: without the plugin that script does not compile.
@@ -115,11 +111,12 @@ func show_rewarded(placement: String) -> bool:
 
 ## Random ad between battles (Game decides when). Skipped when the NO RANDOM ADS perk is active,
 ## when there is no provider or another ad is running; the provider answers false at once when its
-## interstitial is not loaded. The player earns nothing from it.
-func show_interstitial() -> void:
+## interstitial is not loaded. The player earns nothing from it. Returns true when the ad was shown.
+func show_interstitial() -> bool:
 	if _busy or PlayerData.has_no_ads() or provider == null:
-		return
+		return false
 	_busy = true
 	provider.show.call_deferred("interstitial")
-	await provider.finished
+	var shown: bool = await provider.finished
 	_busy = false
+	return shown

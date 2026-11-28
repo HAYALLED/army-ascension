@@ -1,35 +1,31 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://jnui5c0ay4ji"]
 
-[ext_resource type="Theme" path="res://Resources/UI/ui_theme.tres" id="1_tk18p"]
-[ext_resource type="Script" path="res://Scripts/UI/MainMenu.gd" id="2_cufvu"]
-[ext_resource type="Texture2D" path="res://Assets/UI/bg_main_menu.png" id="3_ng2ks"]
+[ext_resource type="Theme" uid="uid://bohd7lec5fb4s" path="res://Resources/UI/ui_theme.tres" id="1_tk18p"]
+[ext_resource type="Script" uid="uid://doy1bser84gtb" path="res://Scripts/UI/MainMenu.gd" id="2_cufvu"]
+[ext_resource type="Texture2D" uid="uid://b43mqapgxvw57" path="res://Assets/UI/bg_main_menu.png" id="3_ng2ks"]
 [ext_resource type="PackedScene" path="res://Scene/Menus/Pages/HomePage.tscn" id="4_0xx3b"]
-[ext_resource type="Script" path="res://Scripts/UI/Pages/HomePage.gd" id="5_0tr4r"]
 [ext_resource type="PackedScene" path="res://Scene/Menus/Pages/SoldiersPage.tscn" id="6_kjuu2"]
-[ext_resource type="Script" path="res://Scripts/UI/Pages/SoldiersPage.gd" id="7_e66wk"]
 [ext_resource type="PackedScene" path="res://Scene/Menus/Pages/UpgradePage.tscn" id="8_kncek"]
-[ext_resource type="Script" path="res://Scripts/UI/Pages/UpgradePage.gd" id="9_aal47"]
 [ext_resource type="PackedScene" path="res://Scene/Menus/Pages/MissionsPage.tscn" id="10_afflk"]
-[ext_resource type="Script" path="res://Scripts/UI/Pages/MissionsPage.gd" id="11_mijn3"]
 [ext_resource type="PackedScene" path="res://Scene/Menus/Pages/ShopPage.tscn" id="12_qnyxv"]
-[ext_resource type="Script" path="res://Scripts/UI/Pages/ShopPage.gd" id="13_wmwt0"]
 [ext_resource type="PackedScene" path="res://Scene/UI/Components/CurrencyPill.tscn" id="14_12u6t"]
-[ext_resource type="Script" path="res://Scripts/UI/Components/CurrencyPill.gd" id="15_5ufcj"]
-[ext_resource type="Texture2D" path="res://Assets/UI/icon_settings.png" id="16_7tewt"]
-[ext_resource type="Texture2D" path="res://Assets/UI/tabbar.png" id="17_l8hla"]
-[ext_resource type="Texture2D" path="res://Assets/UI/icon_soldiers.png" id="18_ohx0t"]
-[ext_resource type="Texture2D" path="res://Assets/UI/icon_upgrade.png" id="19_5i77f"]
-[ext_resource type="Texture2D" path="res://Assets/UI/icon_play.png" id="20_5m028"]
-[ext_resource type="Texture2D" path="res://Assets/UI/icon_missions.png" id="21_0nrfl"]
-[ext_resource type="Texture2D" path="res://Assets/UI/icon_shop.png" id="22_lmg5l"]
+[ext_resource type="Texture2D" uid="uid://b51w30vx5wejn" path="res://Assets/UI/icon_settings.png" id="16_7tewt"]
+[ext_resource type="Texture2D" uid="uid://bmlphjxncy62d" path="res://Assets/UI/tabbar.png" id="17_l8hla"]
+[ext_resource type="Texture2D" uid="uid://du1bgn5f31giv" path="res://Assets/UI/icon_soldiers.png" id="18_ohx0t"]
+[ext_resource type="Texture2D" uid="uid://die30eabx44nn" path="res://Assets/UI/icon_upgrade.png" id="19_5i77f"]
+[ext_resource type="Texture2D" uid="uid://cd16emu2pn4jr" path="res://Assets/UI/icon_play.png" id="20_5m028"]
+[ext_resource type="Texture2D" uid="uid://t4ou02frksrn" path="res://Assets/UI/icon_missions.png" id="21_0nrfl"]
+[ext_resource type="Texture2D" uid="uid://bdheviccyaka2" path="res://Assets/UI/icon_shop.png" id="22_lmg5l"]
 
 [sub_resource type="ButtonGroup" id="ButtonGroup_3mxh6"]
 
 [node name="MainMenu" type="Control" unique_id=901816523]
 layout_mode = 3
-anchors_preset = 0
+anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 theme = ExtResource("1_tk18p")
 script = ExtResource("2_cufvu")
 
@@ -51,50 +47,40 @@ offset_top = 130.0
 offset_bottom = -180.0
 mouse_filter = 2
 
-[node name="HomePage" type="Control" parent="Pages" unique_id=806928833 instance=ExtResource("4_0xx3b")]
+[node name="HomePage" parent="Pages" unique_id=806928833 instance=ExtResource("4_0xx3b")]
 unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-theme = ExtResource("1_tk18p")
-script = ExtResource("5_0tr4r")
+grow_horizontal = 2
+grow_vertical = 2
 
-[node name="SoldiersPage" type="Control" parent="Pages" unique_id=1221677895 instance=ExtResource("6_kjuu2")]
+[node name="SoldiersPage" parent="Pages" unique_id=1221677895 instance=ExtResource("6_kjuu2")]
 unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-theme = ExtResource("1_tk18p")
-script = ExtResource("7_e66wk")
+grow_horizontal = 2
+grow_vertical = 2
 
-[node name="UpgradePage" type="Control" parent="Pages" unique_id=2087154241 instance=ExtResource("8_kncek")]
+[node name="UpgradePage" parent="Pages" unique_id=2087154241 instance=ExtResource("8_kncek")]
 unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-theme = ExtResource("1_tk18p")
-script = ExtResource("9_aal47")
+grow_horizontal = 2
+grow_vertical = 2
 
-[node name="MissionsPage" type="Control" parent="Pages" unique_id=38541904 instance=ExtResource("10_afflk")]
+[node name="MissionsPage" parent="Pages" unique_id=38541904 instance=ExtResource("10_afflk")]
 unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-theme = ExtResource("1_tk18p")
-script = ExtResource("11_mijn3")
+grow_horizontal = 2
+grow_vertical = 2
 
-[node name="ShopPage" type="Control" parent="Pages" unique_id=765228179 instance=ExtResource("12_qnyxv")]
+[node name="ShopPage" parent="Pages" unique_id=765228179 instance=ExtResource("12_qnyxv")]
 unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-theme = ExtResource("1_tk18p")
-script = ExtResource("13_wmwt0")
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="TopBar" type="MarginContainer" parent="." unique_id=1423369357]
 unique_name_in_owner = true
@@ -111,27 +97,15 @@ layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 10
 
-[node name="GoldPill" type="PanelContainer" parent="TopBar/Row" unique_id=36560541 instance=ExtResource("14_12u6t")]
-custom_minimum_size = Vector2(160, 64)
+[node name="GoldPill" parent="TopBar/Row" unique_id=36560541 instance=ExtResource("14_12u6t")]
 layout_mode = 2
-theme = ExtResource("1_tk18p")
-theme_type_variation = &"PanelCurrency"
-script = ExtResource("15_5ufcj")
 
-[node name="ShardsPill" type="PanelContainer" parent="TopBar/Row" unique_id=1831388495 instance=ExtResource("14_12u6t")]
-custom_minimum_size = Vector2(160, 64)
+[node name="ShardsPill" parent="TopBar/Row" unique_id=1831388495 instance=ExtResource("14_12u6t")]
 layout_mode = 2
-theme = ExtResource("1_tk18p")
-theme_type_variation = &"PanelCurrency"
-script = ExtResource("15_5ufcj")
 kind = "shards"
 
-[node name="GemsPill" type="PanelContainer" parent="TopBar/Row" unique_id=990961191 instance=ExtResource("14_12u6t")]
-custom_minimum_size = Vector2(160, 64)
+[node name="GemsPill" parent="TopBar/Row" unique_id=990961191 instance=ExtResource("14_12u6t")]
 layout_mode = 2
-theme = ExtResource("1_tk18p")
-theme_type_variation = &"PanelCurrency"
-script = ExtResource("15_5ufcj")
 kind = "gems"
 
 [node name="Spacer" type="Control" parent="TopBar/Row" unique_id=1691412777]
